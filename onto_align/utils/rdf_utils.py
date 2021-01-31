@@ -1,6 +1,6 @@
 import xml.etree.ElementTree as ET
 import pandas as pd
-from onto_align.uri_lib import onto_uri_dict, onto_uri_dict_inv
+from onto_align.utils import onto_uri_dict, onto_uri_dict_inv
 # from onto_align import main_dir
 
 
