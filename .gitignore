@@ -297,3 +297,4 @@ fabric.properties
 # Customized
 data/
 demo/
+testing.py
