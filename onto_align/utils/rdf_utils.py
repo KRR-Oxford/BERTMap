@@ -56,10 +56,13 @@ def read_mappings(rdf_file, src_onto=None, tgt_onto=None, include_measure=False)
             en1, en2 = reformat_entity_uri(en1, src_onto), reformat_entity_uri(en2, tgt_onto)
             measure, rel = measure.text, rel.text
             row = [en1, en2, measure] if include_measure else [en1, en2]
-            if rel == "=":
+            if rel == "=" or rel == ">" or rel == "<":
+                # rel.replace("&gt;", ">").replace("&lt;", "<")
                 legal_mappings.append(row)
-            else:
+            elif rel == "?":
                 illegal_mappings.append(row)
+            else:
+                print("Unknown Relation Warning: ", rel)
 
     print("#Maps (\"=\"):", len(legal_mappings))
     print("#Maps (\"?\"):", len(illegal_mappings))
@@ -116,11 +119,10 @@ def logmap_text_to_rdf(logmap_text, rdf_template):
         le.SubElement(rdf_cell, "entity2").set("{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource", en2)
         rdf_measure = le.SubElement(rdf_cell, "measure")
         rdf_measure.text = measure
-        rdf_measure.set("{http://www.w3.org/1999/02/22-rdf-syntax-ns#}datatype", "http://www.w3.org/2001/XMLSchema#float")
-        le.SubElement(rdf_cell, "relation").text = rel
+        rdf_measure.set("{http://www.w3.org/1999/02/22-rdf-syntax-ns#}datatype",
+                        "http://www.w3.org/2001/XMLSchema#float")
+        le.SubElement(rdf_cell, "relation").text = "="  # according to Ernesto, class subsumptions should be considered
 
     output_rdf = logmap_text.replace(".txt", ".rdf")
     with open(output_rdf, "wb+") as f:
         le.ElementTree(root).write(f, pretty_print=True, xml_declaration=True, encoding="utf-8")
-
-

@@ -7,6 +7,7 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--ref', type=str)
     args = parser.parse_args()
     evaluator = Evaluator(args.pre, args.ref)
+    print("------ Results ------")
     print("P =", evaluator.P)
     print("R =", evaluator.R)
     print("F1 =", evaluator.F1)

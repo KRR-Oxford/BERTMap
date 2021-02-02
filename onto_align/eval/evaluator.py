@@ -9,7 +9,6 @@ class Evaluator:
         self.pre_legal, _ = read_mappings(pre, src_onto, tgt_onto)
         print("----- Load Reference Mappings -----")
         self.ref_legal, self.ref_illegal = read_mappings(ref, src_onto, tgt_onto)
-        print("------ Results ------")
         self.P = self.precision()
         self.R = self.recall()
         self.F1 = self.f1()
