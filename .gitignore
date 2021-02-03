@@ -297,4 +297,3 @@ fabric.properties
 # Customized
 data/
 demo/
-logmap_preprocessing.py
