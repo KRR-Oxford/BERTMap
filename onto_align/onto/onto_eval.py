@@ -1,18 +1,19 @@
-from onto_align.utils import read_mappings, read_onto_uris
+"""
+For evaluating the ontology mappings
+"""
+from onto_align.onto.oaei_utils import read_tsv_mappings
 
 
-class Evaluator:
+class OntoEvaluator:
 
-    def __init__(self, pre, ref):
-        src_onto, tgt_onto = read_onto_uris(ref)
-        print("----- Load Predicted Mappings -----")
-        self.pre_legal, _ = read_mappings(pre, src_onto, tgt_onto)
-        print("----- Load Reference Mappings -----")
-        self.ref_legal, self.ref_illegal = read_mappings(ref, src_onto, tgt_onto)
+    def __init__(self, pre_tsv, ref_tsv, except_tsv=None):
+        self.pre = read_tsv_mappings(pre_tsv)
+        self.ref = read_tsv_mappings(ref_tsv)
+        self.ref_illegal = read_tsv_mappings(except_tsv) if except_tsv else None
         self.P = self.precision()
         self.R = self.recall()
         self.F1 = self.f1()
-
+        
     def precision(self):
         """
         % of predictions are correct:
@@ -20,18 +21,18 @@ class Evaluator:
         """
         tp = 0  # true positive
         fp = 0  # false positive
-        unsat = 0
-        for p_map in self.pre_legal:
-            # ignore the "?" mappings
-            if p_map in self.ref_illegal:
-                unsat += 1
+        num_illegal = 0
+        for p_map in self.pre:
+            # ignore the "?" mappings where available
+            if self.ref_illegal and p_map in self.ref_illegal:
+                num_illegal += 1
                 continue
             # compute tp and fp non-illegal mappings
-            if p_map in self.ref_legal:
+            if p_map in self.ref:
                 tp += 1
             else:
                 fp += 1
-        print("#Unsat.:", unsat)
+        print("#Illegal.:", num_illegal)
         return tp / (tp + fp)
 
     def recall(self):
@@ -41,8 +42,8 @@ class Evaluator:
         """
         tp = 0  # true positive
         fn = 0  # false negative
-        for r_map in self.ref_legal:
-            if r_map in self.pre_legal:
+        for r_map in self.ref:
+            if r_map in self.pre:
                 tp += 1
             else:
                 fn += 1

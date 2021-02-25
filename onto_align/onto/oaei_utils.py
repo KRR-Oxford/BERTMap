@@ -1,35 +1,18 @@
+from re import sub
 import xml.etree.ElementTree as ET
 import lxml.etree as le
 import pandas as pd
-from onto_align.utils import onto_uri_dict, onto_uri_dict_inv
+from onto_align.onto import Ontology
 
 
-def read_onto_uris(rdf_file):
-    xml_root = ET.parse(rdf_file).getroot()
-    onto_uri1, onto_uri2 = "", ""
-    for elem in xml_root.iter():
-        if "uri1" in elem.tag:
-            onto_uri1 = elem.text
-        elif "uri2" in elem.tag:
-            onto_uri2 = elem.text
-        # end case when both ontologies are captured
-        if not onto_uri1 == "" and not onto_uri2 == "":
-            break
-    return onto_uri1, onto_uri2
+def read_tsv_mappings(tsv_file):
+    """read mappings from tsv file"""
+    _df = pd.read_csv(tsv_file, sep="\t")[["Entity1",  "Entity2"]].astype(str)
+    mappings = [ "\t".join(_df.iloc[i]) for i in range(len(_df))]
+    return mappings
 
 
-def reformat_entity_uri(entity_uri, onto_uri, inverse=False):
-    """
-    Returns: onto_uri#fragment <=> onto_prefix:fragment
-    """
-    if not inverse:
-        entity_uri = entity_uri.replace(onto_uri + "#", onto_uri_dict[onto_uri] + ":")
-    else:
-        entity_uri = entity_uri.replace(onto_uri_dict_inv[onto_uri] + ":", onto_uri + "#")
-    return entity_uri
-
-
-def read_mappings(rdf_file, src_onto=None, tgt_onto=None, include_measure=False):
+def read_rdf_mappings(rdf_file, src_onto=None, tgt_onto=None):
     """
     Args:
         rdf_file: path to mappings in rdf format
@@ -38,24 +21,31 @@ def read_mappings(rdf_file, src_onto=None, tgt_onto=None, include_measure=False)
         include_measure: including measure value or not
 
     Returns:
-        mappings(=), mappings(?)
+        mappings(=;>,<), mappings(?)
     """
     xml_root = ET.parse(rdf_file).getroot()
     legal_mappings = []  # where relation is "="
     illegal_mappings = []  # where relation is "?"
     if src_onto is None or tgt_onto is None:
         # Read URIs for ontology 1 and 2 from rdf if not given
-        src_onto, tgt_onto = read_onto_uris(rdf_file)
+        uris = Ontology.read_onto_uris_from_rdf(rdf_file, "uri1", "uri2")
+        src_onto, tgt_onto = uris["uri1"], uris["uri2"]
 
     for elem in xml_root.iter():
         # every Cell contains a mapping of en1 -rel(some value)-> en2
         if 'Cell' in elem.tag:
-            # follow the order in the oaei rdf mappings
-            en1, en2, measure, rel = tuple(list(elem))
-            en1, en2 = list(en1.attrib.values())[0], list(en2.attrib.values())[0]
-            en1, en2 = reformat_entity_uri(en1, src_onto), reformat_entity_uri(en2, tgt_onto)
-            measure, rel = measure.text, rel.text
-            row = [en1, en2, measure] if include_measure else [en1, en2]
+            for sub_elem in elem:
+                if "entity1" in sub_elem.tag:
+                    en1 = list(sub_elem.attrib.values())[0]
+                elif "entity2" in sub_elem.tag:
+                    en2 = list(sub_elem.attrib.values())[0]
+                elif "relation" in sub_elem.tag:
+                    rel = sub_elem.text
+                elif "measure" in sub_elem.tag:
+                    measure = sub_elem.text
+            en1, en2 = Ontology.reformat_entity_uri(en1, src_onto), Ontology.reformat_entity_uri(en2, tgt_onto)
+            row = [en1, en2, measure]
+            # =: equivalent; > superset of; < subset of.
             if rel == "=" or rel == ">" or rel == "<":
                 # rel.replace("&gt;", ">").replace("&lt;", "<")
                 legal_mappings.append(row)
@@ -70,9 +60,9 @@ def read_mappings(rdf_file, src_onto=None, tgt_onto=None, include_measure=False)
     return legal_mappings, illegal_mappings
 
 
-def rdf_to_tsv(rdf_file):
+def rdf_to_tsv_mappings(rdf_file, src_onto=None, tgt_onto=None):
     output_dir = rdf_file.replace(".rdf", "")
-    legal_mappings, illegal_mappings = read_mappings(rdf_file)
+    legal_mappings, illegal_mappings = read_rdf_mappings(rdf_file, src_onto, tgt_onto)
     _df = pd.DataFrame(legal_mappings, columns=["Entity1", "Entity2", "Value"])
     _df.to_csv(output_dir + "_legal.tsv", index=False, sep='\t')
     _df = pd.DataFrame(illegal_mappings, columns=["Entity1", "Entity2", "Value"])
@@ -80,6 +70,7 @@ def rdf_to_tsv(rdf_file):
 
 
 def create_rdf_template(rdf_file):
+    """Create rdf template without mappings"""
     root = le.parse(rdf_file).getroot()
     align = root[0]
     for elem in align:
@@ -90,14 +81,12 @@ def create_rdf_template(rdf_file):
 
 
 def logmap_text_to_rdf(logmap_text, rdf_template):
-
-    """
-    Write LogMap output text into RDF format with given template
+    """Write LogMap output text into RDF format with given template
+    
     Args:
         logmap_text: path to the LogMap output text file
         rdf_template: rdf template with no mappings
     """
-
     # read mappings
     mappings = []
     with open(logmap_text, "r") as f:

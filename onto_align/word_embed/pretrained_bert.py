@@ -1,13 +1,12 @@
 """
-Contextual Word Embedding models (BERT and its variants)
-from Pytorch-based Huggingface Library.
+Pretrained BERT and its variants from Pytorch-based Huggingface Library.
 """
 from transformers import AutoModel, AutoTokenizer
 from scipy.spatial.distance import cosine
 import torch
 
 
-class Bert:
+class PretrainedBert:
 
     def __init__(self, pretrained_path):
         print("Load the Pretrained BERT model...")
@@ -49,7 +48,7 @@ if __name__ == "__main__":
     # Similarity example
     text = "After stealing money from the bank vault, " \
            "the bank robber was seen fishing on the Mississippi river bank."
-    bert = Bert('../../../clinical_kb_albert')
+    bert = PretrainedBert('../../../clinical_kb_albert')
     print("Tokenized text:", bert.tokenize(text))
     last_2_exact = bert.get_word_embeddings(text, -2, "exact")
     last_1_exact = bert.get_word_embeddings(text, -1, "exact")

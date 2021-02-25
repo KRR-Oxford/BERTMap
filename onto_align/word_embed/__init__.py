@@ -1,1 +1,1 @@
-from onto_align.word_embed.bert import Bert
+from onto_align.word_embed.pretrained_bert import PretrainedBert
