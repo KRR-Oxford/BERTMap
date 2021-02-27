@@ -305,5 +305,6 @@ fabric.properties
 # Customized
 data/
 demo/
+rdf_template/
 test.py
 test.ipynb
