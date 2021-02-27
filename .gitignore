@@ -303,8 +303,8 @@ fabric.properties
 *.code-workspace
 
 # Customized
-data/*
-!data/references
+*data/*
+!*data/references
 demo/
 rdf_template/
 test.py
