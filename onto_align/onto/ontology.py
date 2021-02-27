@@ -11,7 +11,7 @@ class Ontology:
     abbr2uri = {v: k for k, v in uri2abbr.items()}
 
     def __init__(self, onto_file):
-        self.onto = get_ontology(onto_file)
+        self.onto = get_ontology(f"file://{onto_file}").load()
 
     @staticmethod
     def uri_abbr_dict(cls, uri_abbr_tsv):

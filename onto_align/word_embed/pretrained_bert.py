@@ -63,7 +63,8 @@ if __name__ == "__main__":
                   "last-4-cat": last_4_cat}
     for strat, embeds in embed_dict.items():
         print(f"Pooling Strategy: {strat}.")
-        diff_bank = 1 - cosine(embeds[10], embeds[19])
+        # cosine here means the cosine distance
+        diff_bank = 1 - cosine(embeds[10], embeds[19])  # it's equal to cos(a, b)
         same_bank = 1 - cosine(embeds[10], embeds[6])
         print('First 5 vector values for each instance of "bank".')
         print("[bank] vault:\t", str(embeds[6][:5]))   # "bank" at position 6 is contextually closer to at 10
