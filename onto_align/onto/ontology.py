@@ -15,7 +15,7 @@ class Ontology:
         self.iri = self.onto.base_iri
         self.iri_abbr = self.iri2abbr[self.iri]
 
-    @staticmethod
+    @classmethod
     def set_iri_abbr_dict(cls, iri_abbr_tsv):
         """ Read the aligned URI-Abbr_URI pairs and form two dictionaries """
         cls.iri_abbr_tsv = iri_abbr_tsv
@@ -30,9 +30,9 @@ class Ontology:
         Returns: onto_uri#fragment <=> onto_prefix:fragment
         """
         if not inverse:
-            entity_uri = entity_uri.replace(onto_uri + "#", cls.iri2abbr[onto_uri] + ":")
+            entity_uri = entity_uri.replace(onto_uri, cls.iri2abbr[onto_uri])
         else:
-            entity_uri = entity_uri.replace(cls.abbr2iri[onto_uri] + ":", onto_uri + "#")
+            entity_uri = entity_uri.replace(cls.abbr2iri[onto_uri], onto_uri)
         return entity_uri
 
     @staticmethod
