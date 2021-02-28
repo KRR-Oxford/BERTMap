@@ -41,14 +41,28 @@ class PretrainedBert:
                 # (sent_len, hid_dim * #selected_layer)
                 return token_embeddings[neg_layer:].permute(1, 0, 2).reshape(sent_len, -1)
             else:
-                raise NameError("Pooling strategy not recognized! Available choices are: {sum}, {cat}.")
-
+                raise NameError("Pooling strategy not recognized! Available choices are: {exact}, {sum}, {cat}.")
+            
+    def get_basic_sent_embeddings(self, sent, strategy="last-2-mean"):
+        """Provide basic sentence embedding by:
+           1. taking the mean vector of the second-to-last layer (last-2-mean);
+           2. taking the [cls] token of the last layer (last-1-cls)
+        """
+        if strategy == "last-2-mean":
+            word_embeds = self.get_word_embeddings(sent, -2, strategy="exact")
+            return torch.mean(word_embeds, dim=0)
+        elif strategy == "last-1-cls":
+            word_embeds = self.get_word_embeddings(sent, -1, strategy="exact")
+            return word_embeds[0]
+        else:
+            raise NameError("Sentence embedding strategy not recognized! Available choices are: {last-2-mean}, {last-1-cls}.")
+        
 
 if __name__ == "__main__":
     # Similarity example
     text = "After stealing money from the bank vault, " \
            "the bank robber was seen fishing on the Mississippi river bank."
-    bert = PretrainedBert('../../../clinical_kb_albert')
+    bert = PretrainedBert('emilyalsentzer/Bio_ClinicalBERT')
     print("Tokenized text:", bert.tokenize(text))
     last_2_exact = bert.get_word_embeddings(text, -2, "exact")
     last_1_exact = bert.get_word_embeddings(text, -1, "exact")
