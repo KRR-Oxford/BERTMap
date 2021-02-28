@@ -6,23 +6,23 @@ import xml.etree.ElementTree as ET
 class Ontology:
 
     # for simplification of the ontology uris
-    uri_abbr_tsv = __file__.replace("ontology.py", "") + "uri_abbr.tsv"
-    uri2abbr = pd.read_csv(uri_abbr_tsv, index_col=0, squeeze=True, sep='\t').to_dict()
-    abbr2uri = {v: k for k, v in uri2abbr.items()}
+    iri_abbr_tsv = __file__.replace("ontology.py", "") + "iri_abbr.tsv"
+    iri2abbr = pd.read_csv(iri_abbr_tsv, index_col=0, squeeze=True, sep='\t').to_dict()
+    abbr2iri = {v: k for k, v in iri2abbr.items()}
 
     def __init__(self, onto_file):
         self.onto = get_ontology(f"file://{onto_file}").load()
+        self.iri = self.onto.base_iri
+        self.iri_abbr = self.iri2abbr[self.iri]
 
     @staticmethod
-    def uri_abbr_dict(cls, uri_abbr_tsv):
+    def set_iri_abbr_dict(cls, iri_abbr_tsv):
         """ Read the aligned URI-Abbr_URI pairs and form two dictionaries """
-        cls.uri_abbr_tsv = uri_abbr_tsv
-        uri2abbr = pd.read_csv(uri_abbr_tsv, sep='\t').to_dict()
-
-        abbr2uri = {
-            v: k for k, v in uri2abbr.items()
+        cls.iri_abbr_tsv = iri_abbr_tsv
+        cls.iri2abbr = pd.read_csv(iri_abbr_tsv, sep='\t').to_dict()
+        cls.abbr2iri = {
+            v: k for k, v in cls.iri2abbr.items()
         }
-        return uri2abbr, abbr2uri
 
     @classmethod
     def reformat_entity_uri(cls, entity_uri, onto_uri, inverse=False):
@@ -30,9 +30,9 @@ class Ontology:
         Returns: onto_uri#fragment <=> onto_prefix:fragment
         """
         if not inverse:
-            entity_uri = entity_uri.replace(onto_uri + "#", cls.uri2abbr[onto_uri] + ":")
+            entity_uri = entity_uri.replace(onto_uri + "#", cls.iri2abbr[onto_uri] + ":")
         else:
-            entity_uri = entity_uri.replace(cls.abbr2uri[onto_uri] + ":", onto_uri + "#")
+            entity_uri = entity_uri.replace(cls.abbr2iri[onto_uri] + ":", onto_uri + "#")
         return entity_uri
 
     @staticmethod

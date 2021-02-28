@@ -307,5 +307,6 @@ fabric.properties
 !*data/references
 demo/
 rdf_template/
+experiments/
 test.py
 test.ipynb
