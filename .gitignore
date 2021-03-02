@@ -309,5 +309,5 @@ demo/
 rdf_template/
 experiments/
 pretrained_bert/
-test.py
-test.ipynb
+test.*
+exp*.ipynb

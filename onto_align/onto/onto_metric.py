@@ -1,12 +1,22 @@
 from scipy.spatial.distance import cosine
 from textdistance import levenshtein
+from itertools import product
 
 
 class OntoMetric:
     
-    def __init__(self):
-        self.cos_dist = cosine  # 1 - cos(v_1, v_2)
-        self.norm_edit_dist = levenshtein.normalized_distance  # edit-distance / max(v_1, v_2)
+    cos_dist = cosine  # 1 - cos(v_1, v_2)
+    norm_edit_dist = levenshtein.normalized_distance  # edit-distance / max(v_1, v_2)
+    norm_edit_sim = levenshtein.normalized_similarity
         
-
-onto_metric = OntoMetric()
+    @classmethod    
+    def min_norm_edit_dist(cls, src_labels, tgt_labels):
+        label_pairs = product(src_labels, tgt_labels)
+        dist_list = [cls.norm_edit_dist(src, tgt) for src, tgt in label_pairs]
+        return min(dist_list)
+    
+    @classmethod    
+    def max_norm_edit_sim(cls, src_labels, tgt_labels):
+        label_pairs = product(src_labels, tgt_labels)
+        sim_list = [cls.norm_edit_sim(src, tgt) for src, tgt in label_pairs]
+        return max(sim_list)
