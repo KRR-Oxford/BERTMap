@@ -17,8 +17,9 @@ class OntoExperiment:
         self.exp_name = exp_name
         
         # data file
-        self.src_tsv = pd.read_csv(src_data_tsv, sep="\t")
-        self.tgt_tsv = pd.read_csv(tgt_data_tsv, sep='\t')
+        na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL','null'})  # exclude mistaken parsing of string "null" to NaN
+        self.src_tsv = pd.read_csv(src_data_tsv, sep="\t", na_values=na_vals, keep_default_na=False)
+        self.tgt_tsv = pd.read_csv(tgt_data_tsv, sep='\t', na_values=na_vals, keep_default_na=False)
 
         
     def run(self):
