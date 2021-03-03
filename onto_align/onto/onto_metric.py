@@ -10,13 +10,13 @@ class OntoMetric:
     norm_edit_sim = levenshtein.normalized_similarity
         
     @classmethod    
-    def min_norm_edit_dist(cls, src_labels, tgt_labels):
-        label_pairs = product(src_labels, tgt_labels)
+    def min_norm_edit_dist(cls, src_lexicon, tgt_lexicon):
+        label_pairs = product(src_lexicon, tgt_lexicon)
         dist_list = [cls.norm_edit_dist(src, tgt) for src, tgt in label_pairs]
         return min(dist_list)
     
     @classmethod    
-    def max_norm_edit_sim(cls, src_labels, tgt_labels):
-        label_pairs = product(src_labels, tgt_labels)
+    def max_norm_edit_sim(cls, src_lexicon, tgt_lexicon):
+        label_pairs = product(src_lexicon, tgt_lexicon)
         sim_list = [cls.norm_edit_sim(src, tgt) for src, tgt in label_pairs]
         return max(sim_list)
