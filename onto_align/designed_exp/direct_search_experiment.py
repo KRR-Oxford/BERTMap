@@ -14,9 +14,10 @@
             
         Remove the duplicates
 """
-from onto_align.onto import OntoExperiment
+from onto_align.onto import Ontology, OntoExperiment
 import multiprocessing
 import pandas as pd
+import random
 
 
 class DirectSearchExperiment(OntoExperiment):
@@ -61,6 +62,47 @@ class DirectSearchExperiment(OntoExperiment):
         assert src_queue.empty() and tgt_queue.empty()
     
     def batch_mappings(self, batch_inds, queue=None, inverse=False):
+        """Generate a batch of mappings for given source or target (inverse=True) entity batch indices"""
+        batch_dict = dict()
+        src_tsv = self.src_tsv if not inverse else self.tgt_tsv
+        tgt_tsv = self.tgt_tsv if not inverse else self.src_tsv
+        
+        for i in batch_inds:
+            src_row = src_tsv.iloc[i]
+            src_entity_iri = src_row["entity-iri"]
+            src_lexicon = self.lexicon_process(src_row["entity-lexicon"])
+            min_dist = 1
+            tgt_entity_iri = None
+            
+            for j in range(len(tgt_tsv)):
+                tgt_row = tgt_tsv.iloc[j]
+                tgt_lexicon = self.lexicon_process(tgt_row["entity-lexicon"])
+                entity_dist = self.entity_dist_metric(src_lexicon, tgt_lexicon)
+                if (entity_dist < min_dist) or (entity_dist == min_dist and random.random() < 0.5):
+                    min_dist = entity_dist
+                    tgt_entity_iri = tgt_row["entity-iri"]   
+            
+            if not inverse:
+                batch_dict[i] = [Ontology.reformat_entity_uri(src_entity_iri, self.src_iri), 
+                                 Ontology.reformat_entity_uri(tgt_entity_iri, self.tgt_iri), 
+                                 1 - min_dist]
+            else:
+                batch_dict[i] = [Ontology.reformat_entity_uri(tgt_entity_iri, self.src_iri), 
+                                 Ontology.reformat_entity_uri(src_entity_iri, self.tgt_iri), 
+                                 1 - min_dist]               
+        
+        if queue:
+            queue.put(batch_dict)
+        
+        print("Finishing batch ...")
+        print(batch_dict)
+            
+        return batch_dict
+    
+    def lexicon_process(self, entity_lexicon):
+        raise NotImplementedError
+    
+    def entity_dist_metric(self, src_lexicon, tgt_lexicon):
         raise NotImplementedError
     
     def save(self, save_path):
