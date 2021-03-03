@@ -21,8 +21,8 @@ import pandas as pd
 
 class DirectSearchExperiment(OntoExperiment):
     
-    def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, src_data_tsv, tgt_data_tsv, task="small", exp_name="norm_edit_dist"):
-        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_data_tsv, tgt_data_tsv, task=task, exp_name=exp_name)
+    def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, src_data_tsv, tgt_data_tsv, task_suffix="small", exp_name="norm_edit_dist"):
+        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_data_tsv, tgt_data_tsv, task_suffix=task_suffix, exp_name=exp_name)
         
         # result mappings: fixed src, search tgt; fixed tgt sea
         self.src2tgt_mappings_tsv = pd.DataFrame(index=range(len(self.src_tsv)), columns=["Entity1", "Entity2", "Value"])
@@ -65,6 +65,7 @@ class DirectSearchExperiment(OntoExperiment):
     
     def save(self, save_path):
         self.combined_mappings_tsv = self.src2tgt_mappings_tsv.append(self.tgt2src_mappings_tsv).drop_duplicates()
-        self.src2tgt_mappings_tsv.to_csv(f"{save_path}/{self.src}2{self.tgt}_{self.task}-{self.exp_name}-src2tgt.tsv", index=False, sep='\t')
-        self.tgt2src_mappings_tsv.to_csv(f"{save_path}/{self.src}2{self.tgt}_{self.task}-{self.exp_name}-tgt2src.tsv", index=False, sep='\t')
-        self.combined_mappings_tsv.to_csv(f"{save_path}/{self.src}2{self.tgt}_{self.task}-{self.exp_name}-combined.tsv", index=False, sep='\t')
+        name = f"{self.src}2{self.tgt}_{self.task_suffix}-{self.exp_name}"
+        self.src2tgt_mappings_tsv.to_csv(f"{save_path}/{name}-src2tgt.tsv", index=False, sep='\t')
+        self.tgt2src_mappings_tsv.to_csv(f"{save_path}/{name}-tgt2src.tsv", index=False, sep='\t')
+        self.combined_mappings_tsv.to_csv(f"{save_path}/{name}-combined.tsv", index=False, sep='\t')

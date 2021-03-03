@@ -311,3 +311,4 @@ experiments/
 pretrained_bert/
 test.*
 exp*.ipynb
+exp*.py

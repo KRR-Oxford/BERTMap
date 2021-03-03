@@ -7,8 +7,8 @@ import random
 
 class NormEditSimExperiment(DirectSearchExperiment):
     
-    def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, src_data_tsv, tgt_data_tsv, task="small"):
-        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_data_tsv, tgt_data_tsv, task=task, exp_name="norm_edit_dist")
+    def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, src_data_tsv, tgt_data_tsv, task_suffix="small"):
+        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_data_tsv, tgt_data_tsv, task_suffix=task_suffix, exp_name="norm_edit_dist")
             
     def batch_mappings(self, batch_inds, queue=None, inverse=False):
         """Generate a batch of mappings for given source or target (inverse=True) entity batch indices"""

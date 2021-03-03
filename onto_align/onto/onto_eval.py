@@ -6,8 +6,8 @@ from onto_align.onto.oaei_utils import read_tsv_mappings
 
 class OntoEvaluator:
 
-    def __init__(self, pre_tsv, ref_tsv, except_tsv=None):
-        self.pre = read_tsv_mappings(pre_tsv)
+    def __init__(self, pre_tsv, ref_tsv, except_tsv=None, threshold=0.0):
+        self.pre = read_tsv_mappings(pre_tsv, threshold=threshold)  # filter the prediction mappings according to similarity scores
         self.ref = read_tsv_mappings(ref_tsv)
         self.ref_illegal = read_tsv_mappings(except_tsv) if except_tsv else None
         self.P = self.precision()
@@ -32,7 +32,7 @@ class OntoEvaluator:
                 tp += 1
             else:
                 fp += 1
-        print("#Illegal.:", num_illegal)
+        self.num_illegal = num_illegal
         return tp / (tp + fp)
 
     def recall(self):

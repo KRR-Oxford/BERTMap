@@ -5,10 +5,10 @@ import pandas as pd
 from onto_align.onto import Ontology
 
 
-def read_tsv_mappings(tsv_file):
+def read_tsv_mappings(tsv_file, threshold=0.0):
     """read mappings from tsv file"""
-    _df = pd.read_csv(tsv_file, sep="\t")[["Entity1",  "Entity2"]].astype(str)
-    mappings = [ "\t".join(_df.iloc[i]) for i in range(len(_df))]
+    _df = pd.read_csv(tsv_file, sep="\t")
+    mappings = [ "\t".join(_df.iloc[i][:-1]) for i in range(len(_df)) if _df.iloc[i][-1] >= threshold]
     return mappings
 
 
