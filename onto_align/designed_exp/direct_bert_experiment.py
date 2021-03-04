@@ -1,7 +1,6 @@
 from onto_align.designed_exp import DirectSearchExperiment
-from onto_align.onto import OntoMetric, Ontology
+from onto_align.onto import OntoMetric
 from onto_align.word_embed import PretrainedBert
-import random
 import torch
 
 
@@ -18,7 +17,7 @@ class DirectBertExperiment(DirectSearchExperiment):
         self.src_embeds = torch.load(src_embeds_pt)
         self.tgt_embeds = torch.load(tgt_embeds_pt)
     
-    def lexicon_process(self, entity_id, flag):
+    def lexicon_process(self, _, entity_id, flag):
         # strategy "last-2-mean" or "last-1-cls"
         embeds = self.src_embeds if flag == "SRC" else None
         embeds = self.tgt_embeds if flag == "TGT" else None

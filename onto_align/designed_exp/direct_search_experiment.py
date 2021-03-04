@@ -37,13 +37,14 @@ class DirectSearchExperiment(OntoExperiment):
         self.tgt2src_mappings_tsv = pd.DataFrame(index=range(len(self.tgt_tsv)), columns=["Entity1", "Entity2", "Value"])
         self.combined_mappings_tsv = None
     
-    def run(self):
+    def run(self, test=False):
         t_start=time.time()
         src_batch_dict_list = []
         tgt_batch_dict_list = []
         
         # num_splits = num_intervals - 1 e.g. -|-|- 
-        pool = multiprocessing.Pool(multiprocessing.cpu_count())
+        num_pools = multiprocessing.cpu_count() if not test else 2
+        pool = multiprocessing.Pool(num_pools) 
         num_splits = (multiprocessing.cpu_count() - 2) // 2  
         src_batch_iter = self.interval_split(num_splits, len(self.src_tsv))
         tgt_batch_iter = self.interval_split(num_splits, len(self.tgt_tsv))
@@ -52,13 +53,18 @@ class DirectSearchExperiment(OntoExperiment):
         for src_batch_inds in src_batch_iter:
             count += 1
             src_batch_dict_list.append(pool.apply_async(self.batch_mappings, args=(src_batch_inds, False, )))
-        assert count == num_splits + 1
+            # test round for one batch
+            if test == True:
+                break 
+        # assert count == num_splits + 1
         
         count = 0
         for tgt_batch_inds in tgt_batch_iter:
             count += 1
             tgt_batch_dict_list.append(pool.apply_async(self.batch_mappings, args=(tgt_batch_inds, True, )))
-        assert count == num_splits + 1
+            if test == True:
+                break 
+        # assert count == num_splits + 1
         
         pool.close()
         pool.join()
@@ -89,19 +95,19 @@ class DirectSearchExperiment(OntoExperiment):
         for i in batch_inds:
             src_row = src_tsv.iloc[i]
             src_entity_iri = src_row["entity-iri"]
-            src_lexicon = self.lexicon_process(src_row["entity-lexicon"])
+            src_lexicon = self.lexicon_process(src_row["entity-lexicon"], i, "Fixed-SRC")
             min_dist = 1
             tgt_entity_iri = None
             
             for j in range(len(tgt_tsv)):
                 tgt_row = tgt_tsv.iloc[j]
-                tgt_lexicon = self.lexicon_process(tgt_row["entity-lexicon"])
+                tgt_lexicon = self.lexicon_process(tgt_row["entity-lexicon"], j, "Fixed-TGT")
                 entity_dist = self.entity_dist_metric(src_lexicon, tgt_lexicon)
                 if (entity_dist < min_dist) or (entity_dist == min_dist and random.random() < 0.5):
                     min_dist = entity_dist
                     tgt_entity_iri = tgt_row["entity-iri"]   
                 
-                print(f"[Process {pid}][{flag}] current [{j}]: {entity_dist:5f}; stored: {min_dist}")
+                self.log_print(f"[Process {pid}][{flag}] current [{j}]: {entity_dist:5f}; stored: {min_dist:5f}")
                 sys.stdout.flush()
             
             if not inverse:
@@ -119,7 +125,7 @@ class DirectSearchExperiment(OntoExperiment):
             
         return batch_dict
     
-    def lexicon_process(self, entity_lexicon):
+    def lexicon_process(self, lexicon_data, lexicon_id, flag):
         raise NotImplementedError
     
     def entity_dist_metric(self, src_lexicon, tgt_lexicon):
