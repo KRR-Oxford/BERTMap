@@ -101,7 +101,7 @@ class DirectSearchExperiment(OntoExperiment):
                     min_dist = entity_dist
                     tgt_entity_iri = tgt_row["entity-iri"]   
                 
-                print(f"[Process {pid}][{flag}] current: {entity_dist}; stored: {min_dist}")
+                print(f"[Process {pid}][{flag}] current [{j}]: {entity_dist:5f}; stored: {min_dist}")
                 sys.stdout.flush()
             
             if not inverse:
