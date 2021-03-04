@@ -119,7 +119,7 @@ class DirectSearchExperiment(OntoExperiment):
                                  Ontology.reformat_entity_uri(src_entity_iri, self.tgt_iri), 
                                  1 - min_dist]      
                 
-            self.log_print(f"[Map {i}] {batch_dict[i][0]} | {batch_dict[i][1]}")         
+            self.log_print(f"[Process {pid}][{flag}][Map {i}] {batch_dict[i][0]} | {batch_dict[i][1]}")         
         
         self.log_print(f"[Process {pid}][{flag}] Finishing the batch ...")
             
