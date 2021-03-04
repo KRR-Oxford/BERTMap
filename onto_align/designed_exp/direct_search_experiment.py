@@ -95,13 +95,13 @@ class DirectSearchExperiment(OntoExperiment):
         for i in batch_inds:
             src_row = src_tsv.iloc[i]
             src_entity_iri = src_row["entity-iri"]
-            src_lexicon = self.lexicon_process(src_row["entity-lexicon"], i, "Fixed-SRC")
+            src_lexicon = self.lexicon_process(src_row["entity-lexicon"], i, "SRC")
             min_dist = 1
             tgt_entity_iri = None
             
             for j in range(len(tgt_tsv)):
                 tgt_row = tgt_tsv.iloc[j]
-                tgt_lexicon = self.lexicon_process(tgt_row["entity-lexicon"], j, "Fixed-TGT")
+                tgt_lexicon = self.lexicon_process(tgt_row["entity-lexicon"], j, "TGT")
                 entity_dist = self.entity_dist_metric(src_lexicon, tgt_lexicon)
                 if (entity_dist < min_dist) or (entity_dist == min_dist and random.random() < 0.5):
                     min_dist = entity_dist

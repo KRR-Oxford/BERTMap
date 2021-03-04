@@ -17,10 +17,10 @@ class DirectBertExperiment(DirectSearchExperiment):
         self.src_embeds = torch.load(src_embeds_pt)
         self.tgt_embeds = torch.load(tgt_embeds_pt)
     
-    def lexicon_process(self, _, entity_id, flag):
+    def lexicon_process(self, _, entity_id, entity_flag):
         # strategy "last-2-mean" or "last-1-cls"
-        embeds = self.src_embeds if flag == "SRC" else None
-        embeds = self.tgt_embeds if flag == "TGT" else None
+        embeds = self.src_embeds if entity_flag == "SRC" else None
+        embeds = self.tgt_embeds if entity_flag == "TGT" else None
         return embeds[entity_id]
 
     def entity_dist_metric(self, src_lexicon, tgt_lexicon):
