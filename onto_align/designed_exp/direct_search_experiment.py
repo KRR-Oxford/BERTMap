@@ -18,12 +18,19 @@ from onto_align.onto import Ontology, OntoExperiment
 import multiprocessing
 import pandas as pd
 import random
+import os
+import sys
+import time
 
 
 class DirectSearchExperiment(OntoExperiment):
     
-    def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, src_data_tsv, tgt_data_tsv, task_suffix="small", exp_name="norm_edit_dist"):
-        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_data_tsv, tgt_data_tsv, task_suffix=task_suffix, exp_name=exp_name)
+    def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
+                 src_data_tsv, tgt_data_tsv, save_path, 
+                 task_suffix="small", exp_name="norm_edit_dist"):
+        
+        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_data_tsv, tgt_data_tsv, 
+                         save_path, task_suffix=task_suffix, exp_name=exp_name)
         
         # result mappings: fixed src, search tgt; fixed tgt sea
         self.src2tgt_mappings_tsv = pd.DataFrame(index=range(len(self.src_tsv)), columns=["Entity1", "Entity2", "Value"])
@@ -31,38 +38,50 @@ class DirectSearchExperiment(OntoExperiment):
         self.combined_mappings_tsv = None
     
     def run(self):
-        src_queue = multiprocessing.SimpleQueue()
-        tgt_queue = multiprocessing.SimpleQueue()
-        # -2 cores to prevent overflow
+        t_start=time.time()
+        src_batch_dict_list = []
+        tgt_batch_dict_list = []
+        
         # num_splits = num_intervals - 1 e.g. -|-|- 
+        pool = multiprocessing.Pool(multiprocessing.cpu_count())
         num_splits = (multiprocessing.cpu_count() - 2) // 2  
         src_batch_iter = self.interval_split(num_splits, len(self.src_tsv))
         tgt_batch_iter = self.interval_split(num_splits, len(self.tgt_tsv))
+        
         count = 0
         for src_batch_inds in src_batch_iter:
             count += 1
-            print(f"Compute the mapping for {str(count)}th source entity batch ...")
-            p = multiprocessing.Process(target=self.batch_mappings, args=(src_batch_inds, src_queue, False, )) 
-            p.start()
-
+            src_batch_dict_list.append(pool.apply_async(self.batch_mappings, args=(src_batch_inds, False, )))
         assert count == num_splits + 1
+        
         count = 0
         for tgt_batch_inds in tgt_batch_iter:
             count += 1
-            print(f"Compute the mapping for {str(count)}th target entity batch ...")
-            p = multiprocessing.Process(target=self.batch_mappings, args=(tgt_batch_inds, tgt_queue, True, )) 
-            p.start() 
+            tgt_batch_dict_list.append(pool.apply_async(self.batch_mappings, args=(tgt_batch_inds, True, )))
         assert count == num_splits + 1
         
-        for _ in range(count):
-            for k, v in src_queue.get().items():
+        pool.close()
+        pool.join()
+        
+        for result in src_batch_dict_list:
+            for k, v in result.get().items():
                 self.src2tgt_mappings_tsv.iloc[k] = v   
-            for k, v in tgt_queue.get().items():
+        for result in tgt_batch_dict_list:
+            for k, v in result.get().items():
                 self.tgt2src_mappings_tsv.iloc[k] = v   
-        assert src_queue.empty() and tgt_queue.empty()
+        
+        t_end = time.time()
+        t = t_end-t_start
+        self.log_print('the program time is :%s' %t)
     
-    def batch_mappings(self, batch_inds, queue=None, inverse=False):
+    def batch_mappings(self, batch_inds, inverse=False):
         """Generate a batch of mappings for given source or target (inverse=True) entity batch indices"""
+        
+        flag = "Fixed-SRC" if not inverse else "Fixed-TGT"
+        pid = os.getpid()
+        size = len(batch_inds)
+        self.log_print(f"[Process {pid}][{flag}] Starting a batch with size {size}")
+        
         batch_dict = dict()
         src_tsv = self.src_tsv if not inverse else self.tgt_tsv
         tgt_tsv = self.tgt_tsv if not inverse else self.src_tsv
@@ -81,6 +100,9 @@ class DirectSearchExperiment(OntoExperiment):
                 if (entity_dist < min_dist) or (entity_dist == min_dist and random.random() < 0.5):
                     min_dist = entity_dist
                     tgt_entity_iri = tgt_row["entity-iri"]   
+                
+                print(f"[Process {pid}][{flag}] current: {entity_dist}; stored: {min_dist}")
+                sys.stdout.flush()
             
             if not inverse:
                 batch_dict[i] = [Ontology.reformat_entity_uri(src_entity_iri, self.src_iri), 
@@ -89,13 +111,11 @@ class DirectSearchExperiment(OntoExperiment):
             else:
                 batch_dict[i] = [Ontology.reformat_entity_uri(tgt_entity_iri, self.src_iri), 
                                  Ontology.reformat_entity_uri(src_entity_iri, self.tgt_iri), 
-                                 1 - min_dist]               
+                                 1 - min_dist]      
+                
+            self.log_print(f"[Map {i}] {batch_dict[i][0]} | {batch_dict[i][1]}")         
         
-        if queue:
-            queue.put(batch_dict)
-        
-        print("Finishing batch ...")
-        print(batch_dict)
+        self.log_print(f"[Process {pid}][{flag}] Finishing the batch ...")
             
         return batch_dict
     
@@ -105,9 +125,9 @@ class DirectSearchExperiment(OntoExperiment):
     def entity_dist_metric(self, src_lexicon, tgt_lexicon):
         raise NotImplementedError
     
-    def save(self, save_path):
+    def save(self):
         self.combined_mappings_tsv = self.src2tgt_mappings_tsv.append(self.tgt2src_mappings_tsv).drop_duplicates()
         name = f"{self.src}2{self.tgt}_{self.task_suffix}-{self.exp_name}"
-        self.src2tgt_mappings_tsv.to_csv(f"{save_path}/{name}-src2tgt.tsv", index=False, sep='\t')
-        self.tgt2src_mappings_tsv.to_csv(f"{save_path}/{name}-tgt2src.tsv", index=False, sep='\t')
-        self.combined_mappings_tsv.to_csv(f"{save_path}/{name}-combined.tsv", index=False, sep='\t')
+        self.src2tgt_mappings_tsv.to_csv(f"{self.save_path}/{name}-src2tgt.tsv", index=False, sep='\t')
+        self.tgt2src_mappings_tsv.to_csv(f"{self.save_path}/{name}-tgt2src.tsv", index=False, sep='\t')
+        self.combined_mappings_tsv.to_csv(f"{self.save_path}/{name}-combined.tsv", index=False, sep='\t')

@@ -1,12 +1,14 @@
 import pandas as pd
 from onto_align.onto import Ontology
 from onto_align.onto import OntoEvaluator
+import sys
 
 
 class OntoExperiment:
     
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
-                 src_data_tsv, tgt_data_tsv, task_suffix="small", exp_name="norm_edit_dist"):
+                 src_data_tsv, tgt_data_tsv, save_path, 
+                 task_suffix="undefined_task", exp_name="undefined_exp"):
         
         # basic information
         self.src = src_onto_iri_abbr  # iri abbreviation of source ontology without ":"
@@ -15,6 +17,7 @@ class OntoExperiment:
         self.tgt_iri = Ontology.abbr2iri_dict[self.tgt+":"]  # full target iri
         self.task_suffix = task_suffix  # small or whole
         self.exp_name = exp_name
+        self.save_path = save_path
         
         # data file
         na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL','null'})  # exclude mistaken parsing of string "null" to NaN
@@ -25,7 +28,7 @@ class OntoExperiment:
     def run(self):
         raise NotImplementedError
     
-    def save(self, save_path):
+    def save(self):
         raise NotImplementedError
         
     @staticmethod
@@ -45,3 +48,8 @@ class OntoExperiment:
             end = min((i + 1) * interval_range, max_num)
             yield max_range[start: end]
     
+    def log_print(self, statement):
+        print(statement)
+        with open(f"{self.save_path}/mapping_generation.log", 'a+') as f:
+            f.write(f'{statement}\n')
+        sys.stdout.flush()
