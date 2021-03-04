@@ -3,12 +3,16 @@ Pretrained BERT and its variants from Pytorch-based Huggingface Library.
 """
 from transformers import AutoModel, AutoTokenizer
 from scipy.spatial.distance import cosine as cos_dist
+from onto_align.onto import OntoExperiment
 import torch
+import itertools
+import os
+import sys
 
 
 class PretrainedBert:
 
-    def __init__(self, pretrained_path):
+    def __init__(self, pretrained_path, embeds_save_path=""):
         print("Load the Pretrained BERT model...")
         self.model = AutoModel.from_pretrained(pretrained_path, output_hidden_states=True)
         self.tokenizer = AutoTokenizer.from_pretrained(pretrained_path)
@@ -56,6 +60,28 @@ class PretrainedBert:
             return word_embeds[0]
         else:
             raise NameError("Sentence embedding strategy not recognized! Available choices are: {last-2-mean}, {last-1-cls}.")
+        
+    def mean_lexicon_embeddings(self, iri2lexicon_file, embeds_save_path, strategy="last-2-mean", flag="Fixed-SRC"):
+        # strategy "last-2-mean" or "last-1-cls"
+        lexicon_embeds = []
+        iri2lexicon_df = OntoExperiment.read_iri2lexicon_file(iri2lexicon_file)
+        pid = os.getpid()
+        for i, dp in iri2lexicon_df.iterrows():
+            entity_lexicons = list(itertools.chain.from_iterable([property.split(" <sep> ") for property in dp["entity-lexicon"].split(" <property> ")]))
+            tokenized_lexicon = [self.tokenizer.tokenize(lexicon) for lexicon in entity_lexicons]
+            self.log_print(embeds_save_path, f"[Process {pid}][{flag}][{i}][{strategy}] {tokenized_lexicon}")
+            stacked_embeds = torch.stack([self.get_basic_sent_embeddings(lexicon, strategy=strategy) for lexicon in entity_lexicons])
+            lexicon_embeds.append(torch.mean(stacked_embeds, dim=0))
+        
+        lexicon_embeds = torch.stack(lexicon_embeds, dim=0)
+        return lexicon_embeds
+    
+    @staticmethod
+    def log_print(embeds_save_path, statement):
+        print(statement)
+        with open(f"{embeds_save_path}/embeds_generation.log", 'a+') as f:
+            f.write(f'{statement}\n')
+        sys.stdout.flush()
         
 
 if __name__ == "__main__":

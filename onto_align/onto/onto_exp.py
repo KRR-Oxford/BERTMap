@@ -20,9 +20,8 @@ class OntoExperiment:
         self.save_path = save_path
         
         # data file
-        na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL','null'})  # exclude mistaken parsing of string "null" to NaN
-        self.src_tsv = pd.read_csv(src_data_tsv, sep="\t", na_values=na_vals, keep_default_na=False)
-        self.tgt_tsv = pd.read_csv(tgt_data_tsv, sep='\t', na_values=na_vals, keep_default_na=False)
+        self.src_tsv = self.read_iri2lexicon_file(src_data_tsv)
+        self.tgt_tsv = self.read_iri2lexicon_file(tgt_data_tsv)
 
         
     def run(self):
@@ -47,6 +46,11 @@ class OntoExperiment:
             start = i * interval_range
             end = min((i + 1) * interval_range, max_num)
             yield max_range[start: end]
+            
+    @staticmethod
+    def read_iri2lexicon_file(iri2lexicon_file):
+        na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL','null'})  # exclude mistaken parsing of string "null" to NaN
+        return pd.read_csv(iri2lexicon_file, sep="\t", na_values=na_vals, keep_default_na=False)
     
     def log_print(self, statement):
         print(statement)
