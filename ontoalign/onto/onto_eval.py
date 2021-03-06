@@ -1,7 +1,7 @@
 """
 For evaluating the ontology mappings
 """
-from onto_align.onto.oaei_utils import read_tsv_mappings
+from ontoalign.utils.oaei_utils import read_tsv_mappings
 
 
 class OntoEvaluator:

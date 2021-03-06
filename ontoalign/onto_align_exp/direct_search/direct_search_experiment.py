@@ -108,7 +108,6 @@ class DirectSearchExperiment(OntoExperiment):
                     tgt_entity_iri = tgt_row["entity-iri"]   
                 
                 self.log_print(f"[Process {pid}][{flag}] current [{j}]: {entity_dist:5f}; stored: {min_dist:5f}")
-                sys.stdout.flush()
             
             if not inverse:
                 batch_dict[i] = [Ontology.reformat_entity_uri(src_entity_iri, self.src_iri), 

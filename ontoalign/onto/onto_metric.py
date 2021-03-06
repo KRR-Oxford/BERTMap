@@ -1,4 +1,5 @@
 from scipy.spatial.distance import cosine
+from sklearn.metrics.pairwise import cosine_similarity
 from textdistance import levenshtein
 from itertools import product
 
@@ -6,6 +7,7 @@ from itertools import product
 class OntoMetric:
     
     cos_dist = cosine  # 1 - cos(v_1, v_2)
+    pairwise_cos_sim = cosine_similarity 
     norm_edit_dist = levenshtein.normalized_distance  # edit-distance / max(v_1, v_2)
     norm_edit_sim = levenshtein.normalized_similarity
         

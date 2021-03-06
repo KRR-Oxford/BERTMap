@@ -2,7 +2,7 @@ from re import sub
 import xml.etree.ElementTree as ET
 import lxml.etree as le
 import pandas as pd
-from onto_align.onto import Ontology
+from ontoalign.onto import Ontology
 
 
 def read_tsv_mappings(tsv_file, threshold=0.0):
