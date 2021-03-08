@@ -1,0 +1,2 @@
+from ontoalign.experiments.direct_search.direct_search_experiment import DirectSearchExperiment
+from ontoalign.experiments.direct_search.direct_bert_experiment import DirectBertExperiment

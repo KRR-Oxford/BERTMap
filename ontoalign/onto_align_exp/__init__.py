@@ -1,1 +1,0 @@
-from ontoalign.onto_align_exp.basic_exp import OntoAlignExperiment

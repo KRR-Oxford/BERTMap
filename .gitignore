@@ -307,7 +307,6 @@ fabric.properties
 !*data/references
 demo/
 rdf_template/
-experiments/
 pretrained_bert/
 test.*
-exp*
+largebio_exp*

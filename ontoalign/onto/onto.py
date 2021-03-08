@@ -40,11 +40,11 @@ class Ontology:
         return iri_lexicon_df
     
     @classmethod
-    def load_iri_lexicon_file(cls, iri_lexicon_file):
+    def load_iri_lexicon_file(cls, iri_lexicon_file: str):
         return pd.read_csv(iri_lexicon_file, sep="\t", na_values=cls.na_vals, keep_default_na=False)
     
     @classmethod
-    def iri_lexicon_batch_generator(cls, iri_lexicon_file, batch_size):
+    def iri_lexicon_batch_generator(cls, iri_lexicon_file: str, batch_size: int):
         iri_lexicon_df = cls.load_iri_lexicon_file(iri_lexicon_file)
         index_splits = batch_split(batch_size, max_num=len(iri_lexicon_df))
         for split in index_splits:

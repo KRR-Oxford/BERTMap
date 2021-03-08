@@ -2,7 +2,7 @@ import pandas as pd
 from ontoalign.onto import Ontology
 from ontoalign.onto import OntoEvaluator
 from ontoalign.utils import log_print
-import sys
+import time
 
 
 class OntoAlignExperiment:
@@ -20,15 +20,24 @@ class OntoAlignExperiment:
         self.name = name
         self.save_path = save_path
         
-        # data batch generator
-        self.src_batch_generator = Ontology.iri_lexicon_batch_generator(src_onto_lexicon_tsv)
-        self.tgt_batch_generator = Ontology.iri_lexicon_batch_generator(tgt_onto_lexicon_tsv)
+        # onto lexicon data
+        self.src_onto_lexicon_path = src_onto_lexicon_tsv
+        self.src_onto_lexicon = Ontology.load_iri_lexicon_file(self.src_onto_lexicon_path)
+        self.tgt_onto_lexicon_path = tgt_onto_lexicon_tsv
+        self.tgt_onto_lexicon = Ontology.load_iri_lexicon_file(self.tgt_onto_lexicon_path)
         
         # define log print function
-        self.log_print = lambda info: log_print(info, self.save_path)
+        self.log_print = lambda info: log_print(info, f"{self.save_path}/{self.name}.log")
 
         
     def run(self):
+        t_start = time.time()
+        self.alignment()
+        t_end = time.time()
+        t = t_end - t_start
+        self.log_print('the program time is :%s' %t)
+    
+    def alignment(self):
         raise NotImplementedError
     
     def save(self):

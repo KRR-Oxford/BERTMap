@@ -1,5 +1,11 @@
 import sys
 
+def swap(a, b):
+    temp = a 
+    a = b
+    b = temp
+    return a, b
+
 def size_split(sizes):
     max_range = list(range(sum(sizes)))
     splits = []
