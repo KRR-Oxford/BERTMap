@@ -39,4 +39,4 @@ if choice == "whole":
             onto_data = f"{base}/{onto}.whole.labels.tsv"
             
             ent_embeds = bert_ent.entity_embeds_from_ontology(bert_method, onto_data, batch_size=2000)
-            torch.save(ent_embeds, f"{base}/onto.whole.{name}.pt")
+            torch.save(ent_embeds, f"{base}/{onto}.whole.{name}.pt")
