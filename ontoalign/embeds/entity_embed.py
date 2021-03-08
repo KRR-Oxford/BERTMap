@@ -45,7 +45,7 @@ class BertEntityEmbedding:
             end = batch_lexicon_sizes[i] + start
             # print(start, end)
             entity_lexicon_embeds = all_lexicon_sents_embeds[start: end]
-            entity_embed = torch.mean(entity_lexicon_embeds, dim=0)
+            entity_embed = torch.mean(entity_lexicon_embeds, dim=0)  # here entity embedding = mean(lexicon embedding)
             entity_embeds_list.append(entity_embed)
         assert len(entity_embeds_list) == num_entity
         return torch.stack(entity_embeds_list)

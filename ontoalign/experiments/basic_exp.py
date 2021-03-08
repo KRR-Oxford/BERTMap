@@ -46,7 +46,8 @@ class OntoAlignExperiment:
     @staticmethod
     def evaluate(pre_tsv, ref_tsv, except_tsv=None, task_name = "0", threshold=0.0):
         evaluator = OntoEvaluator(pre_tsv, ref_tsv, except_tsv, threshold=threshold)
-        result_df = pd.DataFrame(columns=["Precision", "Recall", "F1", "#Illegal", "Threshold"])
-        result_df.loc[task_name] = [evaluator.P, evaluator.R, evaluator.F1, evaluator.num_illegal, threshold]
+        result_df = pd.DataFrame(columns=["Precision", "Recall", "F1", "#Illegal"])
+        task_name = task_name + ":" + str(threshold)
+        result_df.loc[task_name] = [evaluator.P, evaluator.R, evaluator.F1, evaluator.num_illegal]
         result_df = result_df.round({"Precision": 3, "Recall": 3, "F1": 3})
         return result_df

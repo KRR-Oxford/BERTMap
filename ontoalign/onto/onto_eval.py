@@ -12,7 +12,10 @@ class OntoEvaluator:
         self.ref_illegal = read_tsv_mappings(except_tsv) if except_tsv else None
         self.P = self.precision()
         self.R = self.recall()
-        self.F1 = self.f1()
+        try:
+            self.F1 = self.f1()
+        except:
+            self.F1 = "Undefined"
         
     def precision(self):
         """
