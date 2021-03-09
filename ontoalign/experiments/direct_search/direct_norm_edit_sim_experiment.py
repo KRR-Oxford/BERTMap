@@ -8,7 +8,6 @@ from itertools import product
 from textdistance import levenshtein
 from multiprocessing_on_dill import Pool
 import os
-import time
 
 class DirectNormEditSimExperiment(DirectSearchExperiment):
     
@@ -19,41 +18,32 @@ class DirectNormEditSimExperiment(DirectSearchExperiment):
                          task_suffix=task_suffix, name="nes")
         
         self.num_pools = num_pools
-        self.src_procs = []
-        self.tgt_procs= []
 
     def alignment(self):
         pool = Pool(self.num_pools)
-        self.src_procs = []
-        self.tgt_procs= []
-        self.fixed_one_side_alignment(pool, "SRC")
-        self.fixed_one_side_alignment(pool, "TGT")
+        src_procs = []
+        tgt_procs= []
+        self.fixed_one_side_alignment(pool, src_procs, "SRC")
+        self.fixed_one_side_alignment(pool, tgt_procs, "TGT")
         # unpack the results
         pool.close()
         pool.join()
-        self.unpack_procs("SRC")
-        self.unpack_procs("TGT")
-            
-    def unpack_procs(self, flag="SRC"):
-        _, _, procs, mappings = self.align_config(flag) 
-        for p in procs:
-            from_ind, from_entity_iri, to_entity_iri, mapping_value = p.get()
-            if flag == "SRC":
-                mappings.iloc[from_ind] = [from_entity_iri, to_entity_iri, mapping_value]
-            else:
-                mappings.iloc[from_ind] = [to_entity_iri, from_entity_iri, mapping_value]
+        for proc in src_procs:
+            i, from_entity_iri, to_entity_iri, mapping_value = proc.get()
+            self.src2tgt_mappings.iloc[i] = [from_entity_iri, to_entity_iri, mapping_value]
+        for proc in tgt_procs:
+            j, from_entity_iri, to_entity_iri, mapping_value = proc.get()
+            self.tgt2src_mappings.iloc[j] = [to_entity_iri, from_entity_iri, mapping_value]
             
     def align_config(self, flag="SRC"):
         assert flag == "SRC" or flag == "TGT"
         from_onto_lexicon = self.src_onto_lexicon if flag == "SRC" else self.tgt_onto_lexicon
         to_onto_lexicon = self.tgt_onto_lexicon if flag == "SRC" else self.src_onto_lexicon
-        procs = self.src_procs if flag == "SRC" else self.tgt_procs
-        mappings = self.src2tgt_mappings if flag == "SRC" else self.tgt2src_mappings
-        return from_onto_lexicon, to_onto_lexicon, procs, mappings
+        return from_onto_lexicon, to_onto_lexicon
             
-    def fixed_one_side_alignment(self, pool, flag="SRC"):
+    def fixed_one_side_alignment(self, pool, procs, flag="SRC"):
         """Fix one ontology, generate the target entities for each entity in the fixed ontology"""
-        from_onto_lexicon, to_onto_lexicon, procs, _ = self.align_config(flag) 
+        from_onto_lexicon, to_onto_lexicon = self.align_config(flag) 
         
         for i, from_dp in from_onto_lexicon.iterrows():
             p = pool.apply_async(self.fix_one_entity_alignment, args=(i, from_dp, to_onto_lexicon, flag, ))
@@ -69,6 +59,7 @@ class DirectNormEditSimExperiment(DirectSearchExperiment):
         self.log_print(f"[PID {os.getpid()}][{self.name}][{flag}: {self.src}][#Entity: {from_ind}][Mapping: {from_entity_iri}, {to_entity_iri}, {mapping_value}]" if flag == "SRC" \
             else f"[PID {os.getpid()}][{self.name}][{flag}: {self.tgt}][#Entity: {from_ind}][Mapping: {from_entity_iri}, {to_entity_iri}, {mapping_value}]")
         to_entity_iri = to_onto_lexicon.iloc[result.idxmax()]["Entity-IRI"]
+        d
         return from_ind, from_entity_iri, to_entity_iri, mapping_value
 
     @staticmethod    

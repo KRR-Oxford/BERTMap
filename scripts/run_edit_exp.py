@@ -1,7 +1,6 @@
 import sys
 sys.path.append("/home/yuahe/projects/OntoAlign-py")
 from ontoalign.experiments.direct_search import DirectNormEditSimExperiment
-import multiprocessing
 
 for src, tgt in [("fma", "nci"), ("fma", "snomed"), ("snomed", "nci")]:
     
@@ -13,7 +12,8 @@ for src, tgt in [("fma", "nci"), ("fma", "snomed"), ("snomed", "nci")]:
                             src, tgt, 
                             src_onto_lexicon_tsv, tgt_onto_lexicon_tsv,
                             f"/home/yuahe/projects/OntoAlign-py/largebio_exp/small/{src}2{tgt}/",
-                            task_suffix="small", num_pools=20)
+                            task_suffix="small", num_pools=24)
     exp.run()
     exp.save()
+
 
