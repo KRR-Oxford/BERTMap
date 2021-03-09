@@ -27,13 +27,13 @@
 """
 
 from ontoalign.onto import Ontology
-from ontoalign.experiments import OntoAlignExperiment
+from ontoalign.experiments.direct_search import DirectSearchExperiment
 from ontoalign.embeds import PretrainedBert
 from sklearn.metrics.pairwise import cosine_similarity
 import torch
 import pandas as pd
 
-class DirectBertExperiment(OntoAlignExperiment):
+class DirectBertExperiment(DirectSearchExperiment):
     
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
                  src_onto_lexicon_tsv, tgt_onto_lexicon_tsv, save_path, 
@@ -41,39 +41,33 @@ class DirectBertExperiment(OntoAlignExperiment):
                  src_batch_size=10000, tgt_batch_size=10000,
                  task_suffix="small", name="bc-mean", 
                  bert_path="emilyalsentzer/Bio_ClinicalBERT"):
-        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_lexicon_tsv, tgt_onto_lexicon_tsv, 
-                         save_path, task_suffix=task_suffix, name=name)
+        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_lexicon_tsv, tgt_onto_lexicon_tsv, save_path, 
+                         task_suffix=task_suffix, name=name)
         self.src_batch_size = src_batch_size
         self.tgt_batch_size = tgt_batch_size
         self.bert = PretrainedBert(bert_path)
         self.src_embeds = torch.load(src_embeds_pt)
         self.tgt_embeds = torch.load(tgt_embeds_pt)
-        self.src2tgt_mappings = None
-        self.tgt2src_mappings = None
-        self.combined_mappings = None
         
-    def alignment(self):
-        self.src2tgt_mappings = self.fixed_one_side_alignment("SRC")
-        self.tgt2src_mappings = self.fixed_one_side_alignment("TGT")
-        self.combined_mappings = self.src2tgt_mappings.append(self.tgt2src_mappings).drop_duplicates()
-            
-    def fixed_one_side_alignment(self, flag="SRC"):
-        """Fix one ontology, generate the target entities for each entity in the fixed ontology"""
-        
+    def align_config(self, flag="SRC"):
         assert flag == "SRC" or flag == "TGT"
         from_onto_lexicon_path = self.src_onto_lexicon_path
         to_onto_lexicon_path = self.tgt_onto_lexicon_path
         from_batch_size = self.src_batch_size
         to_batch_size = self.tgt_batch_size
-        mappings = pd.DataFrame(index=range(len(self.src_onto_lexicon)), columns=["Entity1", "Entity2", "Value"])
+        mappings = self.src2tgt_mappings
         if flag == "TGT":
             from_onto_lexicon_path, to_onto_lexicon_path = to_onto_lexicon_path, from_onto_lexicon_path
             from_batch_size, to_batch_size = to_batch_size, from_batch_size
-            mappings = pd.DataFrame(index=range(len(self.tgt_onto_lexicon)), columns=["Entity1", "Entity2", "Value"])
+            mappings = self.tgt2src_mappings
+        return from_onto_lexicon_path, from_batch_size, to_onto_lexicon_path, to_batch_size, mappings
+
+  
+    def fixed_one_side_alignment(self, flag="SRC"):
+        """Fix one ontology, generate the target entities for each entity in the fixed ontology"""
         
+        from_onto_lexicon_path, from_batch_size, to_onto_lexicon_path, to_batch_size, mappings = self.align_config(flag)
         from_batch_generator = Ontology.iri_lexicon_batch_generator(from_onto_lexicon_path, batch_size=from_batch_size)
-        to_batch_generator = Ontology.iri_lexicon_batch_generator(to_onto_lexicon_path, batch_size=to_batch_size)
-        
         batch_ind = 0
         for batch in from_batch_generator:
             # to-generator needs to be re-init for every from-batch
@@ -90,9 +84,8 @@ class DirectBertExperiment(OntoAlignExperiment):
         # swap the mapping direction for target side for furhter combination
         if flag == "TGT":
             mappings["Entity1"], mappings["Entity2"] = list(mappings["Entity2"]), list(mappings["Entity1"])
-            
-        return mappings
-        
+
+
     def batch_alignment(self, from_batch, to_batch_generator, flag="SRC"):
         assert flag == "SRC" or flag == "TGT"
         from_batch_embeds = self.src_embeds[from_batch.index] if flag == "SRC" else self.tgt_embeds[from_batch.index]
@@ -120,8 +113,3 @@ class DirectBertExperiment(OntoAlignExperiment):
         # select the to-entity indices according the final argmax scores
         batch_argmax_scores = torch.gather(batch_argmax_scores_all, dim=0, index=batch_argmax_scores_inds.unsqueeze(0).repeat(j, 1))[0]
         return list(to_onto_lexicon["Entity-IRI"].iloc[list(batch_argmax_scores.numpy())]), batch_max_scores
-
-    def save(self):
-        self.src2tgt_mappings.to_csv(f"{self.save_path}/{self.src}2{self.tgt}.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')
-        self.tgt2src_mappings.to_csv(f"{self.save_path}/{self.tgt}2{self.src}.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')
-        self.combined_mappings.to_csv(f"{self.save_path}/{self.src}-{self.tgt}-combined.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')

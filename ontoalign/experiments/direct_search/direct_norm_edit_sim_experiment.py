@@ -3,55 +3,76 @@
 """
 
 from ontoalign.onto import Ontology
-from ontoalign.experiments import OntoAlignExperiment
+from ontoalign.experiments.direct_search import DirectSearchExperiment
 from itertools import product
 from textdistance import levenshtein
-import multiprocessing
+from multiprocessing_on_dill import Pool
+import os
 import time
 
-class DirectNormEditSimExperiment(OntoAlignExperiment):
+class DirectNormEditSimExperiment(DirectSearchExperiment):
     
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
                  src_onto_lexicon_tsv, tgt_onto_lexicon_tsv, save_path, 
-                 src_batch_size=1000, tgt_batch_size=1000,
-                 task_suffix="small"):
-        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_lexicon_tsv, tgt_onto_lexicon_tsv, 
-                         save_path, task_suffix=task_suffix, name="nes")
+                 task_suffix="small", num_pools=18):
+        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_lexicon_tsv, tgt_onto_lexicon_tsv, save_path, 
+                         task_suffix=task_suffix, name="nes")
         
-        self.src_batch_size = src_batch_size
-        self.tgt_batch_size = tgt_batch_size
-        self.src2tgt_mappings = None
-        self.tgt2src_mappings = None
-        self.combined_mappings = None
-        
-    # def run(self):
-    #             t_start = time.time()
-    #     self.alignment()
-    #     t_end = time.time()
-    #     t = t_end - t_start
-    #     self.log_print('the program time is :%s' %t)
-        
+        self.num_pools = num_pools
+        self.src_procs = []
+        self.tgt_procs= []
 
-    def alignment(self, from_batch, _, flag="SRC"):
+    def alignment(self):
+        pool = Pool(self.num_pools)
+        self.src_procs = []
+        self.tgt_procs= []
+        self.fixed_one_side_alignment(pool, "SRC")
+        self.fixed_one_side_alignment(pool, "TGT")
+        # unpack the results
+        pool.close()
+        pool.join()
+        self.unpack_procs("SRC")
+        self.unpack_procs("TGT")
+            
+    def unpack_procs(self, flag="SRC"):
+        _, _, procs, mappings = self.align_config(flag) 
+        for p in procs:
+            from_ind, from_entity_iri, to_entity_iri, mapping_value = p.get()
+            if flag == "SRC":
+                mappings.iloc[from_ind] = [from_entity_iri, to_entity_iri, mapping_value]
+            else:
+                mappings.iloc[from_ind] = [to_entity_iri, from_entity_iri, mapping_value]
+            
+    def align_config(self, flag="SRC"):
+        assert flag == "SRC" or flag == "TGT"
+        from_onto_lexicon = self.src_onto_lexicon if flag == "SRC" else self.tgt_onto_lexicon
         to_onto_lexicon = self.tgt_onto_lexicon if flag == "SRC" else self.src_onto_lexicon
-        batch_norm_edit_sim = lambda x, y: self.max_norm_edit_sim(Ontology.parse_entity_lexicon(x)[0], Ontology.parse_entity_lexicon(y)[0])
-        to_entity_idx_list = []
-        mapping_values = []
-        for _, from_entity in from_batch.iterrows():
-            from_lexicon = from_entity["Entity-Lexicon"]
-            result = to_onto_lexicon["Entity-Lexicon"].apply(lambda to_lexicon: batch_norm_edit_sim(from_lexicon, to_lexicon), )
-            to_entity_idx_list.append(result.idxmax())
-            mapping_values.append(result.max())
-        to_entity_iris = list(to_onto_lexicon.iloc[to_entity_idx_list]["Entity-IRI"])
-        return to_entity_iris, mapping_values
+        procs = self.src_procs if flag == "SRC" else self.tgt_procs
+        mappings = self.src2tgt_mappings if flag == "SRC" else self.tgt2src_mappings
+        return from_onto_lexicon, to_onto_lexicon, procs, mappings
+            
+    def fixed_one_side_alignment(self, pool, flag="SRC"):
+        """Fix one ontology, generate the target entities for each entity in the fixed ontology"""
+        from_onto_lexicon, to_onto_lexicon, procs, _ = self.align_config(flag) 
+        
+        for i, from_dp in from_onto_lexicon.iterrows():
+            p = pool.apply_async(self.fix_one_entity_alignment, args=(i, from_dp, to_onto_lexicon, flag, ))
+            procs.append(p)
+    
+    def fix_one_entity_alignment(self, from_ind, from_dp, to_onto_lexicon, flag="SRC"):
+        from_entity_iri = from_dp["Entity-IRI"]
+        from_entity_lexicon = Ontology.parse_entity_lexicon(from_dp["Entity-Lexicon"])[0]
+        result = to_onto_lexicon["Entity-Lexicon"].apply(lambda to_entity_lexicon: 
+            self.max_norm_edit_sim(from_entity_lexicon, Ontology.parse_entity_lexicon(to_entity_lexicon)[0]))
+        to_entity_iri = to_onto_lexicon.iloc[result.idxmax()]["Entity-IRI"]
+        mapping_value = result.max()
+        self.log_print(f"[PID {os.getpid()}][{self.name}][{flag}: {self.src}][#Entity: {from_ind}][Mapping: {from_entity_iri}, {to_entity_iri}, {mapping_value}]" if flag == "SRC" \
+            else f"[PID {os.getpid()}][{self.name}][{flag}: {self.tgt}][#Entity: {from_ind}][Mapping: {from_entity_iri}, {to_entity_iri}, {mapping_value}]")
+        to_entity_iri = to_onto_lexicon.iloc[result.idxmax()]["Entity-IRI"]
+        return from_ind, from_entity_iri, to_entity_iri, mapping_value
 
     @staticmethod    
     def max_norm_edit_sim(from_lexicon, to_lexicon):
         label_pairs = product(from_lexicon, to_lexicon)
         sim_scores = [levenshtein.normalized_similarity(src, tgt) for src, tgt in label_pairs]
         return max(sim_scores)
-    
-    def save(self):
-        self.src2tgt_mappings.to_csv(f"{self.save_path}/{self.src}2{self.tgt}.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')
-        self.tgt2src_mappings.to_csv(f"{self.save_path}/{self.tgt}2{self.src}.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')
-        self.combined_mappings.to_csv(f"{self.save_path}/{self.src}-{self.tgt}-combined.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')
