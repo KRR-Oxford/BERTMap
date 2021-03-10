@@ -63,7 +63,8 @@ class OntoAlignExperiment:
         eval_df = eval_df.melt(id_vars=["Mappings", "Threshold"], value_vars=["Precision", "Recall", "F1"], var_name="Metric", value_name="Value")
         
         # set styles
-        sns.set(style='darkgrid', rc={"font.weight": "bold", "font.size": 15, 
+        sns.set(style='darkgrid', rc={"font.weight": "bold", "font.size": 20, "axes.labelsize": 20,
+                                      "axes.titlesize": 20, "xtick.labelsize": 16, "ytick.labelsize": 16,
                                       "font.family": "Times New Roman", "axes.labelweight": "bold", 
                                       "axes.titleweight": "bold", "axes.titlepad": 10})
         # create FacetGrid plots for all mappings
@@ -77,5 +78,6 @@ class OntoAlignExperiment:
             ax = g.axes.flat[i]
             ax.axvline(part_f1["Threshold"].loc[part_f1["Value"].idxmax()], ls='--',c='r', label="max(F1)")
             ax.legend(loc="upper left")
-        g.fig.suptitle("Plots of Precision, Recall, Macro-F1 against Threshold for Combined, SRC2TGT and TGT2SRC Mappings", y=1.02, fontsize=15, weight="bold")
+            ax.set_title(name, color="gray")
+        g.fig.suptitle("Plots of Precision, Recall, Macro-F1 against Threshold for Combined, SRC2TGT and TGT2SRC Mappings", y=1.02, fontsize=20, weight="bold")
         return g
