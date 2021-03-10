@@ -309,4 +309,5 @@ demo/
 rdf_template/
 pretrained_bert/
 test.*
-largebio_exp*
+largebio_exp_old
+largebio_exp/**/*.tsv
