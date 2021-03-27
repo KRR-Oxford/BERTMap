@@ -311,3 +311,4 @@ pretrained_bert/
 test.*
 largebio_exp_old
 largebio_exp/**/*.tsv
+testing/
