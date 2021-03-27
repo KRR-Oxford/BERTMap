@@ -1,9 +1,8 @@
 import sys
-sys.path.append("/home/yuahe/projects/OntoAlign-py")
+sys.path.append("/home/yuahe/projects/BERTMap")
+from bertmap.onto import Ontology
 
-from ontoalign.onto import Ontology
-
-data_base = "/home/yuahe/projects/OntoAlign-py/largebio_data/ontologies"
+data_base = "/home/yuahe/projects/BERTMap/largebio_data/ontologies"
 save_path= f"{data_base}/../onto_labels"
 properties = ["label"]
 

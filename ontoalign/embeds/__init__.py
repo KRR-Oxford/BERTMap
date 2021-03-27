@@ -1,2 +1,0 @@
-from ontoalign.embeds.pretrained_bert import PretrainedBert
-from ontoalign.embeds.entity_embed import BertEntityEmbedding

@@ -1,0 +1,3 @@
+from bertmap.map.direct_search.direct_search_map import DirectSearchMapping
+from bertmap.map.direct_search.direct_bert_map import DirectBERTMapping
+from bertmap.map.direct_search.direct_nes_map import DirectNESMapping

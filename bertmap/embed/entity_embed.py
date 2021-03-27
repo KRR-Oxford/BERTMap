@@ -1,5 +1,5 @@
-from ontoalign.embeds import PretrainedBert
-from ontoalign.onto import Ontology
+from bertmap.embed import PretrainedBert
+from bertmap.onto import Ontology
 import torch
 import itertools
 from typing import List

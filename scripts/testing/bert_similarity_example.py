@@ -1,7 +1,7 @@
 import sys
-sys.path.append("/home/yuahe/projects/OntoAlign-py")
-from ontoalign.embeds import PretrainedBert
-from ontoalign.onto import OntoMetric
+sys.path.append("/home/yuahe/projects/BERTMap")
+from bertmap.embed import PretrainedBert
+from bertmap.onto import OntoMetric
 
 # Similarity example
 text = "After stealing money from the bank vault, " \

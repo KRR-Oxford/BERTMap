@@ -1,9 +1,9 @@
 import sys
-sys.path.append("/home/yuahe/projects/OntoAlign-py")
-from ontoalign.embeds import PretrainedBert
-from ontoalign.embeds import BertEntityEmbedding
+sys.path.append("/home/yuahe/projects/BERTMap")
+from bertmap.map import PretrainedBert
+from bertmap.map import BertEntityEmbedding
 import torch
-base = "/home/yuahe/projects/OntoAlign-py/largebio_data/onto_labels"
+base = "/home/yuahe/projects/BERTMap/largebio_data/onto_labels"
 
 bert = PretrainedBert("emilyalsentzer/Bio_ClinicalBERT")
 bert_ent = BertEntityEmbedding(bert)

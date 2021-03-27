@@ -1,3 +1,0 @@
-from ontoalign.experiments.direct_search.direct_search_experiment import DirectSearchExperiment
-from ontoalign.experiments.direct_search.direct_bert_experiment import DirectBertExperiment
-from ontoalign.experiments.direct_search.direct_norm_edit_sim_experiment import DirectNormEditSimExperiment

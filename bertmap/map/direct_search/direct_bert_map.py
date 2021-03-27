@@ -26,14 +26,13 @@
     Possible Improvement: we can compute batch-to-batch for source and target sides simultaneously. However, it won't be practical for very large ontologies.
 """
 
-from ontoalign.onto import Ontology
-from ontoalign.experiments.direct_search import DirectSearchExperiment
-from ontoalign.embeds import PretrainedBert
+from bertmap.onto import Ontology
+from bertmap.map.direct_search import DirectSearchMapping
+from bertmap.embed import PretrainedBert
 from sklearn.metrics.pairwise import cosine_similarity
 import torch
-import pandas as pd
 
-class DirectBertExperiment(DirectSearchExperiment):
+class DirectBERTMapping(DirectSearchMapping):
     
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
                  src_onto_lexicon_tsv, tgt_onto_lexicon_tsv, save_path, 

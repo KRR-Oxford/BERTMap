@@ -1,9 +1,8 @@
-from ontoalign.onto import Ontology
-from ontoalign.experiments import OntoAlignExperiment
+from bertmap.map import OntoMapping
 import pandas as pd
 
 
-class DirectSearchExperiment(OntoAlignExperiment):
+class DirectSearchMapping(OntoMapping):
     
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
                  src_onto_lexicon_tsv, tgt_onto_lexicon_tsv, save_path, 

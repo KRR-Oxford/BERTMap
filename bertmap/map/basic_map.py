@@ -1,12 +1,12 @@
 import pandas as pd
-from ontoalign.onto import Ontology
-from ontoalign.onto import OntoEvaluator
-from ontoalign.utils import log_print
+from bertmap.onto import Ontology
+from bertmap.onto import OntoEvaluator
+from bertmap.utils import log_print
 import time
 import seaborn as sns 
 
 
-class OntoAlignExperiment:
+class OntoMapping:
     
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
                  src_onto_lexicon_tsv, tgt_onto_lexicon_tsv, save_path, 

@@ -2,7 +2,7 @@ from owlready2 import get_ontology
 import owlready2
 import pandas as pd
 import xml.etree.ElementTree as ET
-from ontoalign.utils import batch_split
+from bertmap.utils import batch_split
 import itertools
 
 class Ontology:

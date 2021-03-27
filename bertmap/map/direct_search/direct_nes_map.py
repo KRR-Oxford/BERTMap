@@ -2,14 +2,14 @@
    Unlike the BERT experiment where the batched (vectorization) algorithm is used, here we apply the multiprocessing on each batch.
 """
 
-from ontoalign.onto import Ontology
-from ontoalign.experiments.direct_search import DirectSearchExperiment
+from bertmap.onto import Ontology
+from bertmap.map.direct_search import DirectSearchMapping
 from itertools import product
 from textdistance import levenshtein
 from multiprocessing_on_dill import Pool
 import os
 
-class DirectNormEditSimExperiment(DirectSearchExperiment):
+class DirectNESMapping(DirectSearchMapping):
     
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
                  src_onto_lexicon_tsv, tgt_onto_lexicon_tsv, save_path, 
@@ -52,14 +52,21 @@ class DirectNormEditSimExperiment(DirectSearchExperiment):
     def fix_one_entity_alignment(self, from_ind, from_dp, to_onto_lexicon, flag="SRC"):
         from_entity_iri = from_dp["Entity-IRI"]
         from_entity_lexicon = Ontology.parse_entity_lexicon(from_dp["Entity-Lexicon"])[0]
-        result = to_onto_lexicon["Entity-Lexicon"].apply(lambda to_entity_lexicon: 
-            self.max_norm_edit_sim(from_entity_lexicon, Ontology.parse_entity_lexicon(to_entity_lexicon)[0]))
-        to_entity_iri = to_onto_lexicon.iloc[result.idxmax()]["Entity-IRI"]
-        mapping_value = result.max()
+        max_sim_score= 0
+        max_sim_ind = 0
+        for j, dp in to_onto_lexicon.iterrows():
+            to_entity_lexicon = Ontology.parse_entity_lexicon(dp["Entity-Lexicon"])[0]
+            sim_score = self.max_norm_edit_sim(from_entity_lexicon, to_entity_lexicon)
+            if sim_score > max_sim_score:
+                max_sim_score = sim_score
+                max_sim_ind = j
+                if max_sim_score == 1.0:
+                    break
+        to_entity_iri = to_onto_lexicon.iloc[max_sim_ind]["Entity-IRI"]
+        mapping_value = max_sim_score
         self.log_print(f"[PID {os.getpid()}][{self.name}][{flag}: {self.src}][#Entity: {from_ind}][Mapping: {from_entity_iri}, {to_entity_iri}, {mapping_value}]" if flag == "SRC" \
             else f"[PID {os.getpid()}][{self.name}][{flag}: {self.tgt}][#Entity: {from_ind}][Mapping: {from_entity_iri}, {to_entity_iri}, {mapping_value}]")
-        to_entity_iri = to_onto_lexicon.iloc[result.idxmax()]["Entity-IRI"]
-        d
+        
         return from_ind, from_entity_iri, to_entity_iri, mapping_value
 
     @staticmethod    
