@@ -7,7 +7,7 @@ import pandas as pd
 
 class IntraOntoCorpus:
     
-    def __init__(self, onto_path, onto_lexicon_tsv=None, properties=["label"]):
+    def __init__(self, onto_path, onto_lexicon_tsv=None, properties=["label"], corpus_path=None):
         
         self.ontology = Ontology(onto_path)
         self.lexicon = Ontology.load_iri_lexicon_file(onto_lexicon_tsv) if onto_lexicon_tsv \
@@ -17,9 +17,13 @@ class IntraOntoCorpus:
                              "forward_hard_nonsymnonyms", "backward_hard_nonsynonyms"]
             
         # form the intra-ontology corpus
-        self.intra_onto_synonyms()
-        self.intra_onto_soft_nonsynonyms()
-        self.intra_onto_hard_nonsynonyms()
+        if not corpus_path:
+            self.intra_onto_synonyms()
+            self.intra_onto_soft_nonsynonyms()
+            self.intra_onto_hard_nonsynonyms()
+        else:
+            # load corpus from local storage
+            self.load_corpora(save_dir=corpus_path)
         
         
     def intra_onto_synonyms(self):
@@ -111,12 +115,11 @@ class IntraOntoCorpus:
     def save_corpora(self, save_dir):
         for name in self.corpus_names:
             corpus = getattr(self, name)
-            df = pd.DataFrame(columns=["Label1", "Label2"])
-            l1, l2 = [], []
-            for x, y in corpus:
-                l1.append(x)
-                l2.append(y)
-            df["Label1"] = l1
-            df["Label2"] = l2
+            df = pd.DataFrame(corpus, columns=["Label1", "Label2"])
             onto_name = self.ontology.iri_abbr.replace(":", "")
             df.to_csv(f"{save_dir}/{onto_name}.{name}.tsv", sep='\t', index=False)
+            
+    def load_corpora(self, save_dir):
+        for name in self.corpus_names:
+            onto_name = self.ontology.iri_abbr.replace(":", "")
+            setattr(self, name) = pd.read_csv(f"{save_dir}/{onto_name}.{name}.tsv", sep='\t')
