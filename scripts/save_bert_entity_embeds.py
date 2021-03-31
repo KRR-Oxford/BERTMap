@@ -1,12 +1,12 @@
 import sys
 sys.path.append("/home/yuahe/projects/BERTMap")
-from bertmap.map import PretrainedBert
-from bertmap.map import BertEntityEmbedding
+from bertmap.map import PretrainedBERT
+from bertmap.map import BERTEntityEmbedding
 import torch
 base = "/home/yuahe/projects/BERTMap/largebio_data/onto_labels"
 
-bert = PretrainedBert("emilyalsentzer/Bio_ClinicalBERT")
-bert_ent = BertEntityEmbedding(bert)
+bert = PretrainedBERT("emilyalsentzer/Bio_ClinicalBERT")
+bert_ent = BERTEntityEmbedding(bert)
 choice = "whole"
 
 # small

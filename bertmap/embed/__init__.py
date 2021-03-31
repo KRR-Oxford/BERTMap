@@ -1,2 +1,2 @@
-from bertmap.embed.pretrained_bert import PretrainedBert
-from bertmap.embed.entity_embed import BertEntityEmbedding
+from bertmap.embed.pretrained_bert import PretrainedBERT
+from bertmap.embed.entity_embed import BERTEntityEmbedding

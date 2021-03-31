@@ -28,7 +28,7 @@
 
 from bertmap.onto import Ontology
 from bertmap.map.direct_search import DirectSearchMapping
-from bertmap.embed import PretrainedBert
+from bertmap.embed import PretrainedBERT
 from sklearn.metrics.pairwise import cosine_similarity
 import torch
 
@@ -44,7 +44,7 @@ class DirectBERTMapping(DirectSearchMapping):
                          task_suffix=task_suffix, name=name)
         self.src_batch_size = src_batch_size
         self.tgt_batch_size = tgt_batch_size
-        self.bert = PretrainedBert(bert_path)
+        self.bert = PretrainedBERT(bert_path)
         self.src_embeds = torch.load(src_embeds_pt)
         self.tgt_embeds = torch.load(tgt_embeds_pt)
         

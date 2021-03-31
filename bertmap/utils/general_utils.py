@@ -1,4 +1,14 @@
 import sys
+import random
+
+def ex_randrange(start, end, ex):
+    result = random.randrange(start, end)
+    while result == ex and end - start > 1:
+        result = random.randrange(start, end)
+    return result
+
+def uniqify(ls):
+    return list(dict.fromkeys(ls))
 
 def swap(a, b):
     temp = a 

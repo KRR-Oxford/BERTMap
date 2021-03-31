@@ -1,12 +1,12 @@
-from bertmap.embed import PretrainedBert
+from bertmap.embed import PretrainedBERT
 from bertmap.onto import Ontology
 import torch
 import itertools
 from typing import List
 
-class BertEntityEmbedding:
+class BERTEntityEmbedding:
     
-    def __init__(self, pretrained_bert: PretrainedBert):
+    def __init__(self, pretrained_bert: PretrainedBERT):
         self.bert = pretrained_bert
         
     def entity_embeds_from_ontology(self, batch_sent_embeds_method: str, iri_lexicon_file, batch_size=1000):

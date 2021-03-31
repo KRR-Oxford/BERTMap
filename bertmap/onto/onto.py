@@ -4,6 +4,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 from bertmap.utils import batch_split
 import itertools
+import re
 
 class Ontology:
 
@@ -52,10 +53,11 @@ class Ontology:
             
     @staticmethod
     def encode_entity_lexicon(entity, lexical_property):
-        lexicon_list = getattr(entity, lexical_property)
-        assert type(lexicon_list) is owlready2.prop.IndividualValueList
-        lexicon_list = list(set(lexicon_list))  # remove duplicates
-        return " <sep> ".join(lexicon_list).lower().replace("_", " ")
+        raw_lexicon_list = getattr(entity, lexical_property)
+        assert type(raw_lexicon_list) is owlready2.prop.IndividualValueList
+        lexicon_list = [lexicon.lower().replace("_", " ") for lexicon in raw_lexicon_list]
+        lexicon_list = list(dict.fromkeys(lexicon_list))  # remove duplicates
+        return " <sep> ".join(lexicon_list)
         
             
     @staticmethod

@@ -6,7 +6,7 @@ from typing import List
 import torch
 
 
-class PretrainedBert:
+class PretrainedBERT:
 
     def __init__(self, pretrained_path, embeds_save_path=""):
         print("Load the Pretrained BERT model...")
