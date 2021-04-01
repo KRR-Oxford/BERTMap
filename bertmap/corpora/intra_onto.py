@@ -120,6 +120,10 @@ class IntraOntoCorpus:
             df.to_csv(f"{save_dir}/{onto_name}.{name}.tsv", sep='\t', index=False)
             
     def load_corpora(self, save_dir):
+        print("--------------- Loaded Corpora Sizes --------------")
         for name in self.corpus_names:
             onto_name = self.ontology.iri_abbr.replace(":", "")
-            setattr(self, name) = pd.read_csv(f"{save_dir}/{onto_name}.{name}.tsv", sep='\t')
+            setattr(self, name, pd.read_csv(f"{save_dir}/{onto_name}.{name}.tsv", sep='\t'))
+            tag = " ".join(name.split("_"))
+            print(f"{tag}: {len(getattr(self, name))}")
+        print("---------------------------------------------------")
