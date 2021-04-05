@@ -1,21 +1,23 @@
 from bertmap.onto import Ontology
 from bertmap.utils import uniqify, ex_randrange
+from bertmap.corpora import OntologyCorpus
 import random
 import itertools
 import pandas as pd
 
 
-class IntraOntoCorpus:
+class IntraOntoCorpus(OntologyCorpus):
     
-    def __init__(self, onto_path, onto_lexicon_tsv=None, properties=["label"], corpus_path=None):
-        
+    def __init__(self, onto_path, onto_class2text_tsv=None, properties=["label"], corpus_path=None):
+        super().__init__(corpus_path=corpus_path)
         self.ontology = Ontology(onto_path)
-        self.lexicon = Ontology.load_class2text(onto_lexicon_tsv) if onto_lexicon_tsv \
-            else self.ontology.create_class2text(self, *properties) 
+        self.class2text = Ontology.load_class2text(onto_class2text_tsv) if onto_class2text_tsv \
+            else self.ontology.create_class2text(*properties) 
         self.corpus_names = ["id_synonyms", "forward_synonyms", "backward_synonyms", 
                              "forward_soft_nonsynonyms", "backward_soft_nonsynonyms",
                              "forward_hard_nonsynonyms", "backward_hard_nonsynonyms"]
-            
+        self.onto_name = self.ontology.iri_abbr.replace(":", "")
+
         # form the intra-ontology corpus
         if not corpus_path:
             self.intra_onto_synonyms()
@@ -24,7 +26,6 @@ class IntraOntoCorpus:
         else:
             # load corpus from local storage
             self.load_corpora(save_dir=corpus_path)
-            
     
     def train_val_split(self, corpus_names):
         pos_corpora = []
@@ -48,7 +49,7 @@ class IntraOntoCorpus:
         
     def intra_onto_synonyms(self):
         identity, forward, backward = [], [], []  # (a_i, a_i); (a_i, a_{j>i}); (a_i, a_{j<i})
-        for _, dp in self.lexicon.iterrows():
+        for _, dp in self.class2text.iterrows():
             lexicon = dp["Entity-Lexicon"]
             alias_list, num = Ontology.parse_class_text(lexicon)
             identity += list(zip(alias_list, alias_list, [1]*len(alias_list)))
@@ -73,14 +74,14 @@ class IntraOntoCorpus:
     
     def intra_onto_soft_nonsynonyms(self, sample_rate=10): 
         forward, backward = [], []
-        for i, dp in self.lexicon.iterrows():
+        for i, dp in self.class2text.iterrows():
             lexicon = dp["Entity-Lexicon"]
             label_list, _ = Ontology.parse_class_text(lexicon)
             for label in label_list:
                 # for each label, sample X (sample rate) random negatives
-                neg_class_inds = [ex_randrange(0, len(self.lexicon), ex=i) for _ in range(sample_rate-1)]
+                neg_class_inds = [ex_randrange(0, len(self.class2text), ex=i) for _ in range(sample_rate-1)]
                 for nid in neg_class_inds:
-                    neg_label_list, neg_label_num = Ontology.parse_class_text(self.lexicon.iloc[nid]["Entity-Lexicon"])
+                    neg_label_list, neg_label_num = Ontology.parse_class_text(self.class2text.iloc[nid]["Entity-Lexicon"])
                     neg_label_ind = random.randrange(0, neg_label_num)
                     neg_label = neg_label_list[neg_label_ind]
                     forward.append((label, neg_label, 0))
@@ -132,19 +133,3 @@ class IntraOntoCorpus:
             exp_ind = random.randrange(0, len(forward))
             print(f"[{exp_ind}]\n\t[for]: {forward[exp_ind]}\n\t[back]: {backward[exp_ind]}")
         print("\n")
-        
-    def save_corpora(self, save_dir):
-        for name in self.corpus_names:
-            corpus = getattr(self, name)
-            df = pd.DataFrame(corpus, columns=["Label1", "Label2", "Synonymous"])
-            onto_name = self.ontology.iri_abbr.replace(":", "")
-            df.to_csv(f"{save_dir}/{onto_name}.{name}.tsv", sep='\t', index=False)
-            
-    def load_corpora(self, save_dir):
-        print("--------------- Loaded Corpora Sizes --------------")
-        for name in self.corpus_names:
-            onto_name = self.ontology.iri_abbr.replace(":", "")
-            setattr(self, name, pd.read_csv(f"{save_dir}/{onto_name}.{name}.tsv", sep='\t'))
-            tag = " ".join(name.split("_"))
-            print(f"{tag}: {len(getattr(self, name))}")
-        print("---------------------------------------------------")
