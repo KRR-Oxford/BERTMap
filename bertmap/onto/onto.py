@@ -19,7 +19,7 @@ class Ontology:
         self.iri = self.onto.base_iri
         self.iri_abbr = self.iri2abbr_dict[self.iri]
         
-    def class2text(self, *textual_properties):
+    def create_class2text(self, *textual_properties):
         
         # default lexicon information is the "labels"
         if not textual_properties:

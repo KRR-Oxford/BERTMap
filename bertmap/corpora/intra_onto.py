@@ -1,6 +1,5 @@
 from bertmap.onto import Ontology
 from bertmap.utils import uniqify, ex_randrange
-from sklearn.model_selection import train_test_split
 import random
 import itertools
 import pandas as pd
@@ -12,7 +11,7 @@ class IntraOntoCorpus:
         
         self.ontology = Ontology(onto_path)
         self.lexicon = Ontology.load_class2text(onto_lexicon_tsv) if onto_lexicon_tsv \
-            else self.ontology.class2text_df(self, *properties) 
+            else self.ontology.create_class2text(self, *properties) 
         self.corpus_names = ["id_synonyms", "forward_synonyms", "backward_synonyms", 
                              "forward_soft_nonsynonyms", "backward_soft_nonsynonyms",
                              "forward_hard_nonsynonyms", "backward_hard_nonsynonyms"]
