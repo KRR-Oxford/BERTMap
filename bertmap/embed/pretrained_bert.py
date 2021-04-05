@@ -8,7 +8,7 @@ import torch
 
 class PretrainedBERT:
 
-    def __init__(self, pretrained_path):
+    def __init__(self, pretrained_path="emilyalsentzer/Bio_ClinicalBERT"):
         print("Load the Pretrained BERT model...")
         self.model = AutoModel.from_pretrained(pretrained_path, output_hidden_states=True)
         self.tokenizer = AutoTokenizer.from_pretrained(pretrained_path)

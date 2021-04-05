@@ -1,4 +1,3 @@
-from bertmap.onto import Ontology
 import pandas as pd
 
 class OntologyCorpus:

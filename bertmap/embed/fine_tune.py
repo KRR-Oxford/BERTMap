@@ -1,49 +1,42 @@
 """
-Pretrained BERT and its variants from Pytorch-based Huggingface Library.
+Fine-tuning BERT with ontology labels datasets
+Code inspired by: https://huggingface.co/transformers/training.html
 """
-from transformers import AutoModelForSequenceClassification, AutoTokenizer
-import torch
-import pandas as pd
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments
+from bertmap.embed import OntoLabelsDataset
+from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
 
-class BinaryBERT:
+class OntoLabelsBERT:
     
-    def __init__(self, pretrained_bert_path, train_path, val_path, test_path):
+    def __init__(self, pretrained_bert_path, train_path, val_path, forward_test_path, backward_test_path, training_args: TrainingArguments):
         print("Initialize BERT for Binary Classification from the Pretrained BERT model...")
         
         # BERT
         self.model = AutoModelForSequenceClassification.from_pretrained(pretrained_bert_path)
         self.tokenizer = AutoTokenizer.from_pretrained(pretrained_bert_path)
-        
+
         # data
-        self.train = pd.read_csv(train_path, sep='\t')
-        self.val = pd.read_csv(val_path, sep='\t')
-        self.test = pd.read_csv(test_path, sep='\t')
+        self.train = OntoLabelsDataset(train_path, self.tokenizer)
+        self.val = OntoLabelsDataset(val_path, self.tokenizer)
+        self.forward_test = OntoLabelsDataset(forward_test_path, self.tokenizer)
+        self.backward_test = OntoLabelsDataset(backward_test_path, self.tokenizer)
+        
+        # trainer
+        self.training_args = training_args
+        self.trainer = Trainer(model=self.model, args=self.training_args, 
+                               train_dataset=self.train, eval_dataset=self.val, 
+                               compute_metrics=self.compute_metrics)
         
     
-    def data_iterator(self):
-        pass
-        # # Model parameter
-        # MAX_SEQ_LEN = 128
-        # PAD_INDEX = tokenizer.convert_tokens_to_ids(tokenizer.pad_token)
-        # UNK_INDEX = tokenizer.convert_tokens_to_ids(tokenizer.unk_token)
-
-        # # Fields
-
-        # label_field = Field(sequential=False, use_vocab=False, batch_first=True, dtype=torch.float)
-        # text_field = Field(use_vocab=False, tokenize=tokenizer.encode, lower=False, include_lengths=False, batch_first=True,
-        #                 fix_length=MAX_SEQ_LEN, pad_token=PAD_INDEX, unk_token=UNK_INDEX)
-        # fields = [('label', label_field), ('title', text_field), ('text', text_field), ('titletext', text_field)]
-
-        # # TabularDataset
-
-        # train, valid, test = TabularDataset.splits(path=source_folder, train='train.csv', validation='valid.csv',
-        #                                         test='test.csv', format='CSV', fields=fields, skip_header=True)
-
-        # # Iterators
-
-        # train_iter = BucketIterator(train, batch_size=16, sort_key=lambda x: len(x.text),
-        #                             device=device, train=True, sort=True, sort_within_batch=True)
-        # valid_iter = BucketIterator(valid, batch_size=16, sort_key=lambda x: len(x.text),
-        #                             device=device, train=True, sort=True, sort_within_batch=True)
-        # test_iter = Iterator(test, batch_size=16, device=device, train=False, shuffle=False, sort=False)
+    def compute_metrics(pred):
+        labels = pred.label_ids
+        preds = pred.predictions.argmax(-1)
+        # precision, recall, f1, _ = precision_recall_fscore_support(labels, preds, average='binary')
+        acc = accuracy_score(labels, preds)
+        return {
+            'accuracy': acc,
+            # 'f1': f1,
+            # 'precision': precision,
+            # 'recall': recall
+        }
