@@ -4,13 +4,12 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 from bertmap.utils import batch_split
 import itertools
-import re
 
 class Ontology:
 
     # for simplification of the ontology uris
-    iri_abbr_tsv = __file__.replace("onto.py", "") + "iri_abbr.tsv"
-    iri2abbr_dict = pd.read_csv(iri_abbr_tsv, index_col=0, squeeze=True, sep='\t').to_dict()
+    onto_iri_abbr_tsv = __file__.replace("onto.py", "") + "iri_abbr.tsv"
+    iri2abbr_dict = pd.read_csv(onto_iri_abbr_tsv, index_col=0, squeeze=True, sep='\t').to_dict()
     abbr2iri_dict = {v: k for k, v in iri2abbr_dict.items()}
     # exclude mistaken parsing of string "null" to NaN
     na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL','null'})
@@ -20,49 +19,49 @@ class Ontology:
         self.iri = self.onto.base_iri
         self.iri_abbr = self.iri2abbr_dict[self.iri]
         
-    def iri_lexicon_df(self, *lexical_properties):
+    def class2text(self, *textual_properties):
         
         # default lexicon information is the "labels"
-        if not lexical_properties:
-            lexical_properties = ["label"]
+        if not textual_properties:
+            textual_properties = ["label"]
             
-        iri_lexicon_df = pd.DataFrame()
+        class2text_df = pd.DataFrame()
         iri_list, lexicon_list = [], []
         
         for entity in self.onto.classes():
             # lowercase and remove underscores "_", with "<sep>" indicating label boundaries, "<property" indicating property boundaries
-            lexicon = " <property> ".join([self.encode_entity_lexicon(entity, lp) for lp in lexical_properties])
+            lexicon = " <property> ".join([self.encode_class_text(entity, lp) for lp in textual_properties])
             # print(entity.iri, labels)
             iri_list.append(self.abbr_entity_iri(entity.iri))
             lexicon_list.append(lexicon)
             
-        iri_lexicon_df["Entity-IRI"] = iri_list
-        iri_lexicon_df["Entity-Lexicon"] = lexicon_list
-        return iri_lexicon_df
+        class2text_df["Class-IRI"] = iri_list
+        class2text_df["Class-Text"] = lexicon_list
+        return class2text_df
     
     @classmethod
-    def load_iri_lexicon_file(cls, iri_lexicon_file: str):
-        return pd.read_csv(iri_lexicon_file, sep="\t", na_values=cls.na_vals, keep_default_na=False)
+    def load_class2text(cls, class2text_file: str):
+        return pd.read_csv(class2text_file, sep="\t", na_values=cls.na_vals, keep_default_na=False)
     
     @classmethod
-    def iri_lexicon_batch_generator(cls, iri_lexicon_file: str, batch_size: int):
-        iri_lexicon_df = cls.load_iri_lexicon_file(iri_lexicon_file)
-        index_splits = batch_split(batch_size, max_num=len(iri_lexicon_df))
+    def class2text_batch_generator(cls, class2text_file: str, batch_size: int):
+        class2text_df = cls.load_class2text(class2text_file)
+        index_splits = batch_split(batch_size, max_num=len(class2text_df))
         for split in index_splits:
-            yield iri_lexicon_df.iloc[split]
+            yield class2text_df.iloc[split]
             
     @staticmethod
-    def encode_entity_lexicon(entity, lexical_property):
-        raw_lexicon_list = getattr(entity, lexical_property)
-        assert type(raw_lexicon_list) is owlready2.prop.IndividualValueList
-        lexicon_list = [lexicon.lower().replace("_", " ") for lexicon in raw_lexicon_list]
-        lexicon_list = list(dict.fromkeys(lexicon_list))  # remove duplicates
-        return " <sep> ".join(lexicon_list)
+    def encode_class_text(class_entity, textual_property):
+        raw_text_list = getattr(class_entity, textual_property)
+        assert type(raw_text_list) is owlready2.prop.IndividualValueList
+        text_list = [lexicon.lower().replace("_", " ") for lexicon in raw_text_list]
+        text_list = list(dict.fromkeys(text_list))  # remove duplicates
+        return " <sep> ".join(text_list)
         
             
     @staticmethod
-    def parse_entity_lexicon(entity_lexicon):
-        properties = entity_lexicon.split(" <property> ")
+    def parse_class_text(class_text):
+        properties = class_text.split(" <property> ")
         lexicon = itertools.chain.from_iterable([property.split(" <sep> ") for property in properties])
         lexicon = list(filter(lambda x: x != "", lexicon))   # remove the empty lexicon info
         return lexicon, len(lexicon)
@@ -70,7 +69,7 @@ class Ontology:
     @classmethod
     def set_iri_abbr_dict(cls, iri_abbr_tsv):
         """ Read the aligned URI-Abbr_URI pairs and form two dictionaries """
-        cls.iri_abbr_tsv = iri_abbr_tsv
+        cls.onto_iri_abbr_tsv = iri_abbr_tsv
         cls.iri2abbr_dict = pd.read_csv(iri_abbr_tsv, sep='\t').to_dict()
         cls.abbr2iri_dict = {
             v: k for k, v in cls.iri2abbr_dict.items()

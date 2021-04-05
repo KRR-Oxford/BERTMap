@@ -5,13 +5,13 @@ import pandas as pd
 class DirectSearchMapping(OntoMapping):
     
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
-                 src_onto_lexicon_tsv, tgt_onto_lexicon_tsv, save_path, 
+                 src_onto_class2text_tsv, tgt_onto_class2text_tsv, save_path, 
                  task_suffix="small", name="direct_search_exp"):
-        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_lexicon_tsv, tgt_onto_lexicon_tsv, 
+        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_class2text_tsv, tgt_onto_class2text_tsv, 
                     save_path, task_suffix=task_suffix, name=name)
         
-        self.src2tgt_mappings = pd.DataFrame(index=range(len(self.src_onto_lexicon)), columns=["Entity1", "Entity2", "Value"])
-        self.tgt2src_mappings = pd.DataFrame(index=range(len(self.tgt_onto_lexicon)), columns=["Entity1", "Entity2", "Value"])
+        self.src2tgt_mappings = pd.DataFrame(index=range(len(self.src_onto_class2text)), columns=["Entity1", "Entity2", "Value"])
+        self.tgt2src_mappings = pd.DataFrame(index=range(len(self.tgt_onto_class2text)), columns=["Entity1", "Entity2", "Value"])
         self.combined_mappings = None
         
     def alignment(self):

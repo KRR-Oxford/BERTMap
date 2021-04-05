@@ -41,15 +41,15 @@ class PretrainedBERT:
             batch_embeds = torch.mul(batch_embeds, mask)  # the masked positions are zeros now
         
         return batch_embeds, mask
-    
-    def batch_sent_embeds_last_2_mean(self, sents: List[str]):
-        """Take the mean word embedding of -2 layer as the sentence embedding"""
-        batch_word_embeds, mask = self.batch_word_embeds(sents, neg_layer_num=-2)  # (batch_size, sent_len, hid_dim)
+
+    def batch_sent_embeds_mean(self, sents: List[str], neg_layer_num=-1):
+        """Take the mean word embedding of specified layer as the sentence embedding"""
+        batch_word_embeds, mask = self.batch_word_embeds(sents, neg_layer_num=neg_layer_num)  # (batch_size, sent_len, hid_dim)
         sum_embeds = torch.sum(batch_word_embeds, dim=1)  # (batch_size, hid_dim)
         norm = torch.sum(mask , dim=1).double().pow(-1)  # (batch_size, hid_dim), storing the inverse of tokenized sentence length
         return torch.mul(sum_embeds, norm) 
     
-    def batch_sent_embeds_last_1_cls(self, sents: List[str]):
-        """Take the [cls] token embedding of -1 layer as the sentence embedding"""
-        batch_word_embeds, _ = self.batch_word_embeds(sents, neg_layer_num=-1)  # (batch_size, sent_len, hid_dim)
+    def batch_sent_embeds_cls(self, sents: List[str], neg_layer_num=-1):
+        """Take the [cls] token embedding of specified layer as the sentence embedding"""
+        batch_word_embeds, _ = self.batch_word_embeds(sents, neg_layer_num=neg_layer_num)  # (batch_size, sent_len, hid_dim)
         return batch_word_embeds[:, 0, :]  # (batch_size, hid_dim)

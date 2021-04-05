@@ -9,7 +9,7 @@ import seaborn as sns
 class OntoMapping:
     
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
-                 src_onto_lexicon_tsv, tgt_onto_lexicon_tsv, save_path, 
+                 src_onto_class2text_tsv, tgt_onto_lexicon_tsv, save_path, 
                  task_suffix="undefined_task", name="undefined_exp"):
         
         # basic information
@@ -22,10 +22,10 @@ class OntoMapping:
         self.save_path = save_path
         
         # onto lexicon data
-        self.src_onto_lexicon_path = src_onto_lexicon_tsv
-        self.src_onto_lexicon = Ontology.load_iri_lexicon_file(self.src_onto_lexicon_path)
-        self.tgt_onto_lexicon_path = tgt_onto_lexicon_tsv
-        self.tgt_onto_lexicon = Ontology.load_iri_lexicon_file(self.tgt_onto_lexicon_path)
+        self.src_onto_class2text_path = src_onto_class2text_tsv
+        self.src_onto_class2text = Ontology.load_class2text(self.src_onto_class2text_path)
+        self.tgt_onto_class2text_path = tgt_onto_lexicon_tsv
+        self.tgt_onto_class2text = Ontology.load_class2text(self.tgt_onto_class2text_path)
         
         # define log print function
         self.log_print = lambda info: log_print(info, f"{self.save_path}/{self.name}.log")
