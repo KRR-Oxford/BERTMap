@@ -4,9 +4,14 @@ import pandas as pd
 class OntologyCorpus:
     
     def __init__(self, corpus_path=None):
-        self.corpus_names = []
-        self.onto_name = ""
-        self.corpus_path = corpus_path
+        if not corpus_path:
+            self.create_corpora()
+        else:
+            # load corpus from local storage
+            self.load_corpora(save_dir=corpus_path)
+        
+    def create_corpora(self):
+        raise NotImplementedError
         
     def train_val_split(self, corpus_names):
         raise NotImplementedError

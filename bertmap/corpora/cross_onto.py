@@ -9,7 +9,6 @@ class CrossOntoCorpus(OntologyCorpus):
     def __init__(self, src_onto_path, tgt_onto_path, known_mappings_tsv, 
                  src_onto_class2text_tsv=None, tgt_onto_class2text_tsv=None, 
                  properties=["label"], corpus_path=None):
-        super().__init__(corpus_path=corpus_path)
         self.src_ontology = Ontology(src_onto_path)
         self.tgt_ontology = Ontology(tgt_onto_path)
         self.src_onto_class2text = Ontology.load_class2text(src_onto_class2text_tsv) if src_onto_class2text_tsv \
@@ -19,16 +18,13 @@ class CrossOntoCorpus(OntologyCorpus):
         self.known_mappings = read_tsv_mappings(known_mappings_tsv)
         self.corpus_names = ["forward_synonyms", "backward_synonyms"]
         self.onto_name = self.src_ontology.iri_abbr.replace(":", "") + "2" + self.tgt_ontology.iri_abbr.replace(":", "")
+        super().__init__(corpus_path=corpus_path)
         
-        # form the cross-ontology corpus
-        if not corpus_path:
-            # create class: text dict for extracting labels from mappings
-            self.src_onto_class2text_dict = self.create_class2text_dict(self.src_onto_class2text)
-            self.tgt_onto_class2text_dict = self.create_class2text_dict(self.tgt_onto_class2text)
-            self.cross_onto_synonyms()
-        else:
-            # load corpus from local storage
-            self.load_corpora(save_dir=corpus_path)
+            
+    def create_corpora(self):
+        self.src_onto_class2text_dict = self.create_class2text_dict(self.src_onto_class2text)
+        self.tgt_onto_class2text_dict = self.create_class2text_dict(self.tgt_onto_class2text)
+        self.cross_onto_synonyms()
     
     def train_val_split(self, corpus_names):
         return super().train_val_split(corpus_names)

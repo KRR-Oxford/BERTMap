@@ -9,7 +9,6 @@ import pandas as pd
 class IntraOntoCorpus(OntologyCorpus):
     
     def __init__(self, onto_path, onto_class2text_tsv=None, properties=["label"], corpus_path=None):
-        super().__init__(corpus_path=corpus_path)
         self.ontology = Ontology(onto_path)
         self.class2text = Ontology.load_class2text(onto_class2text_tsv) if onto_class2text_tsv \
             else self.ontology.create_class2text(*properties) 
@@ -17,15 +16,12 @@ class IntraOntoCorpus(OntologyCorpus):
                              "forward_soft_nonsynonyms", "backward_soft_nonsynonyms",
                              "forward_hard_nonsynonyms", "backward_hard_nonsynonyms"]
         self.onto_name = self.ontology.iri_abbr.replace(":", "")
-
-        # form the intra-ontology corpus
-        if not corpus_path:
-            self.intra_onto_synonyms()
-            self.intra_onto_soft_nonsynonyms()
-            self.intra_onto_hard_nonsynonyms()
-        else:
-            # load corpus from local storage
-            self.load_corpora(save_dir=corpus_path)
+        super().__init__(corpus_path=corpus_path)
+            
+    def create_corpora(self):
+        self.intra_onto_synonyms()
+        self.intra_onto_soft_nonsynonyms()
+        self.intra_onto_hard_nonsynonyms()
     
     def train_val_split(self, corpus_names):
         pos_corpora = []
