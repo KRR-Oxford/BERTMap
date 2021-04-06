@@ -1,3 +1,7 @@
+"""
+The Cross-ontology Mapping superclass, it requires the implementation of mapping computation algorithm. 
+"""
+
 import pandas as pd
 from bertmap.onto import Ontology
 from bertmap.onto import OntoEvaluator

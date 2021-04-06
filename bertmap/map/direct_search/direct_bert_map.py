@@ -1,19 +1,5 @@
-"""Direct Search BERT Experiment on using some kind of normalized distance metric:
+"""Direct Search Mapping Generation on using Pretrained/Fine-tuned BERT with various pooling strategies and cosine-similarity:
 
-   Naive Algorithm:
-   
-        Compute the *Value between each source-target entity pair where Value is defined by:
-           Dist = norm_distance(entity1, entity2)
-           Value = norm_similarity(entity1, entity2)
-           
-        [Fix the source side] 
-            For each source entity (entity1), pick the target entity (entity2) according to the min(Dist) or max(Value)
-            
-        [Fix the target side] 
-            For each target entity (entity2), pick the source entity (entity1) according to the min(Dist) opr max(Value)
-            
-        Remove the duplicates
-        
     Batched Algorithm with Divide and Conquer Design:
     
         [Fix the source side] 
@@ -28,7 +14,7 @@
 
 from bertmap.onto import Ontology
 from bertmap.map.direct_search import DirectSearchMapping
-from bertmap.embed import PretrainedBERT
+from bertmap.bert import PretrainedBERT
 from sklearn.metrics.pairwise import cosine_similarity
 import torch
 

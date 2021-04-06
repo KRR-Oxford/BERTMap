@@ -1,3 +1,8 @@
+"""
+The Ontology class that handles data generation from owlready2 Ontology object.
+"""
+
+
 from owlready2 import get_ontology
 import owlready2
 import pandas as pd
@@ -57,8 +62,7 @@ class Ontology:
         text_list = [lexicon.lower().replace("_", " ") for lexicon in raw_text_list]
         text_list = list(dict.fromkeys(text_list))  # remove duplicates
         return " <sep> ".join(text_list)
-        
-            
+           
     @staticmethod
     def parse_class_text(class_text):
         properties = class_text.split(" <property> ")

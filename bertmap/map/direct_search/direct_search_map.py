@@ -1,3 +1,21 @@
+"""
+Direct Search Mapping Generation superclass on using some kind of normalized distance metric or classifier (from fine-tuned BERT):
+
+   Prelimniary Algorithm (One-side-fixed Search):
+   
+        Compute the *Value between each source-target entity pair where Value is defined by:
+           Dist = norm_distance(entity1, entity2)
+           Value = norm_similarity(entity1, entity2)
+           
+        [Fix the source side] 
+            For each source entity (entity1), pick the target entity (entity2) according to the min(Dist) or max(Value)
+            
+        [Fix the target side] 
+            For each target entity (entity2), pick the source entity (entity1) according to the min(Dist) opr max(Value)
+            
+        Remove the duplicates
+"""
+
 from bertmap.map import OntoMapping
 import pandas as pd
 

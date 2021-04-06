@@ -1,3 +1,7 @@
+"""
+Ontology Corpus superclass, it requires implementation of how to create sub-corpora and split a train-validation set from them.
+"""
+
 import pandas as pd
 
 class OntologyCorpus:

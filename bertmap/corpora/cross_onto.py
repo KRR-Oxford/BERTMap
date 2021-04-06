@@ -1,3 +1,7 @@
+"""
+Ontology Corpus class from known/seed cross-ontology mappings.
+"""
+
 from bertmap.onto import Ontology
 from bertmap.corpora import OntologyCorpus
 from bertmap.utils.oaei_utils import read_tsv_mappings

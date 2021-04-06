@@ -1,5 +1,5 @@
 """
-For evaluating the ontology mappings
+The Ontology Evaluator class for evaluating the computed cross-ontology mappings.
 """
 from bertmap.utils.oaei_utils import read_tsv_mappings
 

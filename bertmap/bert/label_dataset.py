@@ -3,7 +3,7 @@ from transformers import AutoTokenizer
 import pandas as pd
 import torch
 
-class OntoLabelsDataset(Dataset):
+class OntoLabelDataset(Dataset):
 
     def __init__(self, data_tsv, tokenizer: AutoTokenizer):
         # Model parameter

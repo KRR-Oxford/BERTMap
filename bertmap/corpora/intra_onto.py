@@ -1,3 +1,7 @@
+"""
+Ontology Corpus class from within the input ontology.
+"""
+
 from bertmap.onto import Ontology
 from bertmap.utils import uniqify, ex_randrange
 from bertmap.corpora import OntologyCorpus

@@ -1,6 +1,6 @@
 import sys
 sys.path.append("/home/yuahe/projects/BERTMap")
-from bertmap.embed import OntoLabelsBERT
+from bertmap.embed import OntoLabelBERT
 import pandas as pd
 import torch
 from bertmap.utils import get_device, set_seed

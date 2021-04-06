@@ -1,4 +1,4 @@
-from bertmap.embed import PretrainedBERT
+from bertmap.bert import PretrainedBERT
 from bertmap.onto import Ontology
 import torch
 import itertools

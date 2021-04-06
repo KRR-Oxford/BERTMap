@@ -3,11 +3,11 @@ Fine-tuning BERT with ontology labels datasets
 Code inspired by: https://huggingface.co/transformers/training.html
 """
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments
-from bertmap.embed import OntoLabelsDataset
+from bertmap.bert import OntoLabelDataset
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
 
-class OntoLabelsBERT:
+class OntoLabelBERT:
     
     def __init__(self, pretrained_bert_path, train_path, val_path, forward_test_path, backward_test_path, training_args: TrainingArguments):
         print("Initialize BERT for Binary Classification from the Pretrained BERT model...")
@@ -17,10 +17,10 @@ class OntoLabelsBERT:
         self.tokenizer = AutoTokenizer.from_pretrained(pretrained_bert_path)
 
         # data
-        self.train = OntoLabelsDataset(train_path, self.tokenizer)
-        self.val = OntoLabelsDataset(val_path, self.tokenizer)
-        self.forward_test = OntoLabelsDataset(forward_test_path, self.tokenizer)
-        self.backward_test = OntoLabelsDataset(backward_test_path, self.tokenizer)
+        self.train = OntoLabelDataset(train_path, self.tokenizer)
+        self.val = OntoLabelDataset(val_path, self.tokenizer)
+        self.forward_test = OntoLabelDataset(forward_test_path, self.tokenizer)
+        self.backward_test = OntoLabelDataset(backward_test_path, self.tokenizer)
         
         # trainer
         self.training_args = training_args

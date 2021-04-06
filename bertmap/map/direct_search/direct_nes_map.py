@@ -1,5 +1,7 @@
-"""Direct Search Experiment on using the normalized edit distance score as the distance metric. 
-   Unlike the BERT experiment where the batched (vectorization) algorithm is used, here we apply the multiprocessing on each batch.
+"""
+Direct Search Mapping Generation on using the *normalized edit distance score* as the distance metric.
+
+Unlike the BERT experiment where the batched (vectorization) algorithm is used, here we apply the multiprocessing on each batch.
 """
 
 from bertmap.onto import Ontology

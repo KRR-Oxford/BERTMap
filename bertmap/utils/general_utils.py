@@ -7,8 +7,10 @@ def ex_randrange(start, end, ex):
         result = random.randrange(start, end)
     return result
 
+
 def uniqify(ls):
     return list(dict.fromkeys(ls))
+
 
 def swap(a, b):
     temp = a 
@@ -56,7 +58,8 @@ def equal_split(num_splits, max_num):
         splits.append(max_range[start: end])
     assert len(splits) == num_splits + 1
     return splits
-        
+
+
 def log_print(log_info, log_path: str):
     """Logging information"""
     print(log_info)
