@@ -314,3 +314,4 @@ largebio_exp/**/*.tsv
 testing/
 *pt
 !*data/onto_labels
+exp*/

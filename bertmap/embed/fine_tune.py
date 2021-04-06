@@ -29,6 +29,7 @@ class OntoLabelsBERT:
                                compute_metrics=self.compute_metrics)
         
     
+    @staticmethod
     def compute_metrics(pred):
         labels = pred.label_ids
         preds = pred.predictions.argmax(-1)
