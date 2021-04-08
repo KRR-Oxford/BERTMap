@@ -315,3 +315,4 @@ testing/
 *pt
 !*data/onto_labels
 exp*/
+!scripts/*

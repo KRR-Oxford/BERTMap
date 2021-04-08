@@ -13,7 +13,7 @@ import itertools
 class Ontology:
 
     # for simplification of the ontology uris
-    onto_iri_abbr_tsv = __file__.replace("onto.py", "") + "iri_abbr.tsv"
+    onto_iri_abbr_tsv = __file__.replace("ontology.py", "") + "iri_abbr.tsv"
     iri2abbr_dict = pd.read_csv(onto_iri_abbr_tsv, index_col=0, squeeze=True, sep='\t').to_dict()
     abbr2iri_dict = {v: k for k, v in iri2abbr_dict.items()}
     # exclude mistaken parsing of string "null" to NaN

@@ -1,9 +1,13 @@
 import sys
 import random
 
-def ex_randrange(start, end, ex):
+def random_drop(lst):
+    lst.remove(lst[random.randrange(0, len(lst))])
+    return lst
+    
+def exclude_randrange(start, end, exclude):
     result = random.randrange(start, end)
-    while result == ex and end - start > 1:
+    while result == exclude and end - start > 1:
         result = random.randrange(start, end)
     return result
 
