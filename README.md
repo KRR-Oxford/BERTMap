@@ -1,6 +1,9 @@
 # BERTMap
 
+### Code and Data Management
+
 Data and Experiment files are available at [here](https://drive.google.com/drive/folders/11_Dj6f7MN3pTKkWUUAKnY-vTWh4mMOdE?usp=sharing).
+
 Please clone this repo and download the folders ``data/`` and ``experiment/`` from the link into the BERTMap repository such that:
 ```
 BERTMap/
