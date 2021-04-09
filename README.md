@@ -10,7 +10,7 @@ BERTMap/
 
   bertmap/  # essential code
   data/  # storing different types of data, e.g. .owl (ontologies); .tsv (for class2text data and mappings); .json (for corpora)
-  experiment/  # storing different experiment settings and results
+  experiment/  # storing different experiment settings and their results
   scripts/  # scripts for generating data, running experiments and evaluating the computed mappings
   .gitignore
   README.md
