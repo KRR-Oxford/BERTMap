@@ -8,7 +8,7 @@ Please clone this repo and download the folders ``data/`` and ``experiment/`` fr
 ```
 BERTMap/
 
-  bertmap/
+  bertmap/  # essential code
   data/  # storing different types of data, e.g. .owl (ontologies); .tsv (for class2text data and mappings); .json (for corpora)
   experiment/  # storing different experiment settings and results
   scripts/  # scripts for generating data, running experiments and evaluating the computed mappings
