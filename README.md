@@ -16,3 +16,18 @@ BERTMap/
   README.md
   
 ```
+
+### Scripts Usage
+
+#### Data Preparation
+- **Generate the Class2Text (labels) data file**: ``data_scripts/save_class2text.py``.
+-------------------
+#### Baseline
+- *BERT Baseline Experiment*: ``data_scripts/save_bert_class_embeds.py`` ➡️ ``exp_scripts/run_bert.py`` ➡️ ``eval_scripts/eval_bert.py``.
+- *Normalized Edit Distance Baseline Experiment*: ``exp_scripts/run_nes.py`` ➡️ ``eval_scripts/eval_nes.py``.  (Not recommended to run on the large ontologies because its time complextity is `O(n^2)`).
+--------------------
+#### Fine-tuning on synonym/nonsynonym corpora
+- *Generate the synonym/nonsynonym corpora*: ``corpora_scripts/save_*_corpora.py`.
+- *Sampling training/dev/test sets from corpora*: ... 
+- *Fine-tuning BERT and evaluate on intermediate test set*: ...
+- *Mapping Prediction using Fine-tuned BERT*: ...
