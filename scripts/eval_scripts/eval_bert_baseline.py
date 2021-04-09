@@ -20,7 +20,7 @@ for name in ["mean", "cls"]:
                                                                                      ref_legal, ref_illegal, f"combined", threshold)))
             eval_results.append(pool.apply_async(OntoMapping.evaluate, args=(f"{map_dir}/src2tgt.{src}2{tgt}.small.bc-{name}.tsv", 
                                                                                      ref_legal, ref_illegal, f"{src}2{tgt}", threshold)))
-            eval_results.append(pool.apply_async(OntoMapping.evaluate, args=(f"{map_dir}/tgt2src{src}2{tgt}.small.bc-{name}.tsv", 
+            eval_results.append(pool.apply_async(OntoMapping.evaluate, args=(f"{map_dir}/tgt2src.{src}2{tgt}.small.bc-{name}.tsv", 
                                                                                      ref_legal, ref_illegal, f"{tgt}2{src}", threshold)))
         pool.close()
         pool.join()
