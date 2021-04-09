@@ -32,7 +32,7 @@ class OntoMapping:
         self.tgt_onto_class2text = Ontology.load_class2text(self.tgt_onto_class2text_path)
         
         # define log print function
-        self.log_print = lambda info: log_print(info, f"{self.save_path}/{self.name}.log")
+        self.log_print = lambda info: log_print(info, f"{self.save_path}/{self.name}.{self.src}2{self.tgt}.log")
 
         
     def run(self):

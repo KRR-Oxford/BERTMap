@@ -19,9 +19,12 @@ class OntologyCorpus:
         raise NotImplementedError
 
     @staticmethod
-    def term_dict():
-        # some corpus might not define the hard nonsynonyms so that they will be empty
-        return {"synonyms": [], "soft_nonsynonyms": [], "hard_nonsynonyms": []}
+    def term_dict(hard=True):
+        if hard:
+            return {"synonyms": [], "soft_nonsynonyms": [], "hard_nonsynonyms": []}
+        else:
+            # some corpus might not define the hard nonsynonyms so that they will be empty
+            return {"synonyms": [], "nonsynonyms": []}
 
         
     def id_synonyms(self):

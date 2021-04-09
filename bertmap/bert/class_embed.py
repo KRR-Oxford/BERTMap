@@ -16,13 +16,13 @@ class BERTClassEmbedding:
         for batch in Ontology.class2text_batch_generator(iri_lexicon_file, batch_size=batch_size):
             batch_lexicon_sents = []
             batch_lexicon_sizes = []
-            for lexicon in batch["Entity-Lexicon"]:
+            for lexicon in batch["Class-Text"]:
                 parsed_lexicon_sents, lexicon_size = Ontology.parse_class_text(lexicon)
                 batch_lexicon_sents.append(parsed_lexicon_sents)
                 batch_lexicon_sizes.append(lexicon_size)
             batch_lexicon_sents = list(itertools.chain.from_iterable(batch_lexicon_sents))
             entity_embeds.append(self.class_embeds_from_batched_class2text(batch_sent_embeds_method, batch_lexicon_sizes, batch_lexicon_sents))
-            print(f"[Batch {batch_ind}] Finish the entity embeddings ...")
+            print(f"[Batch {batch_ind}] Finish the class embeddings ...")
             batch_ind += 1
         return torch.cat(entity_embeds, dim=0)
         

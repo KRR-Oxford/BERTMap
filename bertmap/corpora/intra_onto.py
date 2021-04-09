@@ -66,17 +66,17 @@ class IntraOntoCorpus(OntologyCorpus):
             for i in range(num_labels):
                 pos_label = label_list[i]
                 ##### For generating the synonyms #####
-                ith_term_dict = self.corpus_dict[pos_label]
+                pos_term_dict = self.corpus_dict[pos_label]
                 rest_aliases = label_list[i+1:]  # consider only forward synonyms
-                ith_term_synonyms = deepcopy(ith_term_dict["synonyms"])
-                assert ith_term_synonyms is not ith_term_dict["synonyms"]
-                existed_num = len(ith_term_synonyms)
-                ith_term_synonyms += rest_aliases  # update the synonyms for ith label term
-                ith_term_synonyms = uniqify(ith_term_synonyms)  # remove duplicates
-                self.synonym_count += len(ith_term_synonyms) - existed_num  # add the increment number
+                pos_term_synonyms = deepcopy(pos_term_dict["synonyms"])
+                assert pos_term_synonyms is not pos_term_dict["synonyms"]
+                existed_num = len(pos_term_synonyms)
+                pos_term_synonyms += rest_aliases  # update the synonyms for ith label term
+                pos_term_synonyms = uniqify(pos_term_synonyms)  # remove duplicates
+                self.synonym_count += len(pos_term_synonyms) - existed_num  # add the increment number
                 ##### Update the dictionary #####
-                ith_term_dict["synonyms"] = ith_term_synonyms
-                self.corpus_dict[pos_label] = ith_term_dict
+                pos_term_dict["synonyms"] = pos_term_synonyms
+                self.corpus_dict[pos_label] = pos_term_dict
 
     def intra_onto_soft_nonsynonyms(self, sample_rate=5):
         self.soft_nonsynonym_count = 0
@@ -86,10 +86,10 @@ class IntraOntoCorpus(OntologyCorpus):
             label_list, _ = Ontology.parse_class_text(class_text)
             for pos_label in label_list:
                 ##### For generating the soft nonsynonyms #####
-                ith_term_dict = self.corpus_dict[pos_label]
-                ith_term_soft_nonsynonyms = deepcopy(ith_term_dict["soft_nonsynonyms"])
-                assert ith_term_soft_nonsynonyms is not ith_term_dict["soft_nonsynonyms"]
-                existed_num = len(ith_term_soft_nonsynonyms)
+                pos_term_dict = self.corpus_dict[pos_label]
+                pos_term_soft_nonsynonyms = deepcopy(pos_term_dict["soft_nonsynonyms"])
+                assert pos_term_soft_nonsynonyms is not pos_term_dict["soft_nonsynonyms"]
+                existed_num = len(pos_term_soft_nonsynonyms)
                 neg_class_inds = [exclude_randrange(0, len(self.class2text), exclude=k) for _ in range(sample_rate-1)]
                 assert k not in neg_class_inds  # randomsly sample R class ids that is not the current class id k
                 for nid in neg_class_inds:
@@ -97,14 +97,14 @@ class IntraOntoCorpus(OntologyCorpus):
                     neg_label_ind = random.randrange(0, neg_label_num)  # randomly pick a label from the negative cclass
                     neg_label = neg_label_list[neg_label_ind]
                     if self.negative_sample_check(pos_label, neg_label):
-                        ith_term_soft_nonsynonyms.append(neg_label)
+                        pos_term_soft_nonsynonyms.append(neg_label)
                     else:
                         self.soft_violation.append([pos_label, neg_label])
-                ith_term_soft_nonsynonyms = uniqify(ith_term_soft_nonsynonyms)
-                self.soft_nonsynonym_count += len(ith_term_soft_nonsynonyms) - existed_num
+                pos_term_soft_nonsynonyms = uniqify(pos_term_soft_nonsynonyms)
+                self.soft_nonsynonym_count += len(pos_term_soft_nonsynonyms) - existed_num
                 ##### Update the dictionary #####
-                ith_term_dict["soft_nonsynonyms"] = ith_term_soft_nonsynonyms
-                self.corpus_dict[pos_label] = ith_term_dict
+                pos_term_dict["soft_nonsynonyms"] = pos_term_soft_nonsynonyms
+                self.corpus_dict[pos_label] = pos_term_dict
 
 
     def intra_onto_hard_nonsynonyms(self, max_num=10):
@@ -128,19 +128,19 @@ class IntraOntoCorpus(OntologyCorpus):
                     for pos_label, neg_label in pairs_from_sibling_classes:
                         ##### For generating the hard nonsynonyms #####
                         pos_term_dict = self.corpus_dict[pos_label]
-                        term_hard_nonsynonyms = deepcopy(pos_term_dict["hard_nonsynonyms"])
-                        assert term_hard_nonsynonyms is not pos_term_dict["hard_nonsynonyms"]
-                        existed_num = len(term_hard_nonsynonyms)
+                        pos_term_hard_nonsynonyms = deepcopy(pos_term_dict["hard_nonsynonyms"])
+                        assert pos_term_hard_nonsynonyms is not pos_term_dict["hard_nonsynonyms"]
+                        existed_num = len(pos_term_hard_nonsynonyms)
                         if self.negative_sample_check(pos_label, neg_label):
-                            term_hard_nonsynonyms.append(neg_label)
+                            pos_term_hard_nonsynonyms.append(neg_label)
                         else:
                             self.hard_violation.append([pos_label, neg_label])
-                        term_hard_nonsynonyms = uniqify(term_hard_nonsynonyms)
+                        pos_term_hard_nonsynonyms = uniqify(pos_term_hard_nonsynonyms)
                         # a simple strategy to reduce the influence of deep-level sibling classes
-                        while len(term_hard_nonsynonyms) > max_num:
-                            term_hard_nonsynonyms = random_drop(term_hard_nonsynonyms)
-                        self.hard_nonsynonym_count += len(term_hard_nonsynonyms) - existed_num
+                        while len(pos_term_hard_nonsynonyms) > max_num:
+                            pos_term_hard_nonsynonyms = random_drop(pos_term_hard_nonsynonyms)
+                        self.hard_nonsynonym_count += len(pos_term_hard_nonsynonyms) - existed_num
                         ##### Update the dictionary #####
-                        pos_term_dict["hard_nonsynonyms"] = term_hard_nonsynonyms
+                        pos_term_dict["hard_nonsynonyms"] = pos_term_hard_nonsynonyms
                         self.corpus_dict[pos_label] = pos_term_dict
         

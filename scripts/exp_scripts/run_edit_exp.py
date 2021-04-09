@@ -2,12 +2,14 @@ import sys
 sys.path.append("/home/yuahe/projects/BERTMap")
 from bertmap.map.direct_search import DirectNESMapping
 
+label_dir = "/home/yuahe/projects/BERTMap/data/largebio/labels"
+embed_dir = "/home/yuahe/projects/BERTMap/experiment/bert_baseline/class_embeds"
+
 # ("fma", "nci"), ("fma", "snomed"), ("snomed", "nci")
-for src, tgt in [("snomed", "nci")]:
+for src, tgt in [("fma", "nci"), ("fma", "snomed"), ("snomed", "nci")]:
     
-    base = "/home/yuahe/projects/BERTMap/largebio_data/onto_labels"
-    src_onto_lexicon_tsv = f"{base}/{src}2{tgt}.small.labels.tsv"
-    tgt_onto_lexicon_tsv = f"{base}/{tgt}2{src}.small.labels.tsv"
+    src_onto_lexicon_tsv = f"{label_dir}/{src}2{tgt}.small.labels.tsv"
+    tgt_onto_lexicon_tsv = f"{label_dir}/{tgt}2{src}.small.labels.tsv"
     
     exp = DirectNESMapping(src, tgt, 
                            src_onto_lexicon_tsv, tgt_onto_lexicon_tsv,
