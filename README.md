@@ -20,7 +20,7 @@ BERTMap/
 ### Scripts Usage
 
 #### Data Preparation
-- **Generate the Class2Text (labels) data file**: ``data_scripts/save_class2text.py``.
+- *Generate the Class2Text (labels) data file*: ``data_scripts/save_class2text.py``.
 -------------------
 #### Baseline
 - *BERT Baseline Experiment*: ``data_scripts/save_bert_class_embeds.py`` ➡️ ``exp_scripts/run_bert.py`` ➡️ ``eval_scripts/eval_bert.py``.
