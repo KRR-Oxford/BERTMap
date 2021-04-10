@@ -6,7 +6,10 @@ from copy import deepcopy
 
 class IntraOntoCorpusPair(OntologyCorpus):
     
-    def __init__(self, src_intra_onto_corpus: IntraOntoCorpus, tgt_intra_onto_corpus: IntraOntoCorpus, task_name, corpus_path=None):
+    def __init__(self, task_name, src_intra_onto_corpus=None, tgt_intra_onto_corpus=None, corpus_path=None):
+        super().__init__(task_name, src_intra_onto_corpus, tgt_intra_onto_corpus, corpus_path=corpus_path)
+        
+    def init_config(self, task_name, src_intra_onto_corpus: IntraOntoCorpus, tgt_intra_onto_corpus: IntraOntoCorpus):
         self.corpus_dict = deepcopy(src_intra_onto_corpus.corpus_dict)
         self.to_add_corpus_dict = deepcopy(tgt_intra_onto_corpus.corpus_dict)
         print("Merging the following Source and Target Ontologies ...")
@@ -14,7 +17,6 @@ class IntraOntoCorpusPair(OntologyCorpus):
         self.report(self.to_add_corpus_dict)
         self.onto_name = task_name
         self.corpus_type = "intra-onto-pair"
-        super().__init__(corpus_path=corpus_path)
         
     def create_corpus(self):
         self.corpus_dict[" corpus_info "]["num_violated"] += self.to_add_corpus_dict[" corpus_info "]["num_violated"]

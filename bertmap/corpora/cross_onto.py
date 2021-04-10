@@ -17,7 +17,13 @@ class CrossOntoCorpus(OntologyCorpus):
     def __init__(self, src_onto_path, tgt_onto_path, known_mappings_tsv, 
                  src_onto_class2text_tsv=None, tgt_onto_class2text_tsv=None, 
                  properties=["label"], sample_rate=5, corpus_path=None):
+        super().__init__(src_onto_path, tgt_onto_path, known_mappings_tsv, 
+                         src_onto_class2text_tsv, tgt_onto_class2text_tsv, 
+                         properties, sample_rate, corpus_path=corpus_path)
         
+    def init_config(self, src_onto_path, tgt_onto_path, known_mappings_tsv, 
+                    src_onto_class2text_tsv=None, tgt_onto_class2text_tsv=None, 
+                    properties=["label"], sample_rate=5,):
         self.src_ontology = Ontology(src_onto_path)
         self.tgt_ontology = Ontology(tgt_onto_path)
         self.src_onto_class2text = Ontology.load_class2text(src_onto_class2text_tsv) if src_onto_class2text_tsv \
@@ -30,8 +36,6 @@ class CrossOntoCorpus(OntologyCorpus):
         self.sample_rate = sample_rate
         self.corpus_type = "cross-onto"
         self.onto_name = self.src_ontology.iri_abbr.replace(":", "") + "2" + self.tgt_ontology.iri_abbr.replace(":", "")
-        
-        super().__init__(corpus_path=corpus_path)
         
             
     def create_corpus(self):

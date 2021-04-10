@@ -7,13 +7,17 @@ import json
 
 class OntologyCorpus:
     
-    def __init__(self, corpus_path=None):
+    def __init__(self, *config_args, corpus_path=None):
         if not corpus_path:
+            self.init_config(*config_args)
             self.create_corpus()
         else:
             # load corpus from local storage
             self.load_corpus(save_dir=corpus_path)
         assert self.corpus_dict is not None
+        
+    def init_config(self, *config_args):
+        raise NotImplementedError
         
     def create_corpus(self):
         raise NotImplementedError

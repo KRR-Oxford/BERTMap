@@ -12,6 +12,6 @@ for src, tgt in [("fma", "nci"), ("fma", "snomed"), ("snomed", "nci")]:
 
    oc_src = IntraOntoCorpus(src_onto, src_labels, sample_rate=5)
    oc_tgt = IntraOntoCorpus(tgt_onto, tgt_labels, sample_rate=5)
-   oc_src2tgt = IntraOntoCorpusPair(oc_src, oc_tgt, f"{src}2{tgt}.small")
+   oc_src2tgt = IntraOntoCorpusPair(f"{src}2{tgt}.small", oc_src, oc_tgt)
    oc_src2tgt.save_corpus("/home/yuahe/projects/BERTMap/data/largebio/corpora")
    # oc_src2tgt.load_corpus("/home/yuahe/projects/BERTMap/data/largebio/corpora")
