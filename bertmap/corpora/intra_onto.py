@@ -28,16 +28,15 @@ from collections import defaultdict
 
 class IntraOntoCorpus(OntologyCorpus):
 
-    def __init__(self, onto_path, onto_class2text_tsv=None, properties=["label"], sample_rate=5, corpus_path=None):
-        super().__init__(onto_path, onto_class2text_tsv, properties, sample_rate, corpus_path=corpus_path)
+    def __init__(self, onto_name, onto_path, onto_class2text_tsv=None, properties=["label"], sample_rate=5, corpus_path=None):
+        self.corpus_type = "intra-onto"
+        super().__init__(onto_path, onto_class2text_tsv, properties, sample_rate, onto_name=onto_name, corpus_path=corpus_path)
         
     def init_config(self, onto_path, onto_class2text_tsv=None, properties=["label"], sample_rate=5):
         self.ontology = Ontology(onto_path)
         self.class2text = Ontology.load_class2text(onto_class2text_tsv) if onto_class2text_tsv \
             else self.ontology.create_class2text(*properties)
         self.corpus_dict = defaultdict(lambda:self.term_dict())
-        self.onto_name = self.ontology.iri_abbr.replace(":", "")
-        self.corpus_type = "intra-onto"
         # rate for sampling the random (soft) nonsynonym
         self.sample_rate = sample_rate
 

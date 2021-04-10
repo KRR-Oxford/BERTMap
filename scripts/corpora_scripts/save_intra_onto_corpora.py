@@ -1,6 +1,6 @@
 import sys
 sys.path.append("/home/yuahe/projects/BERTMap")
-from bertmap.corpora import IntraOntoCorpus, IntraOntoCorpusPair
+from bertmap.corpora import IntraOntoCorpus, MergedOntoCorpus
 
 base = "/home/yuahe/projects/BERTMap/data/largebio/"
 
@@ -10,8 +10,8 @@ for src, tgt in [("fma", "nci"), ("fma", "snomed"), ("snomed", "nci")]:
    tgt_onto = base + f"ontos/{tgt}2{src}.small.owl"
    tgt_labels = base + f"labels/{tgt}2{src}.small.labels.tsv"
 
-   oc_src = IntraOntoCorpus(src_onto, src_labels, sample_rate=5)
-   oc_tgt = IntraOntoCorpus(tgt_onto, tgt_labels, sample_rate=5)
-   oc_src2tgt = IntraOntoCorpusPair(f"{src}2{tgt}.small", oc_src, oc_tgt)
+   oc_src = IntraOntoCorpus(src, src_onto, src_labels, sample_rate=5)
+   oc_tgt = IntraOntoCorpus(tgt, tgt_onto, tgt_labels, sample_rate=5)
+   oc_src2tgt = MergedOntoCorpus(f"{src}2{tgt}.small", oc_src, oc_tgt)
    oc_src2tgt.save_corpus("/home/yuahe/projects/BERTMap/data/largebio/corpora")
    # oc_src2tgt.load_corpus("/home/yuahe/projects/BERTMap/data/largebio/corpora")

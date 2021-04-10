@@ -7,23 +7,21 @@ from bertmap.corpora import OntologyCorpus
 from bertmap.utils.oaei_utils import read_tsv_mappings
 from bertmap.utils import uniqify, exclude_randrange
 from collections import OrderedDict, defaultdict
-from itertools import product
 from copy import deepcopy
 import random
-import pandas as pd
 
 class CrossOntoCorpus(OntologyCorpus):
     
-    def __init__(self, src_onto_path, tgt_onto_path, known_mappings_tsv, 
+    def __init__(self, onto_name, src_onto_path, tgt_onto_path, known_mappings_tsv, 
                  src_onto_class2text_tsv=None, tgt_onto_class2text_tsv=None, 
                  properties=["label"], sample_rate=5, corpus_path=None):
-        super().__init__(src_onto_path, tgt_onto_path, known_mappings_tsv, 
-                         src_onto_class2text_tsv, tgt_onto_class2text_tsv, 
-                         properties, sample_rate, corpus_path=corpus_path)
+        self.corpus_type = "cross-onto"
+        super().__init__(src_onto_path, tgt_onto_path, known_mappings_tsv, src_onto_class2text_tsv, tgt_onto_class2text_tsv, 
+                         properties, sample_rate, onto_name=onto_name, corpus_path=corpus_path)
         
     def init_config(self, src_onto_path, tgt_onto_path, known_mappings_tsv, 
                     src_onto_class2text_tsv=None, tgt_onto_class2text_tsv=None, 
-                    properties=["label"], sample_rate=5,):
+                    properties=["label"], sample_rate=5):
         self.src_ontology = Ontology(src_onto_path)
         self.tgt_ontology = Ontology(tgt_onto_path)
         self.src_onto_class2text = Ontology.load_class2text(src_onto_class2text_tsv) if src_onto_class2text_tsv \
@@ -32,11 +30,8 @@ class CrossOntoCorpus(OntologyCorpus):
             else self.tgt_ontology.create_class2text(*properties)
         self.known_mappings = read_tsv_mappings(known_mappings_tsv)
         
-        self.corpus_dict = defaultdict(lambda:self.term_dict(hard=False))
+        self.corpus_dict = defaultdict(lambda:self.term_dict())
         self.sample_rate = sample_rate
-        self.corpus_type = "cross-onto"
-        self.onto_name = self.src_ontology.iri_abbr.replace(":", "") + "2" + self.tgt_ontology.iri_abbr.replace(":", "")
-        
             
     def create_corpus(self):
         self.src_onto_class2text_dict = self.create_class2text_dict(self.src_onto_class2text)
@@ -47,7 +42,8 @@ class CrossOntoCorpus(OntologyCorpus):
         self.corpus_dict[" corpus_info "] = {"corpus_type": "Cross-ontology Corpus", 
                                              "corpus_onto": self.onto_name, 
                                              "synonyms": self.synonym_count,
-                                             "nonsynonyms": self.nonsynonym_count,
+                                             "soft_nonsynonyms": self.nonsynonym_count,
+                                             "hard_nonsynonyms": "Not Available",
                                              "num_violated": len(self.violation)}
         self.report(self.corpus_dict)
         
@@ -102,7 +98,7 @@ class CrossOntoCorpus(OntologyCorpus):
         for label in class_labels:
             neg_map_inds = [exclude_randrange(0, len(self.known_mappings), exclude=map_ind) for _ in range(sample_rate-1)]
             label_dict = self.corpus_dict[label]
-            label_nonsynonyms = label_dict["nonsynonyms"]
+            label_nonsynonyms = label_dict["soft_nonsynonyms"]
             existed_num = len(label_nonsynonyms)
             for nid in neg_map_inds:
                 neg_map = self.known_mappings[nid]
@@ -119,5 +115,5 @@ class CrossOntoCorpus(OntologyCorpus):
             label_nonsynonyms = uniqify(label_nonsynonyms)
             self.nonsynonym_count += len(label_nonsynonyms) - existed_num
             ###### update the dictionary ######
-            label_dict["nonsynonyms"] = label_nonsynonyms
+            label_dict["soft_nonsynonyms"] = label_nonsynonyms
             self.corpus_dict[label] = label_dict       

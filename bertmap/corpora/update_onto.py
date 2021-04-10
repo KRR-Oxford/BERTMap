@@ -1,29 +1,32 @@
+"""
+Ontology Corpus class that takes as input a base corpus and an additional corpus for update.
+"""
+
+
 from bertmap.corpora import OntologyCorpus
-from bertmap.corpora import IntraOntoCorpus
 from bertmap.utils import uniqify
 from copy import deepcopy
 
 
-class IntraOntoCorpusPair(OntologyCorpus):
+class MergedOntoCorpus(OntologyCorpus):
     
-    def __init__(self, task_name, src_intra_onto_corpus=None, tgt_intra_onto_corpus=None, corpus_path=None):
-        super().__init__(task_name, src_intra_onto_corpus, tgt_intra_onto_corpus, corpus_path=corpus_path)
+    def __init__(self, onto_name, base_onto_corpus=None, to_add_onto_corpus=None, corpus_path=None):
+        self.corpus_type = "merged-onto"
+        super().__init__(base_onto_corpus, to_add_onto_corpus, onto_name=onto_name, corpus_path=corpus_path)
         
-    def init_config(self, task_name, src_intra_onto_corpus: IntraOntoCorpus, tgt_intra_onto_corpus: IntraOntoCorpus):
-        self.corpus_dict = deepcopy(src_intra_onto_corpus.corpus_dict)
-        self.to_add_corpus_dict = deepcopy(tgt_intra_onto_corpus.corpus_dict)
+    def init_config(self, base_onto_corpus: OntologyCorpus, to_add_onto_corpus: OntologyCorpus):
+        self.corpus_dict = deepcopy(base_onto_corpus.corpus_dict)
+        self.to_add_corpus_dict = deepcopy(to_add_onto_corpus.corpus_dict)
         print("Merging the following Source and Target Ontologies ...")
         self.report(self.corpus_dict)
         self.report(self.to_add_corpus_dict)
-        self.onto_name = task_name
-        self.corpus_type = "intra-onto-pair"
         
     def create_corpus(self):
         self.corpus_dict[" corpus_info "]["num_violated"] += self.to_add_corpus_dict[" corpus_info "]["num_violated"]
         self.update_synonyms()
         self.update_nonsynonyms("soft")
         self.update_nonsynonyms("hard")
-        self.corpus_dict[" corpus_info "]["corpus_type"] =  "Intra-ontology Corpus (Pair)"
+        self.corpus_dict[" corpus_info "]["corpus_type"] =  "Merged Ontology Corpus"
         self.corpus_dict[" corpus_info "]["corpus_onto"] = self.onto_name
         self.corpus_dict[" corpus_info "]["id_synonyms"] = len(self.corpus_dict)
         print("Updated Corpora Infomation ...")

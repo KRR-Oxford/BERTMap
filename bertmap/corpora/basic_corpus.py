@@ -2,12 +2,12 @@
 Ontology Corpus superclass, it requires implementation of how to create sub-corpora.
 """
 
-import pandas as pd
 import json
 
 class OntologyCorpus:
     
-    def __init__(self, *config_args, corpus_path=None):
+    def __init__(self, *config_args, onto_name=None, corpus_path=None):
+        self.onto_name = onto_name
         if not corpus_path:
             self.init_config(*config_args)
             self.create_corpus()
@@ -23,12 +23,9 @@ class OntologyCorpus:
         raise NotImplementedError
 
     @staticmethod
-    def term_dict(hard=True):
-        if hard:
-            return {"synonyms": [], "soft_nonsynonyms": [], "hard_nonsynonyms": []}
-        else:
-            # some corpus might not define the hard nonsynonyms so that they will be empty
-            return {"synonyms": [], "nonsynonyms": []}
+    def term_dict():
+        # some corpus might not define the hard nonsynonyms so that they will be empty
+        return {"synonyms": [], "soft_nonsynonyms": [], "hard_nonsynonyms": []}
 
         
     def id_synonyms(self):

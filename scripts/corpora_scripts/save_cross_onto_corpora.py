@@ -10,6 +10,6 @@ for src, tgt in [("fma", "nci"), ("fma", "snomed"), ("snomed", "nci")]:
     tgt_onto = base + f"ontos/{tgt}2{src}.small.owl"
     tgt_labels = base + f"labels/{tgt}2{src}.small.labels.tsv"
     ref = base + f"refs/{src}2{tgt}.legal.tsv"
-    src2tgt = CrossOntoCorpus(src_onto, tgt_onto, ref, src_labels, tgt_labels, sample_rate=5)
+    src2tgt = CrossOntoCorpus(f"{src}2{tgt}", src_onto, tgt_onto, ref, src_labels, tgt_labels, sample_rate=5)
     src2tgt.save_corpus(base + "/corpora")
     # src2tgt.load_corpus(base + "/corpora")
