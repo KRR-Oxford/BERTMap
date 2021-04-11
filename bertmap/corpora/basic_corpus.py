@@ -3,6 +3,7 @@ Ontology Corpus superclass, it requires implementation of how to create sub-corp
 """
 
 import json
+import pandas as pd
 
 class OntologyCorpus:
     
@@ -27,10 +28,32 @@ class OntologyCorpus:
         # some corpus might not define the hard nonsynonyms so that they will be empty
         return {"synonyms": [], "soft_nonsynonyms": [], "hard_nonsynonyms": []}
 
-        
     def id_synonyms(self):
-        labels = list(self.corpus_dict.keys())
-        return list(zip(labels, labels))
+        labels = list(self.corpus_dict.keys())[1:]  
+        return list(zip(labels, labels, [1]*len(labels)))
+    
+    def extract_label_pairs(self):
+        synonyms = []
+        soft_nonsynonyms = []
+        hard_nonsynonyms = []
+        for term, semantic_dict in self.corpus_dict.items():
+            if term == " corpus_info ":
+                continue
+            synonyms += [(term, s, 1) for s in semantic_dict["synonyms"]]
+            soft_nonsynonyms += [(term, ns, 0) for ns in semantic_dict["soft_nonsynonyms"]]
+            hard_nonsynonyms += [(term, ns, 0) for ns in semantic_dict["hard_nonsynonyms"]]  
+            
+        return {"id_synonyms": self.id_synonyms(), "synonyms": synonyms,
+                "soft_nonsynonyms": soft_nonsynonyms, "hard_nonsynonyms": hard_nonsynonyms}
+    
+    @staticmethod
+    def backward_label_pairs(label_pairs):
+        # (label1, label2, whether_or_not_synonymous)
+        return [(y, x, s) for x, y, s in label_pairs]
+    
+    @staticmethod
+    def save_labels(label_data, save_dir_tsv):
+        pd.DataFrame(label_data, columns=["Label1", "Label2", "Synonymous"]).to_csv(save_dir_tsv, sep='\t', index=False)
     
     def negative_sample_check(self, label1, label2):
         """The negative label pair (l1, l2) must satisfy the following conditions:

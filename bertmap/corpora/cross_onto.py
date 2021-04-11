@@ -8,11 +8,12 @@ from bertmap.utils.oaei_utils import read_tsv_mappings
 from bertmap.utils import uniqify, exclude_randrange
 from collections import OrderedDict, defaultdict
 from copy import deepcopy
+from sklearn.model_selection import train_test_split
 import random
 
 class CrossOntoCorpus(OntologyCorpus):
     
-    def __init__(self, onto_name, src_onto_path, tgt_onto_path, known_mappings_tsv, 
+    def __init__(self, onto_name, src_onto_path=None, tgt_onto_path=None, known_mappings_tsv=None, 
                  src_onto_class2text_tsv=None, tgt_onto_class2text_tsv=None, 
                  properties=["label"], sample_rate=5, corpus_path=None):
         self.corpus_type = "cross-onto"
@@ -116,4 +117,27 @@ class CrossOntoCorpus(OntologyCorpus):
             self.nonsynonym_count += len(label_nonsynonyms) - existed_num
             ###### update the dictionary ######
             label_dict["soft_nonsynonyms"] = label_nonsynonyms
-            self.corpus_dict[label] = label_dict       
+            self.corpus_dict[label] = label_dict      
+            
+    def train_val_test_split(self, train_ratio=0.2, val_ratio=0.1, test_ratio=0.7, only_test=False):
+        assert train_ratio + val_ratio + test_ratio == 1.0
+        onto_labels = self.extract_label_pairs()
+        # extract cross-ontology labels
+        for_synonyms = onto_labels["synonyms"]
+        back_synonyms = self.backward_label_pairs(for_synonyms)
+        for_soft_nonsynonyms = onto_labels["soft_nonsynonyms"]
+        # use both forward and backward synonyms, sample 1 forward and 1 backward soft nonsynonyms for a synonym
+        synonyms = for_synonyms + back_synonyms
+        nonsynonyms = random.sample(for_soft_nonsynonyms, len(synonyms))
+        nonsynonyms += self.backward_label_pairs(nonsynonyms)
+        # form the label data
+        label_data = synonyms + nonsynonyms
+        label_data = uniqify(label_data)
+        random.shuffle(label_data)
+        if only_test:
+            # use the label data extracted from the reference mappings as the internal test set
+            return label_data
+        else:
+            train_val, test = train_test_split(label_data, test_size=test_ratio)
+            train, val = train_test_split(train_val, test_size=val_ratio / (train_ratio + val_ratio))
+            return train, val, test

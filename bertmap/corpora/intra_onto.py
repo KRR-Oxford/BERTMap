@@ -145,3 +145,5 @@ class IntraOntoCorpus(OntologyCorpus):
                         pos_term_dict["hard_nonsynonyms"] = pos_term_hard_nonsynonyms
                         self.corpus_dict[pos_label] = pos_term_dict
         
+    def train_val_split(self, train_ratio=0.8, val_ratio=0.2):
+        raise NotImplementedError

@@ -6,6 +6,8 @@ Ontology Corpus class that takes as input a base corpus and an additional corpus
 from bertmap.corpora import OntologyCorpus
 from bertmap.utils import uniqify
 from copy import deepcopy
+from sklearn.model_selection import train_test_split
+import random
 
 
 class MergedOntoCorpus(OntologyCorpus):
@@ -31,7 +33,6 @@ class MergedOntoCorpus(OntologyCorpus):
         self.corpus_dict[" corpus_info "]["id_synonyms"] = len(self.corpus_dict)
         print("Updated Corpora Infomation ...")
         self.report(self.corpus_dict)
-
 
     def update_synonyms(self):
         corpus_info = self.corpus_dict[" corpus_info "]
@@ -78,3 +79,37 @@ class MergedOntoCorpus(OntologyCorpus):
             self.corpus_dict[to_add_term] = term_dict
         # update the corpus_info
         self.corpus_dict[" corpus_info "] = corpus_info
+        
+    def train_val_split(self, train_ratio=0.8, val_ratio=0.2, backward=False, identity=False, only_train=False):
+        assert train_ratio + val_ratio == 1.0
+        onto_labels = self.extract_label_pairs()
+        # extract cross-ontology labels
+        synonyms = onto_labels["synonyms"]  # forward synonyms
+         
+        # for each synonym, sample a soft and a hard negative
+        # in case there are too many synonyms (especially after adding the identity synonyms)
+        # we use all the nonsynonyms available
+        soft_nonsynonyms = random.sample(onto_labels["soft_nonsynonyms"], len(synonyms)) \
+            if len(synonyms) < len(onto_labels["soft_nonsynonyms"]) else onto_labels["soft_nonsynonyms"]
+        hard_nonsynonyms = random.sample(onto_labels["hard_nonsynonyms"], len(synonyms)) \
+            if len(synonyms) < len(onto_labels["hard_nonsynonyms"]) else onto_labels["hard_nonsynonyms"]
+        
+        # add all the backward label pairs
+        if backward:
+            synonyms += self.backward_label_pairs(synonyms)
+            soft_nonsynonyms += self.backward_label_pairs(soft_nonsynonyms)
+            hard_nonsynonyms += self.backward_label_pairs(hard_nonsynonyms)
+            
+        if identity:
+            synonyms += onto_labels["id_synonyms"]  # add identity synonyms
+            
+        # form the label data
+        label_data = synonyms + soft_nonsynonyms + hard_nonsynonyms
+        label_data = uniqify(label_data)
+        random.shuffle(label_data)
+        if only_train:
+            return label_data
+        else:
+            train, val = train_test_split(label_data, test_size=val_ratio)
+            return train, val
+
