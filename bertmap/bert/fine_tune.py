@@ -2,7 +2,7 @@
 Fine-tuning BERT with ontology labels datasets
 Code inspired by: https://huggingface.co/transformers/training.html
 """
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments, EarlyStoppingCallback
 from bertmap.bert import OntoLabelDataset
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
@@ -26,6 +26,7 @@ class OntoLabelBERT:
         self.trainer = Trainer(model=self.model, args=self.training_args, 
                                train_dataset=self.train, eval_dataset=self.val, 
                                compute_metrics=self.compute_metrics)
+        self.trainer.add_callback(EarlyStoppingCallback(early_stopping_patience=10))
         
     
     @staticmethod
