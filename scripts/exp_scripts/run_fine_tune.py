@@ -9,12 +9,13 @@ import pandas as pd
 src = "fma"
 tgt = "nci"
 task = "semi-supervised"
+task_abbr = "ss"
 setting = "r"
-data_base = f"/home/yuahe/projects/BERTMap/experiment/bert_fine_tune/data/{task}/{src}2{tgt}.ss."
+data_base = f"/home/yuahe/projects/BERTMap/experiment/bert_fine_tune/data/{task}/{src}2{tgt}.{task_abbr}."
 train_path = data_base + f"train.{setting}.tsv"
-val_path = data_base + f"val.{setting}.tsv"
-test_path = data_base + f"test.{setting}.tsv"
-ckp_base = f"/home/yuahe/projects/BERTMap/experiment/bert_fine_tune/check_points/{task}/{src}2{tgt}.ss.{setting}"
+val_path = data_base + f"val.{setting}.tsv" if task == "unsupervised" else data_base + f"val.r.tsv"
+test_path = data_base + f"test.r.tsv"
+ckp_base = f"/home/yuahe/projects/BERTMap/experiment/bert_fine_tune/check_points/{task}/{src}2{tgt}.{task_abbr}.{setting}"
 logging_steps = 100
 eval_steps = 5 * logging_steps
 
