@@ -27,7 +27,7 @@ class OntoLabelBERT:
         self.trainer = Trainer(model=self.model, args=self.training_args, 
                                train_dataset=self.train, eval_dataset=self.val, 
                                compute_metrics=self.compute_metrics)
-        self.trainer.add_callback(EarlyStoppingCallback(early_stopping_patience=10))
+        # self.trainer.add_callback(EarlyStoppingCallback(early_stopping_patience=10))
         
     
     @staticmethod

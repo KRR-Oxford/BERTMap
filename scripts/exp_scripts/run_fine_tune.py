@@ -18,10 +18,11 @@ test_path = data_base + f"test.r.tsv"
 ckp_base = f"/home/yuahe/projects/BERTMap/experiment/bert_fine_tune/check_points/{task}/{src}2{tgt}.{task_abbr}.{setting}"
 logging_steps = 100
 eval_steps = 5 * logging_steps
+train_epochs = 50
 
 training_args = TrainingArguments(
     output_dir=ckp_base,          
-    num_train_epochs=50,              
+    num_train_epochs=train_epochs,              
     per_device_train_batch_size=64, 
     per_device_eval_batch_size=256,   
     warmup_steps=0,           
