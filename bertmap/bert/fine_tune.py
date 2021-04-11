@@ -9,7 +9,7 @@ from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 
 class OntoLabelBERT:
     
-    def __init__(self, pretrained_bert_path, train_path, val_path, forward_test_path, backward_test_path, training_args: TrainingArguments):
+    def __init__(self, pretrained_bert_path, train_path, val_path, test_path, training_args: TrainingArguments):
         print("Initialize BERT for Binary Classification from the Pretrained BERT model...")
         
         # BERT
@@ -19,8 +19,7 @@ class OntoLabelBERT:
         # data
         self.train = OntoLabelDataset(train_path, self.tokenizer)
         self.val = OntoLabelDataset(val_path, self.tokenizer)
-        self.forward_test = OntoLabelDataset(forward_test_path, self.tokenizer)
-        self.backward_test = OntoLabelDataset(backward_test_path, self.tokenizer)
+        self.test = OntoLabelDataset(test_path, self.tokenizer)
         
         # trainer
         self.training_args = training_args
