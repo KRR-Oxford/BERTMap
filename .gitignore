@@ -303,16 +303,8 @@ fabric.properties
 *.code-workspace
 
 # Customized
-*data/*
-!*data/references
-demo/
-rdf_template/
-pretrained_bert/
-test.*
-largebio_exp_old
-largebio_exp/**/*.tsv
+data/
 testing/
 *pt
-!*data/onto_labels
-exp*/
+experiment/
 !scripts/*
