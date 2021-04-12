@@ -2,9 +2,11 @@
 Fine-tuning BERT with ontology labels datasets
 Code inspired by: https://huggingface.co/transformers/training.html
 """
+from os import stat
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments, EarlyStoppingCallback
 from bertmap.bert import OntoLabelDataset
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
+from typing import Optional
 
 
 class OntoLabelBERT:
@@ -28,7 +30,7 @@ class OntoLabelBERT:
                                train_dataset=self.train, eval_dataset=self.val, 
                                compute_metrics=self.compute_metrics)
         if early_stop:
-            self.trainer.add_callback(EarlyStoppingCallback(early_stopping_patience=10))
+            self.trainer.add_callback(MyEarlyStoppingCallback(early_stopping_patience=5))
         
     
     @staticmethod
@@ -43,3 +45,14 @@ class OntoLabelBERT:
             # 'precision': precision,
             # 'recall': recall
         }
+        
+        
+# Inherit the callback class to print the early stopping states
+class MyEarlyStoppingCallback(EarlyStoppingCallback):
+    
+    def __init__(self, early_stopping_patience: int = 1, early_stopping_threshold: Optional[float] = 0.0):
+        super().__init__(early_stopping_patience=early_stopping_patience, early_stopping_threshold=early_stopping_threshold)
+                
+    def on_evaluate(self, args, state, control, metrics, **kwargs):
+        super().on_evaluate(args, state, control, metrics, **kwargs)
+        print(f"\n[Early stopping status]: {self.early_stopping_patience_counter}/{self.early_stopping_patience}")

@@ -21,9 +21,9 @@ train_path = data_base + f"train.{setting}.tsv"
 val_path = data_base + f"val.{setting}.tsv" if task == "unsupervised" else data_base + f"val.r.tsv"
 test_path = data_base + f"test.r.tsv"
 ckp_base = f"{main_dir}/experiment/bert_fine_tune/check_points/{task}/{src}2{tgt}.{task_abbr}.{setting}"
-logging_steps = 200
+logging_steps = 100
 eval_steps = 5 * logging_steps
-train_epochs = int(sys.argv[3])  # for plain r setting, I think it should set to 20 epochs, but for others with big data, 10 epochs is enough.
+train_epochs = 30  # for plain r setting, I think it should set to 20 epochs, but for others with big data, 10 epochs is enough.
 
 training_args = TrainingArguments(
     output_dir=ckp_base,          
