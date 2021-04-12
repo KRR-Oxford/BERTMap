@@ -6,12 +6,14 @@ from bertmap.utils import get_device, set_seed
 from transformers import TrainingArguments
 import json
 
+task_dict = {"ss": "semi-supervised", "us": "unsupervised"}
+
 # configurations
 src = "fma"
 tgt = "nci"
-task = "semi-supervised"
 task_abbr = sys.argv[1]
 assert task_abbr == "ss" or task_abbr == "us"
+task = task_dict[task_abbr]
 setting = sys.argv[2]
 assert setting in ["f", "f+b", "f+b+i", "r", "f+r", "f+b+r", "f+b+i+r"]
 data_base = f"{main_dir}/experiment/bert_fine_tune/data/{task}/{src}2{tgt}.{task_abbr}."
@@ -19,15 +21,15 @@ train_path = data_base + f"train.{setting}.tsv"
 val_path = data_base + f"val.{setting}.tsv" if task == "unsupervised" else data_base + f"val.r.tsv"
 test_path = data_base + f"test.r.tsv"
 ckp_base = f"{main_dir}/experiment/bert_fine_tune/check_points/{task}/{src}2{tgt}.{task_abbr}.{setting}"
-logging_steps = 100
+logging_steps = 200
 eval_steps = 5 * logging_steps
-train_epochs = 30
+train_epochs = int(sys.argv[3])  # for plain r setting, I think it should set to 20 epochs, but for others with big data, 10 epochs is enough.
 
 training_args = TrainingArguments(
     output_dir=ckp_base,          
     num_train_epochs=train_epochs,              
     per_device_train_batch_size=32, 
-    per_device_eval_batch_size=1024,   
+    per_device_eval_batch_size=512,   
     warmup_steps=0,           
     weight_decay=0.01,   
     logging_steps=logging_steps,
@@ -48,7 +50,7 @@ set_seed(888)
 # with open(f"{ckp_base}/train.log", "w") as log:
 #     with redirect_stdout(log):
 # fine-tuning 
-fine_tune = OntoLabelBERT("emilyalsentzer/Bio_ClinicalBERT", train_path, val_path, test_path, training_args)
+fine_tune = OntoLabelBERT("emilyalsentzer/Bio_ClinicalBERT", train_path, val_path, test_path, training_args, early_stop=True)
 fine_tune.trainer.train()
 # evaluation on test set
 test_results = fine_tune.trainer.evaluate(fine_tune.test)
