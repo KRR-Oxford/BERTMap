@@ -20,7 +20,7 @@ class OntoLabelBERT:
         self.train = OntoLabelDataset(train_path, self.tokenizer)
         self.val = OntoLabelDataset(val_path, self.tokenizer)
         self.test = OntoLabelDataset(test_path, self.tokenizer)
-        print(f"[# Train]: {self.train.__len__()}, [# Val]: {self.val.__len__()}, [# Test]: {self.test.__len__()}")
+        print(f"[# Train]: {len(self.train)}, [# Val]: {len(self.val)}, [# Test]: {len(self.test)}")
         
         # trainer
         self.training_args = training_args
