@@ -307,4 +307,5 @@ data/
 testing/
 *pt
 experiment/
-!scripts/*
+scripts/*/test*
+

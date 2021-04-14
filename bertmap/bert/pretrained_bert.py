@@ -1,18 +1,25 @@
 """
 Pretrained BERT and its variants from Pytorch-based Huggingface Library.
 """
-from transformers import AutoModel, AutoTokenizer
+from transformers import AutoModel, AutoTokenizer, AutoModelForSequenceClassification
 from typing import List
 import torch
 
-
 class PretrainedBERT:
 
-    def __init__(self, pretrained_path="emilyalsentzer/Bio_ClinicalBERT"):
+    def __init__(self, pretrained_path="emilyalsentzer/Bio_ClinicalBERT", tokenizer_path=None, with_classifier=False):
         print("Load the Pretrained BERT model...")
-        self.model = AutoModel.from_pretrained(pretrained_path, output_hidden_states=True)
-        self.tokenizer = AutoTokenizer.from_pretrained(pretrained_path)
-        self.model.eval()
+        
+        if not tokenizer_path:
+            tokenizer_path = pretrained_path
+            
+        if not with_classifier:
+            self.model = AutoModel.from_pretrained(pretrained_path, output_hidden_states=True)
+        else:
+            self.model = AutoModelForSequenceClassification.from_pretrained(pretrained_path, output_hidden_states=True)
+            
+        self.model.eval()    
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
 
     def tokenize(self, sent: str):
         input_ids = self.tokenizer(sent)["input_ids"]
@@ -53,3 +60,4 @@ class PretrainedBERT:
         """Take the [cls] token embedding of specified layer as the sentence embedding"""
         batch_word_embeds, _ = self.batch_word_embeds(sents, neg_layer_num=neg_layer_num)  # (batch_size, sent_len, hid_dim)
         return batch_word_embeds[:, 0, :]  # (batch_size, hid_dim)
+    

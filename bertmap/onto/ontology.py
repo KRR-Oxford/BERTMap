@@ -9,6 +9,7 @@ import pandas as pd
 import xml.etree.ElementTree as ET
 from bertmap.utils import batch_split
 import itertools
+import math
 
 class Ontology:
 
@@ -101,3 +102,31 @@ class Ontology:
             if len(onto_uris) == len(uri_tags):
                 break
         return onto_uris
+    
+
+    # Get te maximum depth of a class to the root
+    @classmethod
+    def depth_max(cls, c):
+        supclasses = owlready2.super_classes(c=c)
+        if len(supclasses) == 0:
+            return 0
+        d_max = 0
+        for super_c in supclasses:
+            super_d = cls.depth_max(c=super_c)
+            if super_d > d_max:
+                d_max = super_d
+        return d_max + 1
+
+
+    # Get te minimum depth of a class to the root
+    @classmethod
+    def depth_min(cls, c):
+        supclasses = owlready2.super_classes(c=c)
+        if len(supclasses) == 0:
+            return 0
+        d_min = math.inf
+        for super_c in supclasses:
+            super_d = cls.depth_min(c=super_c)
+            if super_d < d_min:
+                d_min = super_d
+        return d_min + 1
