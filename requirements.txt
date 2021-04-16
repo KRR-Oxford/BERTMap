@@ -235,10 +235,10 @@ toml @ file:///tmp/build/80754af9/toml_1592853716807/work
 toolz @ file:///tmp/build/80754af9/toolz_1601054250827/work
 torch>=1.8.1
 torchaudio>=0.8.0a0+a751e1d
-torchtext==0.9.1
-torchvision==0.9.0
-tornado==6.0.4
-tqdm==4.49.0
+torchtext>=0.9.1
+torchvision>=0.9.0
+tornado>=6.0.4
+tqdm>=4.49.0
 traitlets @ file:///tmp/build/80754af9/traitlets_1602787416690/work
 transformers==4.3.3
 typing-extensions @ file:///tmp/build/80754af9/typing_extensions_1598376058250/work
