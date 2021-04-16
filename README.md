@@ -1,5 +1,25 @@
 # BERTMap
 
+### Dependencies
+
+1. Install the latest version of Pytorch:
+  ```
+  conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch
+  ```
+2. Install Cython before Owlready2:
+  ```
+  pip install Cython  # the optimized parser of owlready2 relies on Cython
+  pip install Owlready2
+  ```
+3. Install Tensorboard (Optional):
+  ```
+  pip install tensorboard
+  ```
+4. Install the packages specified in ``requirements.txt`` after finishing Step 1-3.
+  ```
+  pip install -r requirements.txt
+  ```
+
 ### Code and Data Management
 
 Data and Experiment files are available at [here](https://drive.google.com/drive/folders/11_Dj6f7MN3pTKkWUUAKnY-vTWh4mMOdE?usp=sharing).
