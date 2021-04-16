@@ -34,7 +34,6 @@ colorama @ file:///tmp/build/80754af9/colorama_1603211150991/work
 contextlib2==0.6.0.post1
 cryptography @ file:///tmp/build/80754af9/cryptography_1601046815590/work
 cycler==0.10.0
-Cython @ file:///tmp/build/80754af9/cython_1594831566883/work
 cytoolz==0.11.0
 dask @ file:///tmp/build/80754af9/dask-core_1602083700509/work
 datasets==1.5.0
@@ -133,7 +132,6 @@ oauth2client==4.1.3
 oauthlib==3.1.0
 olefile==0.46
 openpyxl @ file:///tmp/build/80754af9/openpyxl_1598113097404/work
-Owlready2==0.28
 packaging==20.4
 pandas @ file:///tmp/build/80754af9/pandas_1602088120436/work
 pandocfilters @ file:///tmp/build/80754af9/pandocfilters_1605120460739/work
