@@ -18,7 +18,7 @@ from bertmap.bert import PretrainedBERT
 from sklearn.metrics.pairwise import cosine_similarity
 import torch
 
-class DirectBERTMapping(DirectSearchMapping):
+class DirectBERTEmbedsMapping(DirectSearchMapping):
     
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
                  src_onto_class2text_tsv, tgt_onto_class2text_tsv, save_path, 
@@ -26,8 +26,8 @@ class DirectBERTMapping(DirectSearchMapping):
                  src_batch_size=10000, tgt_batch_size=10000,
                  task_suffix="small", name="bc-mean", 
                  bert_path="emilyalsentzer/Bio_ClinicalBERT"):
-        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_class2text_tsv, tgt_onto_class2text_tsv, save_path, 
-                         task_suffix=task_suffix, name=name)
+        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_class2text_tsv, 
+                         tgt_onto_class2text_tsv, save_path, task_suffix=task_suffix, name=name)
         self.src_batch_size = src_batch_size
         self.tgt_batch_size = tgt_batch_size
         self.bert = PretrainedBERT(bert_path)

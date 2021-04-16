@@ -1,3 +1,4 @@
 from bertmap.map.direct_search.direct_search_map import DirectSearchMapping
-from bertmap.map.direct_search.direct_bert_map import DirectBERTMapping
+from bertmap.map.direct_search.direct_bert_embeds_map import DirectBERTEmbedsMapping
 from bertmap.map.direct_search.direct_nes_map import DirectNESMapping
+from bertmap.map.direct_search.direct_bert_classifier_map import DirectBERTClassifierMapping

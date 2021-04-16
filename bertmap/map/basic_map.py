@@ -25,7 +25,7 @@ class OntoMapping:
         self.name = name
         self.save_path = save_path
         
-        # onto lexicon data
+        # onto text data
         self.src_onto_class2text_path = src_onto_class2text_tsv
         self.src_onto_class2text = Ontology.load_class2text(self.src_onto_class2text_path)
         self.tgt_onto_class2text_path = tgt_onto_lexicon_tsv
