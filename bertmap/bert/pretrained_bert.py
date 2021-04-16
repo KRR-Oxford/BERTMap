@@ -17,7 +17,7 @@ class PretrainedBERT:
             self.model = AutoModel.from_pretrained(pretrained_path, output_hidden_states=True)
         else:
             self.model = AutoModelForSequenceClassification.from_pretrained(pretrained_path, output_hidden_states=True)
-            
+        
         self.model.eval()    
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
 
