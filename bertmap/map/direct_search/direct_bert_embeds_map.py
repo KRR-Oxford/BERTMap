@@ -75,7 +75,7 @@ class DirectBERTEmbedsMapping(DirectSearchMapping):
         assert flag == "SRC" or flag == "TGT"
         from_batch_embeds = self.src_embeds[from_batch.index] if flag == "SRC" else self.tgt_embeds[from_batch.index]
         to_embeds = self.tgt_embeds if flag == "SRC" else self.src_embeds
-        to_onto_lexicon = self.tgt_onto_class2text if flag == "SRC" else self.src_onto_class2text
+        to_onto_class2text = self.tgt_onto_class2text if flag == "SRC" else self.src_onto_class2text
         
         max_scores_list = []
         argmax_scores_list = []
@@ -97,4 +97,4 @@ class DirectBERTEmbedsMapping(DirectSearchMapping):
         batch_max_scores, batch_argmax_scores_inds = batch_max_scores_all.max(axis=0)  # value, indices
         # select the to-entity indices according the final argmax scores
         batch_argmax_scores = torch.gather(batch_argmax_scores_all, dim=0, index=batch_argmax_scores_inds.unsqueeze(0).repeat(j, 1))[0]
-        return list(to_onto_lexicon["Class-IRI"].iloc[list(batch_argmax_scores.numpy())]), batch_max_scores
+        return list(to_onto_class2text["Class-IRI"].iloc[list(batch_argmax_scores.numpy())]), batch_max_scores

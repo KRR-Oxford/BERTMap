@@ -2,6 +2,7 @@ from bertmap.map.direct_search import DirectSearchMapping
 from bertmap.bert import PretrainedBERT
 from bertmap.onto import Ontology
 import torch
+import time
 
 class DirectBERTClassifierMapping(DirectSearchMapping):
     
@@ -32,16 +33,20 @@ class DirectBERTClassifierMapping(DirectSearchMapping):
     def fixed_one_side_alignment(self, flag="SRC"):
         from_onto_class2text_path, to_onto_class2text_path, mappings = self.align_config(flag=flag)
         from_onto_class2text = Ontology.load_class2text(from_onto_class2text_path)
+        to_onto_class2text = Ontology.load_class2text(to_onto_class2text_path)
         for i, dp in from_onto_class2text.iterrows():
             to_batch_generator = Ontology.class2text_batch_generator(to_onto_class2text_path, batch_size=self.batch_size)
-            nbest_dict = self.batch_alignment(dp["Class-Text"], to_batch_generator, flag=flag)
-            return nbest_dict
+            nbest_results = self.batch_alignment(dp["Class-Text"], to_batch_generator, flag=flag)
+            for to_class_ind, mapping_score in nbest_results:
+                to_class_iri = to_onto_class2text.iloc[to_class_ind]["Class-IRI"]
+                print(to_class_iri)
+            return nbest_results
             
     def batch_alignment(self, from_class_text, to_batch_generator, flag="SRC"):
         from_labels, from_len = Ontology.parse_class_text(from_class_text)
         j = 0
         nbest_scores_list = []
-        nbest_indicees_list = []
+        nbest_indices_list = []
         for to_batch in to_batch_generator:
             batch_label_pairs = []
             batch_lens = []
@@ -53,24 +58,20 @@ class DirectBERTClassifierMapping(DirectSearchMapping):
             # compute the classification scores
             batch_scores = self.classifier(batch_label_pairs)
             pooled_batch_scores = self.batch_pooling(batch_scores, batch_lens)
-            print(len(pooled_batch_scores))
             nbest_scores, nbest_indices = torch.topk(pooled_batch_scores, k=self.nbest)
-            nbest_indices += j * len(to_batch)
+            nbest_indices += j * self.batch_size
             nbest_scores_list.append(nbest_scores)
-            nbest_indicees_list.append(nbest_indices)
-        batch_nbest_scores, batch_nbest_indices = torch.topk(torch.stack(nbest_scores_list), k=self.nbest)
-        return batch_nbest_scores, batch_nbest_indices
+            nbest_indices_list.append(nbest_indices)
+            j += 1
+        final_nbest_scores, final_nbest_indices = torch.topk(torch.cat(nbest_scores_list), k=self.nbest)
+        final_nbest_indices = torch.cat(nbest_indices_list)[final_nbest_indices]
+        return list(zip(final_nbest_indices.detach().numpy(), final_nbest_scores.detach().numpy()))
             
             
     def batch_pooling(self, batch_scores, batch_lens):
+        seq_of_scores = torch.split(batch_scores, split_size_or_sections=batch_lens)
         assert self.strategy == "mean" or self.strategy == "max"
         pooling_fn = torch.max if self.strategy == "max" else torch.mean
-        start = 0
-        pooled_batch_scores = []
-        for l in batch_lens:
-            end = start + l
-            pooled_batch_scores.append(pooling_fn(batch_scores[start: end]))
-            start = end
-        assert len(pooled_batch_scores) == len(batch_lens)
+        pooled_batch_scores = [pooling_fn(chunk) for chunk in seq_of_scores]
         return torch.stack(pooled_batch_scores)
             
