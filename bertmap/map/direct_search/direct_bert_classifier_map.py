@@ -76,7 +76,7 @@ class DirectBERTClassifierMapping(DirectSearchMapping):
             self.log_print(f"[batch {j}] pooling time: {t3 - t2}")
             nbest_scores, nbest_indices = torch.topk(pooled_batch_scores, k=self.nbest)
             nbest_indices += j * self.batch_size
-            print(nbest_scores.shape)
+            # print(nbest_scores.shape)
             nbest_scores_list.append(nbest_scores)
             nbest_indices_list.append(nbest_indices)
             j += 1
