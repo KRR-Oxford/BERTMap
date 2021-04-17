@@ -1,14 +1,10 @@
-main_dir = "/home/yuahe/projects/BERTMap"
+main_dir = "/home/lawhy0729/BERTMap"
 import sys
 sys.path.append(main_dir)
 import pandas as pd
-from bertmap.bert import PretrainedBERT
 from bertmap.onto import Ontology, OntoEvaluator
 from bertmap.map.direct_search import DirectBERTClassifierMapping
-from bertmap.utils import get_device
-from bertmap.corpora import CrossOntoCorpus
 import torch
-import time
  
 torch.cuda.empty_cache()
 
@@ -28,11 +24,11 @@ tgt_label_path = main_dir + f"/data/largebio/labels/{tgt}2{src}.small.labels.tsv
 
 # pre_bert = PretrainedBERT(pretrained_path=ckp_base, tokenizer_path="emilyalsentzer/Bio_ClinicalBERT", fine_tuned=False)
 bert_map = DirectBERTClassifierMapping(src, tgt, src_label_path, tgt_label_path, 
-                                       save_path=ckp_base + "/../trial", batch_size=3, 
+                                       save_path=ckp_base + "/../trial", batch_size=-1, 
                                        nbest=2, task_suffix="small", name="bc-tuned-mean", 
                                        bert_path=ckp_base, tokenizer_path="emilyalsentzer/Bio_ClinicalBERT")
 
-bert_map.batch_size = 800
+bert_map.batch_size = 72
 bert_map.strategy = "mean"
 bert_map.fixed_one_side_alignment(flag="SRC")
 bert_map.src2tgt_mappings.to_csv(main_dir + f"/{src}2{tgt}_mappings.tsv")

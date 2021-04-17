@@ -73,7 +73,7 @@ class DirectBERTClassifierMapping(DirectSearchMapping):
                 nbest_indices += j * self.batch_size
                 nbest_scores_list.append(nbest_scores.cpu())
                 nbest_indices_list.append(nbest_indices.cpu())
-            self.log_print(f"[batch {j}] current time: {time.time() - self.start_time}")
+            # print(f"[batch {j}] current time: {time.time() - self.start_time}")
             j += 1
         final_nbest_scores, final_nbest_indices = torch.topk(torch.cat(nbest_scores_list), k=self.nbest)
         final_nbest_indices = torch.cat(nbest_indices_list)[final_nbest_indices]
