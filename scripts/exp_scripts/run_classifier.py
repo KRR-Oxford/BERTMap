@@ -1,4 +1,4 @@
-main_dir = "/home/lawhy0729/BERTMap"
+main_dir = "/home/yuahe/projects/BERTMap"
 import sys
 sys.path.append(main_dir)
 import pandas as pd
@@ -32,7 +32,7 @@ bert_map = DirectBERTClassifierMapping(src, tgt, src_label_path, tgt_label_path,
                                        nbest=2, task_suffix="small", name="bc-tuned-mean", 
                                        bert_path=ckp_base, tokenizer_path="emilyalsentzer/Bio_ClinicalBERT")
 
-bert_map.batch_size = 32
+bert_map.batch_size = 800
 bert_map.strategy = "mean"
 bert_map.fixed_one_side_alignment(flag="SRC")
 bert_map.src2tgt_mappings.to_csv(main_dir + f"/{src}2{tgt}_mappings.tsv")

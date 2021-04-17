@@ -2,7 +2,6 @@ from bertmap.map.direct_search import DirectSearchMapping
 from bertmap.bert import PretrainedBERT
 from bertmap.onto import Ontology
 from bertmap.utils import get_device
-from transformers import TextClassificationPipeline
 import torch
 import time
 
@@ -36,6 +35,7 @@ class DirectBERTClassifierMapping(DirectSearchMapping):
         return from_onto_class2text_path, to_onto_class2text_path, mappings
     
     def fixed_one_side_alignment(self, flag="SRC"):
+        self.start_time = time.time()
         from_onto_class2text_path, to_onto_class2text_path, mappings = self.align_config(flag=flag)
         from_onto_class2text = Ontology.load_class2text(from_onto_class2text_path)
         to_onto_class2text = Ontology.load_class2text(to_onto_class2text_path)
@@ -63,26 +63,21 @@ class DirectBERTClassifierMapping(DirectSearchMapping):
                 batch_label_pairs += [[from_label, to_label] for to_label in to_labels for from_label in from_labels]
                 batch_lens.append(to_len * from_len)
             # compute the classification scores
-            t1 = time.time()
             with torch.no_grad():
                 model_inputs_dict = self.tokenize(batch_label_pairs)
                 for k in model_inputs_dict.keys():
                     model_inputs_dict[k] = model_inputs_dict[k].to(self.device)
                 batch_scores = self.classifier(model_inputs_dict)
-            t2 = time.time()
-            self.log_print(f"[batch {j}] classification time: {t2 - t1}")
-            pooled_batch_scores = self.batch_pooling(batch_scores, batch_lens)
-            t3 = time.time()
-            self.log_print(f"[batch {j}] pooling time: {t3 - t2}")
-            nbest_scores, nbest_indices = torch.topk(pooled_batch_scores, k=self.nbest)
-            nbest_indices += j * self.batch_size
-            # print(nbest_scores.shape)
-            nbest_scores_list.append(nbest_scores)
-            nbest_indices_list.append(nbest_indices)
+                pooled_batch_scores = self.batch_pooling(batch_scores, batch_lens)
+                nbest_scores, nbest_indices = torch.topk(pooled_batch_scores, k=self.nbest)
+                nbest_indices += j * self.batch_size
+                nbest_scores_list.append(nbest_scores.cpu())
+                nbest_indices_list.append(nbest_indices.cpu())
+            self.log_print(f"[batch {j}] current time: {time.time() - self.start_time}")
             j += 1
         final_nbest_scores, final_nbest_indices = torch.topk(torch.cat(nbest_scores_list), k=self.nbest)
         final_nbest_indices = torch.cat(nbest_indices_list)[final_nbest_indices]
-        print(time.time())
+        self.log_print(f"[Last batch] current time: {time.time() - self.start_time}")
         return list(zip(final_nbest_indices.detach().numpy(), final_nbest_scores.detach().numpy()))
             
             
