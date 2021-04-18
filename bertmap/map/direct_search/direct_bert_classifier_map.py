@@ -40,8 +40,9 @@ class DirectBERTClassifierMapping(DirectSearchMapping):
         from_onto_class2text = Ontology.load_class2text(from_onto_class2text_path)
         to_onto_class2text = Ontology.load_class2text(to_onto_class2text_path)
         for i, dp in from_onto_class2text.iterrows():
-            to_batch_generator = Ontology.class2text_batch_generator(to_onto_class2text_path, batch_size=self.batch_size)
-            nbest_results = self.batch_alignment(dp["Class-Text"], to_batch_generator, flag=flag)
+            from_labels, from_len = Ontology.parse_class_text(dp["Class-Text"])
+            to_batch_generator = Ontology.class2text_batch_generator(to_onto_class2text_path, batch_size=self.batch_size // from_len)
+            nbest_results = self.batch_alignment(from_labels, from_len, to_batch_generator, self.batch_size // from_len, flag=flag)
             for to_class_ind, mapping_score in nbest_results:
                 to_class_iri = to_onto_class2text.iloc[to_class_ind]["Class-IRI"]
                 mappings.iloc[i] = [dp["Class-IRI"], to_class_iri, mapping_score] if flag == "SRC" \
@@ -49,11 +50,10 @@ class DirectBERTClassifierMapping(DirectSearchMapping):
                 self.log_print(f"[{self.name}][{flag}: {self.src}][#Entity: {i}][Mapping: {list(mappings.iloc[i])}]" if flag == "SRC" \
                     else f"[{self.name}][{flag}: {self.tgt}][#Entity: {i}][Mapping: {list(mappings.iloc[i])}]")
             
-    def batch_alignment(self, from_class_text, to_batch_generator, flag="SRC"):
-        from_labels, from_len = Ontology.parse_class_text(from_class_text)
+    def batch_alignment(self, from_labels, from_len, to_batch_generator, to_batch_size, flag="SRC"):
         j = 0
-        nbest_scores_list = []
-        nbest_indices_list = []
+        batch_nbest_scores = torch.tensor([-1] * self.nbest).to(self.device)
+        batch_nbest_indices = torch.tensor([-1] * self.nbest).to(self.device)
         for to_batch in to_batch_generator:
             batch_label_pairs = []
             batch_lens = []
@@ -70,15 +70,14 @@ class DirectBERTClassifierMapping(DirectSearchMapping):
                 batch_scores = self.classifier(model_inputs_dict)
                 pooled_batch_scores = self.batch_pooling(batch_scores, batch_lens)
                 nbest_scores, nbest_indices = torch.topk(pooled_batch_scores, k=self.nbest)
-                nbest_indices += j * self.batch_size
-                nbest_scores_list.append(nbest_scores.cpu())
-                nbest_indices_list.append(nbest_indices.cpu())
-            # print(f"[batch {j}] current time: {time.time() - self.start_time}")
-            j += 1
-        final_nbest_scores, final_nbest_indices = torch.topk(torch.cat(nbest_scores_list), k=self.nbest)
-        final_nbest_indices = torch.cat(nbest_indices_list)[final_nbest_indices]
+                nbest_indices += j * to_batch_size
+                # we do the substituion for every batch to prevent from memory overflow
+                batch_nbest_scores, temp_indices = torch.topk(torch.cat([batch_nbest_scores, nbest_scores]), k=self.nbest)
+                batch_nbest_indices = torch.cat([batch_nbest_indices, nbest_indices])[temp_indices]
+                # print(f"[batch {j}] current time: {time.time() - self.start_time}")
+                j += 1
         self.log_print(f"[Last batch] current time: {time.time() - self.start_time}")
-        return list(zip(final_nbest_indices.detach().numpy(), final_nbest_scores.detach().numpy()))
+        return list(zip(batch_nbest_indices.cpu().detach().numpy(), batch_nbest_scores.cpu().detach().numpy()))
             
             
     def batch_pooling(self, batch_scores, batch_lens):

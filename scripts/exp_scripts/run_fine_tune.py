@@ -1,4 +1,4 @@
-main_dir = "C:/Users/lawhy/Work/Oxford-SRUK-OntoAlign/BERTMap"
+main_dir = "/home/lawhy0729/BERTMap"
 import sys
 sys.path.append(main_dir)
 from bertmap.bert import OntoLabelBERT
