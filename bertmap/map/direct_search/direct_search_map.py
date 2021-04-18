@@ -33,8 +33,15 @@ class DirectSearchMapping(OntoMapping):
         self.combined_mappings = None
         
     def alignment(self):
+        # fix SRC side
         self.fixed_one_side_alignment("SRC")
+        self.src2tgt_mappings.to_csv(f"{self.save_path}/src2tgt.{self.src}2{self.tgt}.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')
+        # fix TGT side
         self.fixed_one_side_alignment("TGT")
+        self.tgt2src_mappings.to_csv(f"{self.save_path}/tgt2src.{self.src}2{self.tgt}.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')
+        # generate combined mappings
+        self.combined_mappings = self.src2tgt_mappings.append(self.tgt2src_mappings).drop_duplicates().dropna()
+        self.combined_mappings.to_csv(f"{self.save_path}/combined.{self.src}2{self.tgt}.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')
         
     def align_config(self, flag="SRC"):
         """Configurations for swithcing the fixed ontology side."""
@@ -42,9 +49,3 @@ class DirectSearchMapping(OntoMapping):
     
     def fixed_one_side_alignment(self, flag="SRC"):
         raise NotImplementedError
-        
-    def save(self):
-        self.combined_mappings = self.src2tgt_mappings.append(self.tgt2src_mappings).drop_duplicates().dropna()
-        self.src2tgt_mappings.to_csv(f"{self.save_path}/src2tgt.{self.src}2{self.tgt}.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')
-        self.tgt2src_mappings.to_csv(f"{self.save_path}/tgt2src.{self.src}2{self.tgt}.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')
-        self.combined_mappings.to_csv(f"{self.save_path}/combined.{self.src}2{self.tgt}.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')

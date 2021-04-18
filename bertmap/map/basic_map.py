@@ -44,9 +44,6 @@ class OntoMapping:
     
     def alignment(self):
         raise NotImplementedError
-    
-    def save(self):
-        raise NotImplementedError
         
     @staticmethod
     def evaluate(pre_tsv, ref_tsv, except_tsv=None, task_name = "0", threshold=0.0):
