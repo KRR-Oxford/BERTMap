@@ -1,9 +1,9 @@
-"""Direct Search Mapping Generation on using Pretrained/Fine-tuned BERT with various pooling strategies and cosine-similarity:
+"""Mapping Generation on using Pretrained/Fine-tuned BERT with various pooling strategies and cosine-similarity:
 
     Batched Algorithm with Divide and Conquer Design:
     
         [Fix the source side] 
-            For each *source batch* of entities, compute the Value for the source batch against *each target batch* (divide),
+            For each *source batch* of classes, compute the Value for the source batch against *each target batch* (divide),
             merge the output Value(s) (conquer) to finalize the mappings for current source batch.
             
         [Fix the target side]
@@ -13,12 +13,12 @@
 """
 
 from bertmap.onto import Ontology
-from bertmap.map.direct_search import DirectSearchMapping
+from bertmap.map import OntoMapping
 from bertmap.bert import PretrainedBERT
 from sklearn.metrics.pairwise import cosine_similarity
 import torch
 
-class DirectBERTEmbedsMapping(DirectSearchMapping):
+class BERTEmbedsMapping(OntoMapping):
     
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
                  src_onto_class2text_tsv, tgt_onto_class2text_tsv, save_path, 

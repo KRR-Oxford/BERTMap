@@ -50,8 +50,8 @@ class Ontology:
         return pd.read_csv(class2text_file, sep="\t", na_values=cls.na_vals, keep_default_na=False)
     
     @classmethod
-    def class2text_batch_generator(cls, class2text_file: str, batch_size: int):
-        class2text_df = cls.load_class2text(class2text_file)
+    def class2text_batch_generator(cls, class2text_file, batch_size: int):
+        class2text_df = cls.load_class2text(class2text_file) if type(class2text_file) is str else class2text_file
         index_splits = batch_split(batch_size, max_num=len(class2text_df))
         for split in index_splits:
             yield class2text_df.iloc[split]
