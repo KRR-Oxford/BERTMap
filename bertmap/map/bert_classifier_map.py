@@ -1,7 +1,7 @@
 from bertmap.map import OntoMapping
 from bertmap.bert import PretrainedBERT
 from bertmap.onto import Ontology
-from bertmap.utils import get_device
+from bertmap.utils import get_device, insert_row
 import torch
 import time
 
@@ -30,29 +30,35 @@ class BERTClassifierMapping(OntoMapping):
         to_onto_class2text_path = self.tgt_onto_class2text_path
         from_index = self.src_index
         to_index = self.tgt_index
-        mappings = self.src2tgt_mappings
+        map_name = "src2tgt_mappings"
         if flag == "TGT":
             from_onto_class2text_path, to_onto_class2text_path = to_onto_class2text_path, from_onto_class2text_path
             from_index, to_index = to_index, from_index
-            mappings = self.tgt2src_mappings
-        return from_onto_class2text_path, to_onto_class2text_path, from_index, to_index, mappings
+            map_name = "tgt2src_mappings"
+        return from_onto_class2text_path, to_onto_class2text_path, from_index, to_index, map_name
     
-    def fixed_one_side_alignment(self, flag="SRC"):
+    def fixed_one_side_alignment(self, flag="SRC", start=0):
         self.start_time = time.time()
-        from_onto_class2text_path, to_onto_class2text_path, from_index, to_index, mappings = self.align_config(flag=flag)
+        from_onto_class2text_path, to_onto_class2text_path, _, to_index, map_name = self.align_config(flag=flag)
         from_onto_class2text = Ontology.load_class2text(from_onto_class2text_path)
         to_onto_class2text = Ontology.load_class2text(to_onto_class2text_path)
         for i, dp in from_onto_class2text.iterrows():
+            if i < start:
+                continue
             from_labels, from_len = Ontology.parse_class_text(dp["Class-Text"])
             search_space = to_onto_class2text if not to_index else self.select_candidates(dp["Class-Text"], flag=flag)
-            to_batch_generator = Ontology.class2text_batch_generator(search_space, batch_size=self.batch_size // from_len)
-            nbest_results = self.batch_alignment(from_labels, from_len, to_batch_generator, self.batch_size // from_len, flag=flag)
+            if len(search_space) == 0:
+                print("No candidates available for for current entity ...")
+                continue
+            to_batch_size = max(self.batch_size // from_len, self.nbest + 5)  # normalize the batch size to prevent memory overflow while preserving the KTop functionality
+            to_batch_generator = Ontology.class2text_batch_generator(search_space, batch_size=to_batch_size)
+            nbest_results = self.batch_alignment(from_labels, from_len, to_batch_generator, to_batch_size, flag=flag)
             for to_class_ind, mapping_score in nbest_results:
                 to_class_iri = search_space.iloc[to_class_ind]["Class-IRI"]
-                mappings.iloc[i] = [dp["Class-IRI"], to_class_iri, mapping_score] if flag == "SRC" \
-                    else [to_class_iri, dp["Class-IRI"], mapping_score]
-                self.log_print(f"[{self.name}][{flag}: {self.src}][#Entity: {i}][Mapping: {list(mappings.iloc[i])}]" if flag == "SRC" \
-                    else f"[{self.name}][{flag}: {self.tgt}][#Entity: {i}][Mapping: {list(mappings.iloc[i])}]")
+                result = [dp["Class-IRI"], to_class_iri, mapping_score] if flag == "SRC" else [to_class_iri, dp["Class-IRI"], mapping_score]
+                setattr(self, map_name, insert_row(getattr(self, map_name), result))
+                print_flag = f"{flag}: {self.src}" if flag == "SRC" else f"{flag}: {self.tgt}"
+                self.log_print(f"[{self.name}][{print_flag}][#Class: {i}][Mapping: {result}]")
             
     def batch_alignment(self, from_labels, from_len, to_batch_generator, to_batch_size, flag="SRC"):
         j = 0

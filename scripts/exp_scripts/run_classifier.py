@@ -16,7 +16,7 @@ task_abbr = sys.argv[3]  # us or ss
 task = task_dict[task_abbr]
 setting = sys.argv[4]  # f, f+b ...
 best_ckp = 37000
-ckp_base = f"{main_dir}/experiment/bert_fine_tune/check_points/{task}/{src}2{tgt}.{task_abbr}.{setting}/checkpoint-{best_ckp}"
+ckp_base = f"{main_dir}/experiment/bert_fine_tune/{src}2{tgt}.{task_abbr}.{setting}/checkpoint-{best_ckp}"
 
 src_label_path = main_dir + f"/data/largebio/labels/{src}2{tgt}.small.labels.tsv"
 # src_label_path = main_dir + f"/{src}_labels_from_maps.tsv"
@@ -33,5 +33,3 @@ bert_map.candidate_limit = 50
 bert_map.batch_size = 100
 bert_map.strategy = "mean"
 bert_map.run()
-# bert_map.src2tgt_mappings.to_csv(ckp_base + f"/../{src}2{tgt}_mappings.tsv")
-bert_map.save()

@@ -1,6 +1,12 @@
 import sys
 import random
 
+def insert_row(df, row):
+    df.loc[len(df)] = row  # adding a row
+    df.index = df.index + 1  # shifting index
+    df = df.sort_index()  # sorting by index
+    return df
+
 def random_drop(lst):
     lst.remove(lst[random.randrange(0, len(lst))])
     return lst

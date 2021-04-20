@@ -27,6 +27,7 @@ from copy import deepcopy
 import time
 import seaborn as sns 
 import math
+import re
 
 
 class OntoMapping:
@@ -55,8 +56,8 @@ class OntoMapping:
         self.candidate_limit = 100
 
         # mapping dataframes
-        self.src2tgt_mappings = pd.DataFrame(index=range(len(self.src_onto_class2text)), columns=["Entity1", "Entity2", "Value"])
-        self.tgt2src_mappings = pd.DataFrame(index=range(len(self.tgt_onto_class2text)), columns=["Entity1", "Entity2", "Value"])
+        self.src2tgt_mappings = pd.DataFrame(columns=["Entity1", "Entity2", "Value"])
+        self.tgt2src_mappings = pd.DataFrame(columns=["Entity1", "Entity2", "Value"])
         self.combined_mappings = None
         
         # define log print function
@@ -65,18 +66,18 @@ class OntoMapping:
     def run(self):
         t_start = time.time()
         # fix SRC side
-        self.fixed_one_side_alignment("SRC")
-        self.src2tgt_mappings.to_csv(f"{self.save_path}/src2tgt.{self.src}2{self.tgt}.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')
+        # self.fixed_one_side_alignment("SRC")
+        # self.src2tgt_mappings.to_csv(f"{self.save_path}/src2tgt.maps.tsv", index=False, sep='\t')
         t_src = time.time()
-        self.log_print(f'the program time for computing src2tgt mappings is :{t_src - t_start}')
+        # self.log_print(f'the program time for computing src2tgt mappings is :{t_src - t_start}')
         # fix TGT side
-        self.fixed_one_side_alignment("TGT")
-        self.tgt2src_mappings.to_csv(f"{self.save_path}/tgt2src.{self.src}2{self.tgt}.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')
+        self.fixed_one_side_alignment("TGT", start=1282)
+        self.tgt2src_mappings.to_csv(f"{self.save_path}/tgt2src.maps.tsv", index=False, sep='\t')
         t_tgt= time.time()
         self.log_print(f'the program time for computing tgt2src mappings is :{t_tgt - t_src}')
         # generate combined mappings
-        self.combined_mappings = self.src2tgt_mappings.append(self.tgt2src_mappings).drop_duplicates().dropna()
-        self.combined_mappings.to_csv(f"{self.save_path}/combined.{self.src}2{self.tgt}.{self.task_suffix}.{self.name}.tsv", index=False, sep='\t')
+        # self.combined_mappings = self.src2tgt_mappings.append(self.tgt2src_mappings).drop_duplicates().dropna()
+        # self.combined_mappings.to_csv(f"{self.save_path}/combined.maps.tsv", index=False, sep='\t')
         t_end = time.time()
         self.log_print(f'the overall program time is :{t_end - t_start}')
 
@@ -152,3 +153,36 @@ class OntoMapping:
             ax.set_title(name, color="gray")
         g.fig.suptitle("Plots of Precision, Recall, Macro-F1 against Threshold for Combined, SRC2TGT and TGT2SRC Mappings", y=1.02, fontsize=20, weight="bold")
         return g
+    
+    @staticmethod
+    def logs2maps(log_path, keep=1):
+        with open(log_path, "r") as f:
+            lines = f.readlines()
+        src_maps = []
+        tgt_maps = []
+        src_pa = r"\[SRC:.*Mapping: \['(.+)', '(.+)', (.+)\]\]"
+        tgt_pa = r"\[TGT:.*Mapping: \['(.+)', '(.+)', (.+)\]\]"
+        record = {"src": (None, 0), "tgt": (None, 0)}
+        for line in lines:
+            # print(line)
+            if re.findall(src_pa, line):
+                map = re.findall(src_pa, line)[0]
+                if (not map[0] == record["src"][0]) or record["src"][1] < keep:
+                    record["src"] = (map[0], record["src"][1] + 1)
+                    src_maps.append(map)
+            elif re.findall(tgt_pa, line):
+                map = re.findall(tgt_pa, line)[0]
+                if (not map[1] == record["tgt"][0]) or record["tgt"][1] < keep:
+                    record["tgt"] = (map[1], record["tgt"][1] + 1)
+                    tgt_maps.append(map)
+        
+        save_path = "/".join(log_path.split("/")[:-1])
+        # even_maps = [maps[i] for i in range(0, len(maps), 2)]
+        src_df = pd.DataFrame(src_maps, columns=["Entity1", "Entity2", "Value"])
+        src_df.to_csv(f"{save_path}/src2tgt.maps.tsv", index=False, sep='\t')
+
+        tgt_df = pd.DataFrame(tgt_maps, columns=["Entity1", "Entity2", "Value"])
+        tgt_df.to_csv(f"{save_path}/tgt2src.maps.tsv", index=False, sep='\t')
+        
+        combined_df = src_df.append(tgt_df).drop_duplicates().dropna()
+        combined_df.to_csv(f"{save_path}/combined.maps.tsv", index=False, sep='\t')
