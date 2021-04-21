@@ -1,4 +1,6 @@
-main_dir = "/home/yuahe/projects/BERTMap"
+import os
+main_dir = os.getcwd().split("BERTMap")[0] + "BERTMap"
+main_dir = main_dir.replace("\\", "/")
 import sys
 sys.path.append(main_dir)
 import pandas as pd
@@ -15,8 +17,8 @@ tgt = sys.argv[2]
 task_abbr = sys.argv[3]  # us or ss
 task = task_dict[task_abbr]
 setting = sys.argv[4]  # f, f+b ...
-best_ckp = 37000
-ckp_base = f"{main_dir}/experiment/bert_fine_tune/{src}2{tgt}.{task_abbr}.{setting}/checkpoint-{best_ckp}"
+ckp_base = f"{main_dir}/experiment/bert_fine_tune/{src}2{tgt}.{task_abbr}.{setting}/"
+ckp_base = [ckp_base + folder for folder in os.listdir(ckp_base) if "checkpoint" in folder][0]
 
 src_label_path = main_dir + f"/data/largebio/labels/{src}2{tgt}.small.labels.tsv"
 # src_label_path = main_dir + f"/{src}_labels_from_maps.tsv"
@@ -30,6 +32,6 @@ bert_map = BERTClassifierMapping(src, tgt, src_label_path, tgt_label_path,
 bert_map.set_inverted_index("SRC")
 bert_map.set_inverted_index("TGT")
 bert_map.candidate_limit = 50
-bert_map.batch_size = 100
+bert_map.batch_size = 32
 bert_map.strategy = "mean"
 bert_map.run()
