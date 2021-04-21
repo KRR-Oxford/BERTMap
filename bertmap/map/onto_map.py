@@ -61,23 +61,23 @@ class OntoMapping:
         self.combined_mappings = None
         
         # define log print function
-        self.log_print = lambda info: log_print(info, f"{self.save_path}/{self.name}.{self.src}2{self.tgt}.log")
+        self.log_print = lambda info: log_print(info, f"{self.save_path}/map.log")
 
     def run(self):
         t_start = time.time()
         # fix SRC side
-        # self.fixed_one_side_alignment("SRC")
-        # self.src2tgt_mappings.to_csv(f"{self.save_path}/src2tgt.maps.tsv", index=False, sep='\t')
+        self.fixed_one_side_alignment("SRC")
+        self.src2tgt_mappings.to_csv(f"{self.save_path}/src2tgt.maps.tsv", index=False, sep='\t')
         t_src = time.time()
-        # self.log_print(f'the program time for computing src2tgt mappings is :{t_src - t_start}')
+        self.log_print(f'the program time for computing src2tgt mappings is :{t_src - t_start}')
         # fix TGT side
         self.fixed_one_side_alignment("TGT", start=1282)
         self.tgt2src_mappings.to_csv(f"{self.save_path}/tgt2src.maps.tsv", index=False, sep='\t')
         t_tgt= time.time()
         self.log_print(f'the program time for computing tgt2src mappings is :{t_tgt - t_src}')
         # generate combined mappings
-        # self.combined_mappings = self.src2tgt_mappings.append(self.tgt2src_mappings).drop_duplicates().dropna()
-        # self.combined_mappings.to_csv(f"{self.save_path}/combined.maps.tsv", index=False, sep='\t')
+        self.combined_mappings = self.src2tgt_mappings.append(self.tgt2src_mappings).drop_duplicates().dropna()
+        self.combined_mappings.to_csv(f"{self.save_path}/combined.maps.tsv", index=False, sep='\t')
         t_end = time.time()
         self.log_print(f'the overall program time is :{t_end - t_start}')
 
@@ -162,6 +162,7 @@ class OntoMapping:
         tgt_maps = []
         src_pa = r"\[SRC:.*Mapping: \['(.+)', '(.+)', (.+)\]\]"
         tgt_pa = r"\[TGT:.*Mapping: \['(.+)', '(.+)', (.+)\]\]"
+        # tgt_pa2 = r"\[nci2fma.*Mapping: \['(.+)', '(.+)', (.+)\]\]"
         record = {"src": (None, 0), "tgt": (None, 0)}
         for line in lines:
             # print(line)
@@ -175,6 +176,11 @@ class OntoMapping:
                 if (not map[1] == record["tgt"][0]) or record["tgt"][1] < keep:
                     record["tgt"] = (map[1], record["tgt"][1] + 1)
                     tgt_maps.append(map)
+            # elif re.findall(tgt_pa2, line):
+            #     map = re.findall(tgt_pa2, line)[0]
+            #     if (not map[1] == record["tgt"][0]) or record["tgt"][1] < keep:
+            #         record["tgt"] = (map[1], record["tgt"][1] + 1)
+            #         tgt_maps.append(map)
         
         save_path = "/".join(log_path.split("/")[:-1])
         # even_maps = [maps[i] for i in range(0, len(maps), 2)]
