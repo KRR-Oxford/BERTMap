@@ -8,5 +8,5 @@ tgt = "nci"
 task = "us"
 setting = "f"
 log_dir = main_dir + f"/experiment/bert_fine_tune/{src}2{tgt}.{task}.{setting}/"
-log = log_dir + "full.log"
-OntoMapping.logs2maps(log)
+log = log_dir + "select.log"
+OntoMapping.logs2maps(log, keep=1)
