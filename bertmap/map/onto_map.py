@@ -56,10 +56,11 @@ class OntoMapping:
         self.candidate_limit = 100
         
         # define log print function
-        self.log_print = lambda info: log_print(info, f"{self.save_path}/map.log")
+        self.log_print = lambda info: log_print(info, f"{self.save_path}/map.{self.candidate_limit}.log")
 
     def run(self):
         t_start = time.time()
+        self.log_print(f'Candidate Limit: {self.candidate_limit}')
         # fix SRC side
         self.fixed_one_side_alignment("SRC")
         t_src = time.time()
@@ -69,8 +70,9 @@ class OntoMapping:
         t_tgt= time.time()
         self.log_print(f'the program time for computing tgt2src mappings is :{t_tgt - t_src}')
         t_end = time.time()
-        self.log2maps(f"{self.save_path}/map.log", keep=1)
+        self.log2maps(f"{self.save_path}/map.{self.candidate_limit}.log", keep=1)
         self.log_print(f'the overall program time is :{t_end - t_start}')
+        
         
     def align_config(self, flag="SRC"):
         """Configurations for swithcing the fixed ontology side."""
