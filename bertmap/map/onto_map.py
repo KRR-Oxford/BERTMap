@@ -151,8 +151,8 @@ class OntoMapping:
             lines = f.readlines()
         src_maps = []
         tgt_maps = []
-        src_pa = r"\[SRC:.*Mapping: \['(.+)', '(.+)', (.+)\]\]"
-        tgt_pa = r"\[TGT:.*Mapping: \['(.+)', '(.+)', (.+)\]\]"
+        src_pa = r"\[SRC:.*Mapping: [\(|\[]'(.+)', '(.+)', (.+)[\)|\]]\]"
+        tgt_pa = r"\[TGT:.*Mapping: [\(|\[]'(.+)', '(.+)', (.+)[\)|\]]\]"
         # tgt_pa2 = r"\[nci2fma.*Mapping: \['(.+)', '(.+)', (.+)\]\]"
         record = {"src": (None, 0), "tgt": (None, 0)}
         for line in lines:
