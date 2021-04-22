@@ -8,7 +8,9 @@ from bertmap.onto import Ontology
 def read_tsv_mappings(tsv_file, threshold=0.0):
     """read mappings from tsv file"""
     _df = pd.read_csv(tsv_file, sep="\t") if type(tsv_file) is str else tsv_file
-    mappings = [ "\t".join(_df.iloc[i][:-1]) for i in range(len(_df)) if _df.iloc[i][-1] >= threshold]
+    print(f"# Mappings before thresholding: {len(_df)}")
+    mappings = ["\t".join(_df.iloc[i][:-1]) for i in range(len(_df)) if _df.iloc[i][-1] >= threshold]
+    print(f"# Mappings after thresholding: {len(mappings)}")
     return mappings
 
 
