@@ -21,7 +21,7 @@ for src, tgt in [("fma", "nci")]:
     pool = multiprocessing.Pool(num_pool) 
     eval_results = []
     map_dir = f"{main_dir}/experiment/bert_fine_tune/{src}2{tgt}.{task}.{setting}"
-    for threshold in [0.0, 0.3, 0.5, 0.7, 0.9, 0.92] + evenly_divide(0.95, 1.0, 30):
+    for threshold in [0.0, 0.3, 0.5, 0.7, 0.9, 0.92] + evenly_divide(0.95, 1.0, int(sys.argv[4])):
         threshold = round(threshold, 6)
         eval_results.append(pool.apply_async(OntoMapping.evaluate, args=(f"{map_dir}/combined.maps.tsv", ref_legal, ref_illegal, f"combined", threshold)))
         eval_results.append(pool.apply_async(OntoMapping.evaluate, args=(f"{map_dir}/src2tgt.maps.tsv", ref_legal, ref_illegal, f"{src}2{tgt}", threshold)))
