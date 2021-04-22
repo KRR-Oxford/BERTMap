@@ -3,6 +3,7 @@ main_dir = os.getcwd().split("BERTMap")[0] + "BERTMap"
 import sys
 sys.path.append(main_dir)
 from bertmap.map import OntoMapping
+from bertmap.utils import evenly_divide
 import pandas as pd
 import multiprocessing
 
@@ -19,9 +20,9 @@ for src, tgt in [("fma", "nci")]:
     ref_illegal = f"{ref_dir}/{src}2{tgt}.illegal.tsv"
     pool = multiprocessing.Pool(num_pool) 
     eval_results = []
-    map_dir = f"{main_dir}/experiment/bert_fine_tune/{src}2{tgt}.{task}.{setting}/"
-    #  0.0, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
-    for threshold in [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.90, 0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1.0]:
+    map_dir = f"{main_dir}/experiment/bert_fine_tune/{src}2{tgt}.{task}.{setting}"
+    for threshold in [0.0, 0.3, 0.5, 0.7, 0.9, 0.92] + evenly_divide(0.95, 1.0, 30):
+        threshold = round(threshold, 6)
         eval_results.append(pool.apply_async(OntoMapping.evaluate, args=(f"{map_dir}/combined.maps.tsv", ref_legal, ref_illegal, f"combined", threshold)))
         eval_results.append(pool.apply_async(OntoMapping.evaluate, args=(f"{map_dir}/src2tgt.maps.tsv", ref_legal, ref_illegal, f"{src}2{tgt}", threshold)))
         eval_results.append(pool.apply_async(OntoMapping.evaluate, args=(f"{map_dir}/tgt2src.maps.tsv", ref_legal, ref_illegal, f"{tgt}2{src}", threshold)))
@@ -33,4 +34,7 @@ for src, tgt in [("fma", "nci")]:
         report = report.append(result)
 
     print(report)
+    max_scores = list(report.max()[["Precision", "Recall", "F1"]])
+    min_illegal = list(report.min()[["#Illegal"]])
+    print(f"Best results are: P: {max_scores[0]}; R: {max_scores[1]}; F1: {max_scores[2]}; #Illegal: {min_illegal[0]}.")
     report.to_csv(f"{map_dir}/eval.csv")

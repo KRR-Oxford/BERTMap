@@ -110,6 +110,7 @@ class OntoMapping:
     @staticmethod
     def evaluate(pre_tsv, ref_tsv, except_tsv=None, task_name = "0", threshold=0.0):
         evaluator = OntoEvaluator(pre_tsv, ref_tsv, except_tsv, threshold=threshold)
+        print(f"# Mappings after thresholding: {len(evaluator.pre)}")
         result_df = pd.DataFrame(columns=["Precision", "Recall", "F1", "#Illegal"])
         task_name = task_name + ":" + str(threshold)
         result_df.loc[task_name] = [evaluator.P, evaluator.R, evaluator.F1, evaluator.num_illegal]

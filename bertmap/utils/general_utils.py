@@ -1,6 +1,10 @@
 import sys
 import random
 
+def evenly_divide(start, end, num_splits):
+    step = (end - start) / num_splits
+    return [start + step * i for i in range(num_splits + 1)]
+
 def random_drop(lst):
     lst.remove(lst[random.randrange(0, len(lst))])
     return lst
