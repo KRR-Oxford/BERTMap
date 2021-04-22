@@ -8,11 +8,11 @@ from transformers import TrainingArguments
 import json
 
 # configurations
-src = "fma"
-tgt = "nci"
-task_abbr = sys.argv[1]
+src = sys.argv[1]
+tgt = sys.argv[2]
+task_abbr = sys.argv[3]
 assert task_abbr == "ss" or task_abbr == "us"
-setting = sys.argv[2]
+setting = sys.argv[4]
 assert setting in ["f", "f+b", "f+b+i", "r", "f+r", "f+b+r", "f+b+i+r"]
 data_base = f"{main_dir}/experiment/bert_fine_tune/data/{src}2{tgt}.{task_abbr}."
 train_path = data_base + f"train.{setting}.tsv"
