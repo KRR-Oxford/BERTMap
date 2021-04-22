@@ -14,87 +14,95 @@
 
 from bertmap.onto import Ontology
 from bertmap.map import OntoMapping
-from bertmap.bert import PretrainedBERT
+from bertmap.bert import BERTClassEmbedding
+from bertmap.utils import get_device
 from sklearn.metrics.pairwise import cosine_similarity
 import torch
+import time
+import pandas as pd
 
 class BERTEmbedsMapping(OntoMapping):
     
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
                  src_onto_class2text_tsv, tgt_onto_class2text_tsv, save_path, 
-                 src_embeds_pt, tgt_embeds_pt,
-                 src_batch_size=10000, tgt_batch_size=10000,
-                 task_suffix="small", name="bc-mean", 
+                 batch_size=32, nbest=2, task_suffix="small", name="bc-mean", 
                  bert_path="emilyalsentzer/Bio_ClinicalBERT"):
         super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_class2text_tsv, 
                          tgt_onto_class2text_tsv, save_path, task_suffix=task_suffix, name=name)
-        self.src_batch_size = src_batch_size
-        self.tgt_batch_size = tgt_batch_size
-        self.bert = PretrainedBERT(bert_path)
-        self.src_embeds = torch.load(src_embeds_pt)
-        self.tgt_embeds = torch.load(tgt_embeds_pt)
+        self.batch_size = batch_size
+        self.nbest = nbest
+        
+        self.embed = BERTClassEmbedding(pretrained_bert=bert_path, neg_layer_num=-1)
+        self.device = get_device()
+        self.embed.model.to(self.device)
+        
+        self.strategy = name.split("-")[1]  # ["bc", "mean"]
+        self.embed_func = lambda x, y: self.embeds.class_embeds_from_batched_class2text(f"batch_sent_embeds_{self.strategy}", [x], [y])
+        self.embed_func_batch = lambda x: self.embed.class_embeds_from_ontology(f"batch_sent_embeds_{self.strategy}", x, batch_size=self.batch_size)
         
     def align_config(self, flag="SRC"):
         assert flag == "SRC" or flag == "TGT"
         from_onto_class2text_path = self.src_onto_class2text_path
         to_onto_class2text_path = self.tgt_onto_class2text_path
-        from_batch_size = self.src_batch_size
-        to_batch_size = self.tgt_batch_size
-        mappings = self.src2tgt_mappings
+        from_index = self.src_index
+        to_index = self.tgt_index
+        map_name = "src2tgt_mappings"
         if flag == "TGT":
             from_onto_class2text_path, to_onto_class2text_path = to_onto_class2text_path, from_onto_class2text_path
-            from_batch_size, to_batch_size = to_batch_size, from_batch_size
-            mappings = self.tgt2src_mappings
-        return from_onto_class2text_path, from_batch_size, to_onto_class2text_path, to_batch_size, mappings
-
+            from_index, to_index = to_index, from_index
+            map_name = "tgt2src_mappings"
+        return from_onto_class2text_path, to_onto_class2text_path, from_index, to_index, map_name
   
     def fixed_one_side_alignment(self, flag="SRC"):
         """Fix one ontology, generate the target entities for each entity in the fixed ontology"""
-        
-        from_onto_class2text_path, from_batch_size, to_onto_class2text_path, to_batch_size, mappings = self.align_config(flag)
-        from_batch_generator = Ontology.class2text_batch_generator(from_onto_class2text_path, batch_size=from_batch_size)
-        batch_ind = 0
-        for batch in from_batch_generator:
-            # to-generator needs to be re-init for every from-batch
-            to_batch_generator = Ontology.class2text_batch_generator(to_onto_class2text_path, batch_size=to_batch_size) 
-            to_class_iris, mapping_values = self.batch_alignment(batch, to_batch_generator, flag=flag)
-            from_entity_iris = batch["Class-IRI"]
-            mappings["Entity1"].iloc[batch.index] = from_entity_iris
-            mappings["Entity2"].iloc[batch.index] = to_class_iris
-            mappings["Value"].iloc[batch.index] = mapping_values
-            self.log_print(f"[{self.name}][{flag}: {self.src}][Batch: {batch_ind}] finished." if flag == "SRC" \
-                else f"[{self.name}][{flag}: {self.tgt}][Batch: {batch_ind}] finished.")
-            batch_ind += 1
-        
-        # swap the mapping direction for target side for furhter combination
-        if flag == "TGT":
-            mappings["Entity1"], mappings["Entity2"] = list(mappings["Entity2"]), list(mappings["Entity1"])
+        # configurations
+        self.start_time = time.time()     
+        from_onto_class2text_path, to_onto_class2text_path, _, to_index, map_name = self.align_config(flag)
+        from_onto_class2text = Ontology.load_class2text(from_onto_class2text_path)
+        to_onto_class2text = Ontology.load_class2text(to_onto_class2text_path)
+        results = []
+        for i, dp in from_onto_class2text.iterrows():
+            from_labels, from_len = Ontology.parse_class_text(dp["Class-Text"])
+            search_space = to_onto_class2text if not to_index else self.select_candidates(dp["Class-Text"], flag=flag)
+            if len(search_space) == 0:
+                self.log_print("[Time: {round(time.time() - self.start_time)}][{self.name}][{print_flag}][#Class: {i}] No candidates available for for current entity ...")
+                continue
+            to_batch_generator = Ontology.class2text_batch_generator(search_space, batch_size=self.batch_size)
+            nbest_results = self.batch_alignment(from_labels, from_len, to_batch_generator, self.batch_size, flag=flag)
+            # collect the results
+            for to_class_ind, mapping_score in nbest_results:
+                if mapping_score <= 0.01:
+                    mapping_score = 0.0
+                to_class_iri = search_space.iloc[to_class_ind]["Class-IRI"]
+                result = (dp["Class-IRI"], to_class_iri, mapping_score) if flag == "SRC" else (to_class_iri, dp["Class-IRI"], mapping_score)
+                results.append(result)
+                print_flag = f"{flag}: {self.src}" if flag == "SRC" else f"{flag}: {self.tgt}"
+                self.log_print(f"[Time: {round(time.time() - self.start_time)}][{self.name}][{print_flag}][#Class: {i}][Mapping: {result}]")
+        setattr(self, map_name, pd.DataFrame(results, columns=["Entity1", "Entity2", "Value"]))
 
-
-    def batch_alignment(self, from_batch, to_batch_generator, flag="SRC"):
-        assert flag == "SRC" or flag == "TGT"
-        from_batch_embeds = self.src_embeds[from_batch.index] if flag == "SRC" else self.tgt_embeds[from_batch.index]
-        to_embeds = self.tgt_embeds if flag == "SRC" else self.src_embeds
-        to_onto_class2text = self.tgt_onto_class2text if flag == "SRC" else self.src_onto_class2text
-        
-        max_scores_list = []
-        argmax_scores_list = []
+    def batch_alignment(self, from_labels, from_len, to_batch_generator, to_batch_size, flag="SRC"):
+        batch_nbest_scores = torch.tensor([-1] * self.nbest).to(self.device)
+        batch_nbest_indices = torch.tensor([-1] * self.nbest).to(self.device)
         j = 0
         for to_batch in to_batch_generator:
-            to_batch_embeds = to_embeds[to_batch.index]
+            if self.string_match:
+                for m, to_class_dp in to_batch.iterrows():
+                    to_labels, _ = Ontology.parse_class_text(to_class_dp["Class-Text"])
+                    label_pairs = [[from_label, to_label] for to_label in to_labels for from_label in from_labels]
+                    # return the map if the to-class has a label that is exactly the same as one of the labels of the from-class
+                    for pair in label_pairs:
+                        if pair[0] == pair[1]:
+                            return [(m, 1.0)]
+            from_embed = self.embed_func(from_len, from_labels)
+            to_batch_embeds = self.embed_func_batch(to_batch)
             # compare the cosine similarity scores between two batches
-            sim_scores = cosine_similarity(from_batch_embeds, to_batch_embeds)
-            # pick the maximum/argmax scores in the to_batch w.r.t from_batch 
-            # we need to add j * len(to_batch) to ensure the correct to-entity indices
-            max_scores, argmax_scores = sim_scores.max(axis=1), sim_scores.argmax(axis=1) + j * len(to_batch)
-            max_scores_list.append(torch.tensor(max_scores))
-            argmax_scores_list.append(torch.tensor(argmax_scores))
+            sim_scores = cosine_similarity(from_embed, to_batch_embeds)
+            K = len(sim_scores) if len(sim_scores) < self.nbest else self.nbest
+            nbest_scores, nbest_indices = torch.topk(sim_scores, dim=1, k=K)
+            nbest_indices += j * to_batch_size
+            # we do the substituion for every batch to prevent from memory overflow
+            batch_nbest_scores, temp_indices = torch.topk(torch.cat([batch_nbest_scores, nbest_scores]), k=self.nbest)
+            batch_nbest_indices = torch.cat([batch_nbest_indices, nbest_indices])[temp_indices]
             j += 1
-        # stack the max/argmax scores for all to_batches w.r.t from_batch
-        batch_max_scores_all = torch.stack(max_scores_list)  # (len(to_batch_generator), len(from_batch))
-        batch_argmax_scores_all = torch.stack(argmax_scores_list)
-        # apply the max/argmax function again on the maximum scores from to_batches (note that the torch.tensor.max() provides both max and argmax)
-        batch_max_scores, batch_argmax_scores_inds = batch_max_scores_all.max(axis=0)  # value, indices
-        # select the to-entity indices according the final argmax scores
-        batch_argmax_scores = torch.gather(batch_argmax_scores_all, dim=0, index=batch_argmax_scores_inds.unsqueeze(0).repeat(j, 1))[0]
-        return list(to_onto_class2text["Class-IRI"].iloc[list(batch_argmax_scores.numpy())]), batch_max_scores
+            
+        return list(zip(batch_nbest_indices.cpu().detach().numpy(), batch_nbest_scores.cpu().detach().numpy()))
