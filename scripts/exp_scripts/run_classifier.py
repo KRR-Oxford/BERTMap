@@ -31,7 +31,7 @@ bert_map = BERTClassifierMapping(src, tgt, src_label_path, tgt_label_path,
                                  bert_path=ckp_base, tokenizer_path="emilyalsentzer/Bio_ClinicalBERT", string_match=True)
 bert_map.set_inverted_index("SRC")
 bert_map.set_inverted_index("TGT")
-bert_map.candidate_limit = 50
+bert_map.candidate_limit = int(sys.argv[5]) 
 bert_map.batch_size = 32
 bert_map.strategy = "mean"
 bert_map.run()
