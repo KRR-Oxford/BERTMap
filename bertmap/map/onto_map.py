@@ -156,7 +156,6 @@ class OntoMapping:
         # tgt_pa2 = r"\[nci2fma.*Mapping: \['(.+)', '(.+)', (.+)\]\]"
         record = {"src": (None, 0), "tgt": (None, 0)}
         for line in lines:
-            # print(line)
             if re.findall(src_pa, line):
                 map = re.findall(src_pa, line)[0]
                 if (not map[0] == record["src"][0]) or record["src"][1] < keep:
@@ -167,11 +166,6 @@ class OntoMapping:
                 if (not map[1] == record["tgt"][0]) or record["tgt"][1] < keep:
                     record["tgt"] = (map[1], record["tgt"][1] + 1)
                     tgt_maps.append(map)
-            # elif re.findall(tgt_pa2, line):
-            #     map = re.findall(tgt_pa2, line)[0]
-            #     if (not map[1] == record["tgt"][0]) or record["tgt"][1] < keep:
-            #         record["tgt"] = (map[1], record["tgt"][1] + 1)
-            #         tgt_maps.append(map)
         
         save_path = "/".join(log_path.split("/")[:-1])
         # even_maps = [maps[i] for i in range(0, len(maps), 2)]
