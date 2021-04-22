@@ -1,9 +1,10 @@
 from bertmap.map import OntoMapping
 from bertmap.bert import PretrainedBERT
 from bertmap.onto import Ontology
-from bertmap.utils import get_device, insert_row
+from bertmap.utils import get_device
 import torch
 import time
+import pandas as pd
 
 class BERTClassifierMapping(OntoMapping):
     
@@ -45,6 +46,7 @@ class BERTClassifierMapping(OntoMapping):
         from_onto_class2text = Ontology.load_class2text(from_onto_class2text_path)
         to_onto_class2text = Ontology.load_class2text(to_onto_class2text_path)
         # fix each from-onto class and calculate the mappings
+        results = []
         for i, dp in from_onto_class2text.iterrows():
             # set up a start point to prevent unexpected intervention of the program
             if i < start:
@@ -53,7 +55,7 @@ class BERTClassifierMapping(OntoMapping):
             # reduce search space if the sub-word level inverted index is provided
             search_space = to_onto_class2text if not to_index else self.select_candidates(dp["Class-Text"], flag=flag)
             if len(search_space) == 0:
-                print("No candidates available for for current entity ...")
+                self.log_print("[Time: {round(time.time() - self.start_time)}][{self.name}][{print_flag}][#Class: {i}] No candidates available for for current entity ...")
                 continue
             # normalize the batch size to prevent memory overflow while preserving the KTop functionality
             to_batch_size = max(self.batch_size // from_len, self.nbest + 5)  
@@ -64,10 +66,11 @@ class BERTClassifierMapping(OntoMapping):
                 if mapping_score <= 0.01:
                     mapping_score = 0.0
                 to_class_iri = search_space.iloc[to_class_ind]["Class-IRI"]
-                result = [dp["Class-IRI"], to_class_iri, mapping_score] if flag == "SRC" else [to_class_iri, dp["Class-IRI"], mapping_score]
-                setattr(self, map_name, insert_row(getattr(self, map_name), result))
+                result = (dp["Class-IRI"], to_class_iri, mapping_score) if flag == "SRC" else (to_class_iri, dp["Class-IRI"], mapping_score)
+                results.append(result)
                 print_flag = f"{flag}: {self.src}" if flag == "SRC" else f"{flag}: {self.tgt}"
-                self.log_print(f"[{self.name}][{print_flag}][#Class: {i}][Mapping: {result}]")
+                self.log_print(f"[Time: {round(time.time() - self.start_time)}][{self.name}][{print_flag}][#Class: {i}][Mapping: {result}]")
+        setattr(self, map_name, pd.DataFrame(results, columns=["Entity1", "Entity2", "Value"]))
             
     def batch_alignment(self, from_labels, from_len, to_batch_generator, to_batch_size, flag="SRC"):
         j = 0
@@ -102,7 +105,6 @@ class BERTClassifierMapping(OntoMapping):
                 batch_nbest_indices = torch.cat([batch_nbest_indices, nbest_indices])[temp_indices]
                 # print(f"[batch {j}] current time: {time.time() - self.start_time}")
                 j += 1
-        self.log_print(f"[Last batch] current time: {time.time() - self.start_time}")
         return list(zip(batch_nbest_indices.cpu().detach().numpy(), batch_nbest_scores.cpu().detach().numpy()))
             
     def batch_pooling(self, batch_scores, batch_lens):

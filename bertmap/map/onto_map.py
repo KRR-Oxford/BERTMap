@@ -54,11 +54,6 @@ class OntoMapping:
         self.src_index = None
         self.tgt_index = None
         self.candidate_limit = 100
-
-        # mapping dataframes
-        self.src2tgt_mappings = pd.DataFrame(columns=["Entity1", "Entity2", "Value"])
-        self.tgt2src_mappings = pd.DataFrame(columns=["Entity1", "Entity2", "Value"])
-        self.combined_mappings = None
         
         # define log print function
         self.log_print = lambda info: log_print(info, f"{self.save_path}/map.log")
@@ -67,20 +62,16 @@ class OntoMapping:
         t_start = time.time()
         # fix SRC side
         self.fixed_one_side_alignment("SRC")
-        self.src2tgt_mappings.to_csv(f"{self.save_path}/src2tgt.maps.tsv", index=False, sep='\t')
         t_src = time.time()
         self.log_print(f'the program time for computing src2tgt mappings is :{t_src - t_start}')
         # fix TGT side
         self.fixed_one_side_alignment("TGT", start=1282)
-        self.tgt2src_mappings.to_csv(f"{self.save_path}/tgt2src.maps.tsv", index=False, sep='\t')
         t_tgt= time.time()
         self.log_print(f'the program time for computing tgt2src mappings is :{t_tgt - t_src}')
-        # generate combined mappings
-        self.combined_mappings = self.src2tgt_mappings.append(self.tgt2src_mappings).drop_duplicates().dropna()
-        self.combined_mappings.to_csv(f"{self.save_path}/combined.maps.tsv", index=False, sep='\t')
         t_end = time.time()
+        self.log2maps(f"{self.save_path}/map.log", keep=1)
         self.log_print(f'the overall program time is :{t_end - t_start}')
-
+        
     def align_config(self, flag="SRC"):
         """Configurations for swithcing the fixed ontology side."""
         raise NotImplementedError
@@ -155,7 +146,7 @@ class OntoMapping:
         return g
     
     @staticmethod
-    def logs2maps(log_path, keep=1):
+    def log2maps(log_path, keep=1):
         with open(log_path, "r") as f:
             lines = f.readlines()
         src_maps = []
