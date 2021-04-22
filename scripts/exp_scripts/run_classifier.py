@@ -29,7 +29,7 @@ bert_map = BERTClassifierMapping(src, tgt, src_label_path, tgt_label_path,
                                  save_path=ckp_base + "/..", batch_size=-1, 
                                  nbest=1, task_suffix="small", name="bc-tuned-mean", 
                                  bert_path=ckp_base, tokenizer_path="emilyalsentzer/Bio_ClinicalBERT", 
-                                 string_match=True, device_num=sys.argv[5])
+                                 string_match=True, device_num=int(sys.argv[5]))
 bert_map.set_inverted_index("SRC")
 bert_map.set_inverted_index("TGT")
 bert_map.candidate_limit = int(sys.argv[6]) 
