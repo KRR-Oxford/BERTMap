@@ -10,7 +10,7 @@ class BERTClassifierMapping(OntoMapping):
     
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_class2text_tsv, tgt_onto_class2text_tsv, 
                  save_path, batch_size, nbest=2, task_suffix="small", name="bc-tuned-mean", 
-                 bert_path="", tokenizer_path="emilyalsentzer/Bio_ClinicalBERT", string_match=True):
+                 bert_path="", tokenizer_path="emilyalsentzer/Bio_ClinicalBERT", string_match=True, device_num=0):
         super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_class2text_tsv, 
                          tgt_onto_class2text_tsv, save_path, task_suffix=task_suffix, name=name)    
         self.strategy = name.split("-")[2]  # ["bc", "tuned", "mean"]
@@ -19,7 +19,7 @@ class BERTClassifierMapping(OntoMapping):
         self.string_match = string_match
         
         self.bert = PretrainedBERT(pretrained_path=bert_path, tokenizer_path=tokenizer_path, with_classifier=True)
-        self.device = get_device()
+        self.device = get_device(device_num=device_num)
         self.bert.model.to(self.device)
         
         self.tokenize = lambda x: self.bert.tokenizer(x, padding=True, return_tensors="pt")

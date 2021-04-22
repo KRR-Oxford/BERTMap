@@ -26,14 +26,14 @@ class BERTEmbedsMapping(OntoMapping):
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
                  src_onto_class2text_tsv, tgt_onto_class2text_tsv, save_path, 
                  batch_size=32, nbest=2, task_suffix="small", name="bc-mean", 
-                 bert_path="emilyalsentzer/Bio_ClinicalBERT"):
+                 bert_path="emilyalsentzer/Bio_ClinicalBERT", string_math=True, device_num=0):
         super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_class2text_tsv, 
                          tgt_onto_class2text_tsv, save_path, task_suffix=task_suffix, name=name)
         self.batch_size = batch_size
         self.nbest = nbest
         
         self.embed = BERTClassEmbedding(pretrained_bert=bert_path, neg_layer_num=-1)
-        self.device = get_device()
+        self.device = get_device(device_num=device_num)
         self.embed.model.to(self.device)
         
         self.strategy = name.split("-")[1]  # ["bc", "mean"]
