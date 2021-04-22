@@ -12,7 +12,7 @@ tgt = sys.argv[2]
 task = sys.argv[3]
 setting = sys.argv[4]
 num_pool = int(sys.argv[5])
-ref_dir = "/home/yuahe/projects/BERTMap/data/largebio/refs"
+ref_dir = f"{main_dir}/data/largebio/refs"
 report = pd.DataFrame(columns=["Precision", "Recall", "F1", "#Illegal"])
 ref_legal = f"{ref_dir}/{src}2{tgt}.legal.tsv"
 ref_illegal = f"{ref_dir}/{src}2{tgt}.illegal.tsv"
