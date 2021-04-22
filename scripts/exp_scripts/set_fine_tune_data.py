@@ -1,5 +1,7 @@
+import os
+main_dir = os.getcwd().split("BERTMap")[0] + "BERTMap"
 import sys
-sys.path.append("/home/yuahe/projects/BERTMap")
+sys.path.append(main_dir)
 from bertmap.corpora import CrossOntoCorpus, MergedOntoCorpus
 from random import shuffle
 

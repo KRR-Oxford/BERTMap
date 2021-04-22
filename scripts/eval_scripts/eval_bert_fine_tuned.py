@@ -1,12 +1,13 @@
-main_dir = "/home/yuahe/projects/BERTMap"
+import os
+main_dir = os.getcwd().split("BERTMap")[0] + "BERTMap"
 import sys
 sys.path.append(main_dir)
 from bertmap.map import OntoMapping
 import pandas as pd
 import multiprocessing
 
-task = "us"
-setting = "f"
+task = sys.argv[1]
+setting = sys.argv[2]
 ref_dir = "/home/yuahe/projects/BERTMap/data/largebio/refs"
 # map_dir = "/home/yuahe/projects/BERTMap/experiment/bert_fine_tune/maps"
 
@@ -15,7 +16,7 @@ for src, tgt in [("fma", "nci")]:
     report = pd.DataFrame(columns=["Precision", "Recall", "F1", "#Illegal"])
     ref_legal = f"{ref_dir}/{src}2{tgt}.legal.tsv"
     ref_illegal = f"{ref_dir}/{src}2{tgt}.illegal.tsv"
-    pool = multiprocessing.Pool(10) 
+    pool = multiprocessing.Pool(2) 
     eval_results = []
     map_dir = f"{main_dir}/experiment/bert_fine_tune/{src}2{tgt}.{task}.{setting}/"
     #  0.0, 0.3, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0
@@ -31,4 +32,4 @@ for src, tgt in [("fma", "nci")]:
         report = report.append(result)
 
     print(report)
-    report.to_csv(f"{map_dir}/temp.eval.csv")
+    report.to_csv(f"{map_dir}/eval.csv")
