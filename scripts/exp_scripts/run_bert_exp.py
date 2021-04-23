@@ -1,6 +1,6 @@
 import sys
 sys.path.append("/home/yuahe/projects/BERTMap")
-from bertmap.map.direct_search import DirectBERTMapping
+from bertmap.map import BERTEmbedsMapping
 
 label_dir = "/home/yuahe/projects/BERTMap/data/largebio/labels"
 embed_dir = "/home/yuahe/projects/BERTMap/experiment/bert_baseline/class_embeds"
@@ -14,7 +14,7 @@ for name in ["mean", "cls"]:
         src_embeds_pt = f"{embed_dir}/{src}2{tgt}.small.{name}.pt"
         tgt_embeds_pt = f"{embed_dir}/{tgt}2{src}.small.{name}.pt"
         
-        exp = DirectBERTMapping(
+        exp = BERTEmbedsMapping(
                                 src, tgt, 
                                 src_onto_class2text_tsv, tgt_onto_class2text_tsv,
                                 embed_dir + "/../maps",
