@@ -13,7 +13,7 @@ class OntoLabelDataset(Dataset):
         for _, dp in data.iterrows():
             text_pairs.append([str(dp["Label1"]), str(dp["Label2"])])
             self.labels.append(dp["Synonymous"])
-        self.encodings = tokenizer(text_pairs, padding=True)  # truncation is no need as there is no long sentence here
+        self.encodings = tokenizer(text_pairs, padding=True, max_length=512, truncation=True)  # truncation is no need as there is no long sentence here
 
     def __len__(self):
         return len(self.labels)
