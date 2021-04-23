@@ -58,7 +58,7 @@ class BERTClassifierMapping(OntoMapping):
                 self.log_print("[Time: {round(time.time() - self.start_time)}][{self.name}][{print_flag}][#Class: {i}] No candidates available for for current entity ...")
                 continue
             # normalize the batch size to prevent memory overflow while preserving the KTop functionality
-            to_batch_size = max(self.batch_size // from_len, self.nbest + 5)  
+            to_batch_size = max(self.batch_size // from_len, self.nbest + 1)  
             to_batch_generator = Ontology.class2text_batch_generator(search_space, batch_size=to_batch_size)
             nbest_results = self.batch_alignment(from_labels, from_len, to_batch_generator, to_batch_size, flag=flag)
             # collect the results
