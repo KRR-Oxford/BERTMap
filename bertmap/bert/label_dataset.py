@@ -11,7 +11,7 @@ class OntoLabelDataset(Dataset):
         text_pairs = []
         self.labels = []
         for _, dp in data.iterrows():
-            text_pairs.append([dp["Label1"], dp["Label2"]])
+            text_pairs.append([str(dp["Label1"]), str(dp["Label2"])])
             self.labels.append(dp["Synonymous"])
         self.encodings = tokenizer(text_pairs, padding=True)  # truncation is no need as there is no long sentence here
 
