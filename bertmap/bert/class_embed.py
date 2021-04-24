@@ -7,7 +7,7 @@ from typing import List
 class BERTClassEmbedding:
     
     def __init__(self, pretrained_bert: PretrainedBERT, neg_layer_num=-1):
-        self.bert = pretrained_bert
+        self.pretrained_bert = pretrained_bert
         self.neg_layer_num = neg_layer_num
         
     def class_embeds_from_ontology(self, batch_sent_embeds_method: str, iri_lexicon_file, batch_size=1000):
@@ -37,7 +37,7 @@ class BERTClassEmbedding:
             batch_lexicon (List[str]): ordered lexicon sentences for all entities in the batch
         """
         num_classes = len(batch_class2text_sizes)
-        all_class2text_sents_embeds = getattr(self.bert, batch_sent_embeds_method)(batch_class2text_sents, neg_layer_num=self.neg_layer_num)  # (batch_(sents)_size, hid_dim)
+        all_class2text_sents_embeds = getattr(self.pretrained_bert, batch_sent_embeds_method)(batch_class2text_sents, neg_layer_num=self.neg_layer_num)  # (batch_(sents)_size, hid_dim)
         # return all_lexicon_sents_embeds
         class_embeds_list = []
         end = 0

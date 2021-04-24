@@ -14,7 +14,7 @@
 
 from bertmap.onto import Ontology
 from bertmap.map import OntoMapping
-from bertmap.bert import BERTClassEmbedding
+from bertmap.bert import BERTClassEmbedding, PretrainedBERT
 from bertmap.utils import get_device
 from sklearn.metrics.pairwise import cosine_similarity
 import torch
@@ -26,18 +26,20 @@ class BERTEmbedsMapping(OntoMapping):
     def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
                  src_onto_class2text_tsv, tgt_onto_class2text_tsv, save_path, 
                  batch_size=32, nbest=2, task_suffix="small", name="bc-mean", 
-                 bert_path="emilyalsentzer/Bio_ClinicalBERT", string_math=True, device_num=0):
+                 bert_path="emilyalsentzer/Bio_ClinicalBERT", string_match=True, device_num=0):
         super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_class2text_tsv, 
                          tgt_onto_class2text_tsv, save_path, task_suffix=task_suffix, name=name)
         self.batch_size = batch_size
         self.nbest = nbest
+        self.string_match = string_match
         
-        self.embed = BERTClassEmbedding(pretrained_bert=bert_path, neg_layer_num=-1)
         self.device = get_device(device_num=device_num)
-        self.embed.model.to(self.device)
+        pretrained_bert = pretrained_bert=PretrainedBERT(pretrained_path=bert_path, with_classifier=False)
+        pretrained_bert.model.to(self.device)
+        self.embed = BERTClassEmbedding(pretrained_bert=pretrained_bert, neg_layer_num=-1)
         
         self.strategy = name.split("-")[1]  # ["bc", "mean"]
-        self.embed_func = lambda x, y: self.embeds.class_embeds_from_batched_class2text(f"batch_sent_embeds_{self.strategy}", [x], [y])
+        self.embed_func = lambda x, y: self.embed.class_embeds_from_batched_class2text(f"batch_sent_embeds_{self.strategy}", [x], y)
         self.embed_func_batch = lambda x: self.embed.class_embeds_from_ontology(f"batch_sent_embeds_{self.strategy}", x, batch_size=self.batch_size)
         
     def align_config(self, flag="SRC"):
@@ -83,6 +85,8 @@ class BERTEmbedsMapping(OntoMapping):
     def batch_alignment(self, from_labels, from_len, to_batch_generator, to_batch_size, flag="SRC"):
         batch_nbest_scores = torch.tensor([-1] * self.nbest).to(self.device)
         batch_nbest_indices = torch.tensor([-1] * self.nbest).to(self.device)
+        # print(from_len, from_labels)
+        from_embed = self.embed_func(from_len, from_labels)
         j = 0
         for to_batch in to_batch_generator:
             if self.string_match:
@@ -93,12 +97,11 @@ class BERTEmbedsMapping(OntoMapping):
                     for pair in label_pairs:
                         if pair[0] == pair[1]:
                             return [(m, 1.0)]
-            from_embed = self.embed_func(from_len, from_labels)
             to_batch_embeds = self.embed_func_batch(to_batch)
             # compare the cosine similarity scores between two batches
-            sim_scores = cosine_similarity(from_embed, to_batch_embeds)
+            sim_scores = torch.tensor(cosine_similarity(from_embed, to_batch_embeds)).to(self.device).squeeze(0)
             K = len(sim_scores) if len(sim_scores) < self.nbest else self.nbest
-            nbest_scores, nbest_indices = torch.topk(sim_scores, dim=1, k=K)
+            nbest_scores, nbest_indices = torch.topk(sim_scores, k=K)
             nbest_indices += j * to_batch_size
             # we do the substituion for every batch to prevent from memory overflow
             batch_nbest_scores, temp_indices = torch.topk(torch.cat([batch_nbest_scores, nbest_scores]), k=self.nbest)
