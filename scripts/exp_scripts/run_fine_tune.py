@@ -5,6 +5,7 @@ sys.path.append(main_dir)
 from bertmap.bert import OntoLabelBERT
 from bertmap.utils import get_device, set_seed
 from transformers import TrainingArguments
+import torch
 import json
 
 torch.cuda.empty_cache()
