@@ -17,7 +17,8 @@ def exclude_randrange(start, end, exclude):
 
 
 def uniqify(ls):
-    return list(dict.fromkeys(ls))
+    non_empty_ls = list(filter(lambda x: x != "", ls))
+    return list(dict.fromkeys(non_empty_ls))
 
 
 def swap(a, b):

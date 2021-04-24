@@ -18,7 +18,7 @@ class Ontology:
     iri2abbr_dict = pd.read_csv(onto_iri_abbr_tsv, index_col=0, squeeze=True, sep='\t').to_dict()
     abbr2iri_dict = {v: k for k, v in iri2abbr_dict.items()}
     # exclude mistaken parsing of string "null" to NaN
-    na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL','null'})
+    na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL', 'null', 'n/a'})
 
     def __init__(self, onto_file):
         self.onto = get_ontology(f"file://{onto_file}").load()

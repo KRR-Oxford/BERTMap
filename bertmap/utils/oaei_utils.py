@@ -5,9 +5,11 @@ import pandas as pd
 from bertmap.onto import Ontology
 
 
+na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL', 'null', 'n/a'})
+
 def read_tsv_mappings(tsv_file, threshold=0.0):
     """read mappings from tsv file"""
-    _df = pd.read_csv(tsv_file, sep="\t") if type(tsv_file) is str else tsv_file
+    _df = pd.read_csv(tsv_file, sep="\t", na_values=na_vals, keep_default_na=False) if type(tsv_file) is str else tsv_file
     mappings = ["\t".join(_df.iloc[i][:-1]) for i in range(len(_df)) if _df.iloc[i][-1] >= threshold]
     return mappings
 
