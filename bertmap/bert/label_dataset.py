@@ -8,17 +8,18 @@ class OntoLabelDataset(Dataset):
     def __init__(self, data_tsv, tokenizer: AutoTokenizer):
         # Model parameter
         data = pd.read_csv(data_tsv, sep="\t")
-        text_pairs = []
+        self.text_pairs = []
         self.labels = []
         for _, dp in data.iterrows():
-            text_pairs.append([str(dp["Label1"]), str(dp["Label2"])])
+            self.text_pairs.append([str(dp["Label1"]), str(dp["Label2"])])
             self.labels.append(dp["Synonymous"])
-        self.encodings = tokenizer(text_pairs, padding=True, max_length=512, truncation=True)  # truncation is no need as there is no long sentence here
+        self.encode = lambda x: tokenizer(x, padding=True, max_length=512, truncation=True)
 
     def __len__(self):
         return len(self.labels)
     
     def __getitem__(self, idx):
-        item = {k: torch.tensor(v[idx]) for k, v in self.encodings.items()}
+        encodings = self.encode(self.text_pairs[idx])
+        item = {k: torch.tensor(v[idx]) for k, v in encodings.items()}
         item['labels'] = torch.tensor(self.labels[idx])
         return item
