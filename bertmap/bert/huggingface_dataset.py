@@ -7,5 +7,5 @@ def load_onto_tsv_dataset(data_path, tokenizer: AutoTokenizer):
     dataset = Dataset.from_pandas(df)
     dataset = dataset.map(lambda example: {'label': example['Synonymous']}, remove_columns=['Synonymous']) 
     encoded_dataset = dataset.map(lambda examples: tokenizer(str(examples['Label1']), str(examples['Label2']), 
-                                                             padding=True, max_length=512, truncation=True), batched=True)
+                                                             truncation=True, padding=True), batched=True)
     return encoded_dataset
