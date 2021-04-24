@@ -22,6 +22,6 @@ bert_map = BERTEmbedsMapping(src, tgt, src_onto_class2text_tsv, tgt_onto_class2t
                                 bert_path="emilyalsentzer/Bio_ClinicalBERT", string_match=True)
 bert_map.set_inverted_index("SRC")
 bert_map.set_inverted_index("TGT")
-bert_map.candidate_limit = int(sys.argv[3]) 
+bert_map.candidate_limit = int(sys.argv[4]) 
 bert_map.run()
 
