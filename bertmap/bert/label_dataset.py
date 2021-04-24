@@ -20,6 +20,6 @@ class OntoLabelDataset(Dataset):
     
     def __getitem__(self, idx):
         encodings = self.encode(self.text_pairs[idx])  # encode the input pair lazily to handle the very large dataset
-        item = {k: torch.tensor(v[idx]) for k, v in encodings.items()}
+        item = {k: torch.tensor(v) for k, v in encodings.items()}
         item['labels'] = torch.tensor(self.labels[idx])
         return item
