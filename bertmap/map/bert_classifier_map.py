@@ -39,7 +39,7 @@ class BERTClassifierMapping(OntoMapping):
             map_name = "tgt2src_mappings"
         return from_onto_class2text_path, to_onto_class2text_path, from_index, to_index, map_name
     
-    def fixed_one_side_alignment(self, flag="SRC", start=0):
+    def fixed_one_side_alignment(self, flag="SRC"):
         # configurations
         self.start_time = time.time()
         from_onto_class2text_path, to_onto_class2text_path, _, to_index, map_name = self.align_config(flag=flag)
@@ -49,8 +49,8 @@ class BERTClassifierMapping(OntoMapping):
         results = []
         for i, dp in from_onto_class2text.iterrows():
             # set up a start point to prevent unexpected intervention of the program
-            if i < start:
-                continue
+            # if i < start:
+            #     continue
             from_labels, from_len = Ontology.parse_class_text(dp["Class-Text"])
             # reduce search space if the sub-word level inverted index is provided
             search_space = to_onto_class2text if not to_index else self.select_candidates(dp["Class-Text"], flag=flag)

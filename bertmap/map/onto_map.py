@@ -66,7 +66,7 @@ class OntoMapping:
         t_src = time.time()
         self.log_print(f'the program time for computing src2tgt mappings is :{t_src - t_start}')
         # fix TGT side
-        self.fixed_one_side_alignment("TGT", start=1282)
+        self.fixed_one_side_alignment("TGT")
         t_tgt= time.time()
         self.log_print(f'the program time for computing tgt2src mappings is :{t_tgt - t_src}')
         t_end = time.time()

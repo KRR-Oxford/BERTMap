@@ -4,14 +4,15 @@ Code inspired by: https://huggingface.co/transformers/training.html
 """
 from os import stat
 from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments, EarlyStoppingCallback
-from bertmap.bert import OntoLabelDataset
+from bertmap.bert import OntoLabelDataset, load_onto_tsv_dataset
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
 from typing import Optional
 
 
 class OntoLabelBERT:
     
-    def __init__(self, pretrained_bert_path, train_path, val_path, test_path, training_args: TrainingArguments, early_stop=True):
+    def __init__(self, pretrained_bert_path, train_path, val_path, test_path, 
+                 training_args: TrainingArguments, early_stop=True, huggingface=True):
         print("Initialize BERT for Binary Classification from the Pretrained BERT model...")
         
         # BERT
@@ -19,9 +20,9 @@ class OntoLabelBERT:
         self.tokenizer = AutoTokenizer.from_pretrained(pretrained_bert_path)
 
         # data
-        self.train = OntoLabelDataset(train_path, self.tokenizer)
-        self.val = OntoLabelDataset(val_path, self.tokenizer)
-        self.test = OntoLabelDataset(test_path, self.tokenizer)
+        self.train = OntoLabelDataset(train_path, self.tokenizer) if not huggingface else load_onto_tsv_dataset(train_path, self.tokenizer)
+        self.val = OntoLabelDataset(val_path, self.tokenizer) if not huggingface else load_onto_tsv_dataset(val_path, self.tokenizer)
+        self.test = OntoLabelDataset(test_path, self.tokenizer) if not huggingface else load_onto_tsv_dataset(test_path, self.tokenizer)
         print(f"[# Train]: {len(self.train)}, [# Val]: {len(self.val)}, [# Test]: {len(self.test)}")
         
         # trainer

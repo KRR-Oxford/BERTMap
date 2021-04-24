@@ -1,9 +1,9 @@
-from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 import pandas as pd
 import torch
 
-class OntoLabelDataset(Dataset):
+
+class OntoLabelDataset(torch.utils.data.Dataset):
 
     def __init__(self, data_tsv, tokenizer: AutoTokenizer):
         # Model parameter
