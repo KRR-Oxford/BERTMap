@@ -8,7 +8,7 @@ def load_onto_tsv_dataset(data_path, tokenizer: AutoTokenizer, batch_size=1024, 
     dataset = Dataset.from_pandas(df)
     def encode(examples):
         item = tokenizer(examples['Label1'], examples['Label2'], return_tensor='pt', 
-                         max_length=max_length, padding='longest', truncation=True))
+                         max_length=max_length, padding='longest', truncation=True)
         item['labels'] = examples['Synonymous']
     dataset.set_transform(encode)
     return dataset
