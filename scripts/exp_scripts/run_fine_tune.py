@@ -43,6 +43,7 @@ training_args = TrainingArguments(
     save_total_limit=1,
     metric_for_best_model="accuracy",
     greater_is_better=True,
+    remove_unused_columns=None,
     # disable_tqdm=True
 )
 set_seed(888)
