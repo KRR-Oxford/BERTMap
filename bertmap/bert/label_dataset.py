@@ -1,24 +1,22 @@
+from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 import pandas as pd
 import torch
 
+class OntoLabelDataset(Dataset):
 
-class OntoLabelDataset(torch.utils.data.Dataset):
-
-    def __init__(self, data_tsv, tokenizer: AutoTokenizer, max_length=512):
+    def __init__(self, data_tsv, tokenizer: AutoTokenizer):
         # Model parameter
         na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL', 'null', 'n/a'})
-        self.data = pd.read_csv(data_tsv, sep='\t', na_values=na_vals, keep_default_na=False)
-        # self.labels = list(self.data["Synonymous"])
-        self.encode = lambda examples: tokenizer(examples["Label1"], examples["Label2"], return_tensors='pt', 
-                                                 max_length=max_length, padding="max_length", truncation=True)
-        # self.encodings = tokenizer(text_pairs, truncation=True, padding=True)  # truncation is no need as there is no long sentence here
+        data = pd.read_csv(data_tsv, sep='\t', na_values=na_vals, keep_default_na=False)
+        self.labels = data["Synonymous"]
+        self.encodings = tokenizer(list(zip(data["Label1"], data["Label2"])), padding=True)  
+        # truncation is no need as there is no long sentence here
 
     def __len__(self):
-        return len(self.data)
+        return len(self.labels)
     
     def __getitem__(self, idx):
-        item = self.encode(self.data.iloc[idx])
-        # item = {k: torch.tensor(v[idx]) for k, v in self.encodings.items()}
-        item['labels'] = torch.tensor(self.data.iloc[idx]["Synonymous"])
+        item = {k: torch.tensor(v[idx]) for k, v in self.encodings.items()}
+        item['labels'] = torch.tensor(self.labels[idx])
         return item
