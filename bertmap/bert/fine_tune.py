@@ -12,7 +12,7 @@ from typing import Optional
 class OntoLabelBERT:
     
     def __init__(self, pretrained_bert_path, train_path, val_path, test_path, 
-                 training_args: TrainingArguments, early_stop=True, huggingface=True):
+                 training_args: TrainingArguments, early_stop=True, huggingface=False):
         print("Initialize BERT for Binary Classification from the Pretrained BERT model...")
         
         # BERT

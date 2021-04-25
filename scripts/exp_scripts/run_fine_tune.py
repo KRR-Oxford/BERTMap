@@ -29,8 +29,8 @@ batch_size = int(sys.argv[5])
 training_args = TrainingArguments(
     output_dir=ckp_base,          
     num_train_epochs=train_epochs,              
-    per_device_train_batch_size=batch_size,  # 32 or 16
-    per_device_eval_batch_size=batch_size,   # 32 or 16
+    per_device_train_batch_size=batch_size,  
+    per_device_eval_batch_size=batch_size,   
     warmup_steps=0,           
     weight_decay=0.01,   
     logging_steps=logging_steps,
@@ -51,7 +51,7 @@ set_seed(888)
 
 # fine-tuning 
 fine_tune = OntoLabelBERT("emilyalsentzer/Bio_ClinicalBERT", train_path, val_path, test_path, 
-                          training_args, early_stop=True, huggingface=bool(int(sys.argv[6])))
+                          training_args, early_stop=True, huggingface=False)
 fine_tune.trainer.train()
 # evaluation on test set
 test_results = fine_tune.trainer.evaluate(fine_tune.test)
