@@ -33,6 +33,6 @@ bert_map = BERTClassifierMapping(src, tgt, src_label_path, tgt_label_path,
 bert_map.set_inverted_index("SRC")
 bert_map.set_inverted_index("TGT")
 bert_map.candidate_limit = int(sys.argv[6]) 
-bert_map.batch_size = 32
+bert_map.batch_size = 32 if not src == "snomed" else 8
 bert_map.strategy = "mean"
 bert_map.run()
