@@ -48,10 +48,9 @@ training_args = TrainingArguments(
 )
 set_seed(888)
 
-# with open(f"{ckp_base}/train.log", "w") as log:
-#     with redirect_stdout(log):
 # fine-tuning 
-fine_tune = OntoLabelBERT("emilyalsentzer/Bio_ClinicalBERT", train_path, val_path, test_path, training_args, early_stop=True)
+fine_tune = OntoLabelBERT("emilyalsentzer/Bio_ClinicalBERT", train_path, val_path, test_path, 
+                          training_args, early_stop=True, hugginface=bool(int(sys.argv[5])))
 fine_tune.trainer.train()
 # evaluation on test set
 test_results = fine_tune.trainer.evaluate(fine_tune.test)
