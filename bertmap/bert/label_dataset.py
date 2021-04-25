@@ -15,7 +15,7 @@ class OntoLabelDataset(torch.utils.data.Dataset):
         # self.encodings = tokenizer(text_pairs, truncation=True, padding=True)  # truncation is no need as there is no long sentence here
 
     def __len__(self):
-        return len(self.labels)
+        return len(self.data)
     
     def __getitem__(self, idx):
         item = self.encode(self.data.iloc[idx])
