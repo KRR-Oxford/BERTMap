@@ -21,10 +21,10 @@ train_path = data_base + f"train.{setting}.tsv"
 val_path = data_base + f"val.{setting}.tsv" if task_abbr == "us" else data_base + f"val.r.tsv"
 test_path = data_base + f"test.r.tsv"
 ckp_base = f"{main_dir}/experiment/bert_fine_tune/{src}2{tgt}.{task_abbr}.{setting}"
-logging_steps = 100
-eval_steps = 5 * logging_steps
-train_epochs = 30  # for plain r setting, I think it should set to 20 epochs, but for others with big data, 10 epochs is enough.
 batch_size = int(sys.argv[5])
+logging_steps = 100 * (32 // batch_size)  # in case the batch size is too small to prevent memory blow up
+eval_steps = 5 * logging_steps
+train_epochs = 30  # early stopping is applied, 30 is just the upper limit
 
 training_args = TrainingArguments(
     output_dir=ckp_base,          
@@ -44,14 +44,14 @@ training_args = TrainingArguments(
     save_total_limit=1,
     metric_for_best_model="accuracy",
     greater_is_better=True,
-    remove_unused_columns=None,
+    # remove_unused_columns=None,
     # disable_tqdm=True
 )
 set_seed(888)
 
 # fine-tuning 
 fine_tune = OntoLabelBERT("emilyalsentzer/Bio_ClinicalBERT", train_path, val_path, test_path, 
-                          training_args, early_stop=True, huggingface=int(sys.argv[6]))
+                          training_args, early_stop=True)
 fine_tune.trainer.train()
 # evaluation on test set
 test_results = fine_tune.trainer.evaluate(fine_tune.test)
