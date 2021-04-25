@@ -11,7 +11,7 @@ class OntoLabelDataset(torch.utils.data.Dataset):
         self.data = pd.read_csv(data_tsv, sep='\t', na_values=na_vals, keep_default_na=False)
         # self.labels = list(self.data["Synonymous"])
         self.encode = lambda examples: tokenizer(examples["Label1"], examples["Label2"], return_tensors='pt', 
-                                                 max_length=max_length, padding="longest", truncation=True)
+                                                 max_length=max_length, padding="max_length", truncation=True)
         # self.encodings = tokenizer(text_pairs, truncation=True, padding=True)  # truncation is no need as there is no long sentence here
 
     def __len__(self):
