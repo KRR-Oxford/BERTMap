@@ -15,17 +15,9 @@ def exclude_randrange(start, end, exclude):
         result = random.randrange(start, end)
     return result
 
-
 def uniqify(ls):
     non_empty_ls = list(filter(lambda x: x != "", ls))
     return list(dict.fromkeys(non_empty_ls))
-
-
-def swap(a, b):
-    temp = a 
-    a = b
-    b = temp
-    return a, b
 
 def size_split(sizes):
     max_range = list(range(sum(sizes)))
@@ -35,7 +27,6 @@ def size_split(sizes):
         end = sizes[i] + start
         splits.append(max_range[start: end])
     return splits
-
 
 def batch_split(batch_size, max_num):
     """Split into equal parts of {batch_size} as well as the tail"""
@@ -55,7 +46,6 @@ def batch_split(batch_size, max_num):
     assert len(splits) == num_splits + 1
     return splits
     
-
 def equal_split(num_splits, max_num):
     """Split into equal {num_splits} part as well as the tail"""
     max_range = list(range(max_num))
@@ -67,7 +57,6 @@ def equal_split(num_splits, max_num):
         splits.append(max_range[start: end])
     assert len(splits) == num_splits + 1
     return splits
-
 
 def log_print(log_info, log_path: str):
     """Logging information"""

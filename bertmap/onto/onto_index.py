@@ -1,35 +1,44 @@
 """
-Inverted Index built on WordPiece tokenizer (subword level)
+OntoInvertedIndex class with as entries the subword tokens retrieved from ontological class texts.
 """
 
 from transformers import AutoTokenizer
-from bertmap.onto import Ontology
+from bertmap.onto import OntoBox
 from collections import defaultdict
 from itertools import chain
 
 
 class OntoInvertedIndex:
     
-    def __init__(self, tokenizer_path="emilyalsentzer/Bio_ClinicalBERT"):
+    def __init__(self, ontobox: OntoBox, tokenizer_path: str, 
+                 cut=0, *properties):
+        self.ontobox = ontobox
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
-        self.index = defaultdict(list)
+        self.cut = cut
+        self.construct_index(cut, *properties)
+
+    def __repr__(self):
+        report = "<OntoInvertedIndex>:\n"
+        report += f"\t{str(self.ontobox)}"
+        report += f"\t<entry num={len(self.index)} cut={self.cut}>\n"
+        report += f"</OntoInvertedIndex>\n"
+        return report
         
-    def tokenize_class_text(self, class_text: str):
-        texts, _ = Ontology.parse_class_text(class_text)
+    def tokenize(self, texts):
         return chain.from_iterable([self.tokenizer.tokenize(text) for text in texts])
             
-    def construct_index(self, onto_name, onto_class2text_file, cut=0, clear=False):
-        self.onto_name = onto_name
-        if clear:
-            self.index = defaultdict(list)
-        self.class2text = Ontology.load_class2text(onto_class2text_file) \
-            if type(onto_class2text_file) is str else onto_class2text_file
-        for i, dp in self.class2text.iterrows():
-            tokens = self.tokenize_class_text(dp["Class-Text"])
-            for tk in tokens:
-                if len(tk) > cut:
-                    self.index[tk].append(i)
-        print(f"Sub-word level Inverted Index built for ontology {self.onto_name}, with token length cut at {cut}.")
+    def construct_index(self, cut: int, *properties):
+        """Create Inverted Index with sub-word tokens
 
-            
-    
+        Args:
+            cut (int): ignore sub-word tokens of length <= cut
+        """
+        self.index = defaultdict(list)
+        # default lexicon information is the "labels"
+        if not properties: properties = ["label"]
+        for cls_iri, text_dict in self.ontobox.classtexts.items():
+            for prop, texts in text_dict.items():
+                if not prop in properties: continue
+                tokens = self.tokenize(texts)
+                for tk in tokens:
+                    if len(tk) > cut: self.index[tk].append(self.ontobox.class2idx[cls_iri])

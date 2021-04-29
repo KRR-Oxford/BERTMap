@@ -2,7 +2,7 @@ from re import sub
 import xml.etree.ElementTree as ET
 import lxml.etree as le
 import pandas as pd
-from bertmap.onto import Ontology
+from bertmap.onto import OntoBox
 
 
 na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL', 'null', 'n/a'})
@@ -30,7 +30,7 @@ def read_rdf_mappings(rdf_file, src_onto=None, tgt_onto=None):
     illegal_mappings = []  # where relation is "?"
     if src_onto is None or tgt_onto is None:
         # Read URIs for ontology 1 and 2 from rdf if not given
-        uris = Ontology.read_onto_uris_from_rdf(rdf_file, "uri1", "uri2")
+        uris = OntoBox.read_onto_uris_from_rdf(rdf_file, "uri1", "uri2")
         src_onto, tgt_onto = uris["uri1"], uris["uri2"]
 
     for elem in xml_root.iter():
@@ -45,7 +45,7 @@ def read_rdf_mappings(rdf_file, src_onto=None, tgt_onto=None):
                     rel = sub_elem.text
                 elif "measure" in sub_elem.tag:
                     measure = sub_elem.text
-            en1, en2 = Ontology.reformat_entity_uri(en1, src_onto), Ontology.reformat_entity_uri(en2, tgt_onto)
+            en1, en2 = OntoBox.reformat_entity_uri(en1, src_onto), OntoBox.reformat_entity_uri(en2, tgt_onto)
             row = [en1, en2, measure]
             # =: equivalent; > superset of; < subset of.
             if rel == "=" or rel == ">" or rel == "<":
