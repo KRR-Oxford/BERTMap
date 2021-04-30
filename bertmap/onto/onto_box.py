@@ -24,7 +24,7 @@ class OntoBox():
     # exclude mistaken parsing of string "null" to NaN
     na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL', 'null', 'n/a'})
 
-    def __init__(self, onto_file, classtexts_file=None, iri_abbr=None, *properties):
+    def __init__(self, onto_file, classtexts_file=None, iri_abbr=None, properties=["label"]):
         
         # load owlready2 ontology and assign attributes
         self.onto = get_ontology(f"file://{onto_file}").load()

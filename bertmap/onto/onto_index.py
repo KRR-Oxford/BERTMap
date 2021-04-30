@@ -6,22 +6,24 @@ from transformers import AutoTokenizer
 from bertmap.onto import OntoBox
 from collections import defaultdict
 from itertools import chain
+import json
 
 
 class OntoInvertedIndex:
     
     def __init__(self, ontobox: OntoBox, tokenizer_path: str, 
-                 cut=0, *properties):
+                 cut=0, properties=["label"], index_file=None):
         self.ontobox = ontobox
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
         self.cut = cut
-        self.construct_index(cut, *properties)
+        if index_file: self.load_index(index_file)
+        else: self.construct_index(cut, *properties)
 
     def __repr__(self):
         report = "<OntoInvertedIndex>:\n"
-        report += f"\t{str(self.ontobox)}"
         report += f"\t<entry num={len(self.index)} cut={self.cut}>\n"
-        report += f"</OntoInvertedIndex>\n"
+        report += f"\n{str(self.ontobox)}".replace("\n", "\n\t")
+        report += f"\n</OntoInvertedIndex>\n"
         return report
         
     def tokenize(self, texts):
@@ -42,3 +44,11 @@ class OntoInvertedIndex:
                 tokens = self.tokenize(texts)
                 for tk in tokens:
                     if len(tk) > cut: self.index[tk].append(self.ontobox.class2idx[cls_iri])
+
+    def save_index(self, index_file):
+        with open(index_file, "w") as f:
+            json.dump(self.index, f, indent=4, separators=(',', ': '), sort_keys=True)
+    
+    def load_index(self, index_file):
+        with open(index_file, "r") as f:
+            self.index = json.load(f)
