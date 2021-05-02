@@ -2,8 +2,7 @@
 OntoBox class that handles data generation from owlready2 Ontology object.
 """
 
-import owlready2
-from owlready2 import get_ontology
+from owlready2 import get_ontology, entity
 from bertmap.onto import OntoText
 from bertmap.onto import OntoInvertedIndex
 import math, os, re, ast
@@ -73,15 +72,32 @@ class OntoBox():
         ontobox.onto_index = OntoInvertedIndex(cut=cut, index_file=f"{save_dir}/{inv_index_file[0]}")
         return ontobox
     
+    def create_class2depth(self, strategy: str="max"):
+        assert strategy == "max" or strategy == "min"
+        class2depth = dict()
+        depth_func = getattr(self, "depth_" + strategy)
+        for cl in self.onto.classes():
+            cl_iri_abbr = self.onto_text.abbr_entity_iri(cl.iri)
+            class2depth[cl_iri_abbr] = depth_func(cl)
+        setattr(self, f"class2depth_{strategy}", class2depth)
+    
+    @staticmethod
+    def super_classes(cl):
+        supclasses = list()
+        for supclass in cl.is_a:
+            if type(supclass) == entity.ThingClass:
+                supclasses.append(supclass)
+        return supclasses
+    
     @classmethod
-    def depth_max(cls, c):
+    def depth_max(cls, cl):
         """Get te maximum depth of a class to the root"""
-        supclasses = owlready2.super_classes(c=c)
+        supclasses = cls.super_classes(cl=cl)
         if len(supclasses) == 0:
             return 0
         d_max = 0
         for super_c in supclasses:
-            super_d = cls.depth_max(c=super_c)
+            super_d = cls.depth_max(cl=super_c)
             if super_d > d_max:
                 d_max = super_d
         return d_max + 1
@@ -89,7 +105,7 @@ class OntoBox():
     @classmethod
     def depth_min(cls, c):
         """Get te minimum depth of a class to the root"""
-        supclasses = owlready2.super_classes(c=c)
+        supclasses = cls.super_classes(cl=c)
         if len(supclasses) == 0:
             return 0
         d_min = math.inf

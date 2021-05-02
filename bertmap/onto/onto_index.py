@@ -39,7 +39,7 @@ class OntoInvertedIndex:
             cut (int): ignore sub-word tokens of length <= cut
         """
         self.index = defaultdict(list)
-        for cls_iri, text_dict in self.ontotext.data.items():
+        for cls_iri, text_dict in self.ontotext.texts.items():
             for prop, texts in text_dict.items():
                 if not prop in properties: continue
                 tokens = self.tokenize(texts)
