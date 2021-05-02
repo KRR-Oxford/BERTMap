@@ -46,7 +46,8 @@ class OntoBox():
     
     @classmethod
     def from_saved(cls, save_dir):
-        
+        """Create an OntoBox instance from data files in specified formats
+        """
         # check and load onto data files
         onto_file = []
         classtexts_file = []
