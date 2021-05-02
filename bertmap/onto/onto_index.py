@@ -3,28 +3,31 @@ OntoInvertedIndex class with as entries the subword tokens retrieved from ontolo
 """
 
 from transformers import AutoTokenizer
-from bertmap.onto import OntoBox
+from bertmap.onto import OntoText
 from collections import defaultdict
 from itertools import chain
 import json
+from typing import Optional
 
 
 class OntoInvertedIndex:
     
-    def __init__(self, ontobox: OntoBox, tokenizer_path: str, 
-                 cut=0, properties=["label"], index_file=None):
-        self.ontobox = ontobox
-        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+    def __init__(self, 
+                 ontotext: Optional[OntoText]=None, 
+                 tokenizer_path: Optional[str]=None, 
+                 cut: int=0, 
+                 index_file: Optional[str]=None):
+        
         self.cut = cut
-        if index_file: self.load_index(index_file)
-        else: self.construct_index(cut, *properties)
+        if index_file: 
+            self.load_index(index_file)
+        else:
+            self.ontotext = ontotext
+            self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+            self.construct_index(cut, *self.ontotext.properties)
 
     def __repr__(self):
-        report = "<OntoInvertedIndex>:\n"
-        report += f"\t<entry num={len(self.index)} cut={self.cut}>\n"
-        report += f"\n{str(self.ontobox)}".replace("\n", "\n\t")
-        report += f"\n</OntoInvertedIndex>\n"
-        return report
+        return f"<OntoInvertedIndex num_entries={len(self.index)} cut={self.cut}>"
         
     def tokenize(self, texts):
         return chain.from_iterable([self.tokenizer.tokenize(text) for text in texts])
@@ -36,14 +39,12 @@ class OntoInvertedIndex:
             cut (int): ignore sub-word tokens of length <= cut
         """
         self.index = defaultdict(list)
-        # default lexicon information is the "labels"
-        if not properties: properties = ["label"]
-        for cls_iri, text_dict in self.ontobox.classtexts.items():
+        for cls_iri, text_dict in self.ontotext.data.items():
             for prop, texts in text_dict.items():
                 if not prop in properties: continue
                 tokens = self.tokenize(texts)
                 for tk in tokens:
-                    if len(tk) > cut: self.index[tk].append(self.ontobox.class2idx[cls_iri])
+                    if len(tk) > cut: self.index[tk].append(self.ontotext.class2idx[cls_iri])
 
     def save_index(self, index_file):
         with open(index_file, "w") as f:
