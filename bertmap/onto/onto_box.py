@@ -19,7 +19,7 @@ class OntoBox():
                  textual_properties: List[str]=["label"],
                  tokenizer_path: str="emilyalsentzer/Bio_ClinicalBERT", 
                  cut: int=0,
-                 from_saved=False):
+                 from_saved: bool=False):
         
         # load owlready2 ontology and assign attributes
         self.onto_file = onto_file
@@ -41,7 +41,7 @@ class OntoBox():
         copy2(self.onto_file, save_dir)
         self.onto_text.save_classtexts(save_dir + f"/{self.onto.name}.ctxt.json")
         self.onto_index.save_index(save_dir + f"/{self.onto.name}.ind.json")
-        with open(save_dir + "/info.txt", "w") as f: f.write(str(self))
+        with open(save_dir + "/info", "w") as f: f.write(str(self))
     
     @classmethod
     def from_saved(cls, save_dir):
@@ -56,7 +56,7 @@ class OntoBox():
             if file.endswith(".owl"): onto_file.append(file)
             elif file.endswith(".ctxt.json"): classtexts_file.append(file)
             elif file.endswith(".ind.json"): inv_index_file.append(file)
-            elif file == "info.txt": info_file.append(file)
+            elif file == "info": info_file.append(file)
             else: print(f"[ERROR] invalid file detected: {file}"); return
         if len(onto_file) != 1 or len(classtexts_file) != 1 or len(inv_index_file) != 1: 
             print(f"[ERROR] multiple data files detected"); return

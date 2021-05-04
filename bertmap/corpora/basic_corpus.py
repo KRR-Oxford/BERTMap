@@ -22,11 +22,11 @@ import json
 import pandas as pd
 from typing import Optional
 
-class OntologyCorpus:
+class OntoCorpus:
     
     def __init__(self, *corpus_args, corpus_file: Optional[str]=None):
         if corpus_file: self.load_corpus(corpus_file)
-        else: self.config(*corpus_args); self.create_corpus()
+        else: self.from_saved = False; self.config(*corpus_args); self.create_corpus()
         assert self.corpus_type is not None
         assert self.corpus_info is not None
         assert self.corpus is not None
@@ -44,13 +44,22 @@ class OntologyCorpus:
         synonym_report = "\t<Synonyms "
         for k, v in corpus_info["synonyms"].items():
             synonym_report += f"{k}={v} "
+        synonym_report = synonym_report.rstrip()
         synonym_report += ">\n"
         nonsynonym_report = "\t<Nonsynonyms "
         for k, v in corpus_info["nonsynonyms"].items():
             nonsynonym_report += f"{k}={v} "
+        nonsynonym_report = nonsynonym_report.rstrip()
         nonsynonym_report += ">\n"
         report += synonym_report
         report += nonsynonym_report
+        if corpus_info["others"]:
+            others_report = "\t<OtherInfo "
+            for k, v in corpus_info["others"].items():
+                others_report += f"{k}={v} "
+            others_report = others_report.rstrip()
+            others_report += ">\n"
+            report += others_report
         report += "</OntologyCorpus>"
         return report
 
@@ -65,11 +74,12 @@ class OntologyCorpus:
         return {
             "type": self.corpus_type,
             "onto": [],
-            "synonyms": {"for+back": 0, "id": None},
-            "nonsynonyms": {"soft": 0, "hard": None, "removed_violations": 0}
+            "synonyms": {"non-id": 0, "id": None},
+            "nonsynonyms": {"soft": 0, "hard": None, "soft-back": None, "hard-back": None, "removed_violations": 0},
+            "others": {}
         }
 
-    def identity_synonyms(self):
+    def get_identity_synonyms(self):
         """[Reflexivity]: Map each classtext to itself"""
         classtexts = list(self.corpus.keys())[1:]  
         return list(zip(classtexts, classtexts, [1]*len(classtexts)))
@@ -79,40 +89,28 @@ class OntologyCorpus:
         synonyms = []
         soft_nonsynonyms = []
         hard_nonsynonyms = []
-        for term, semantic_dict in self.corpus.items():
-            if term == " corpus_info ":
-                continue
-            synonyms += [(term, s, 1) for s in semantic_dict["synonyms"]]
-            soft_nonsynonyms += [(term, ns, 0) for ns in semantic_dict["soft_nonsynonyms"]]
-            hard_nonsynonyms += [(term, ns, 0) for ns in semantic_dict["hard_nonsynonyms"]]  
-            
-        return {"id_synonyms": self.identity_synonyms(), "synonyms": synonyms,
+        for label, semantic_dict in self.corpus.items():
+            if label == " corpus_info ": continue
+            synonyms += [(label, s, 1) for s in semantic_dict["synonyms"]]
+            soft_nonsynonyms += [(label, ns, 0) for ns in semantic_dict["soft_nonsynonyms"]]
+            hard_nonsynonyms += [(label, ns, 0) for ns in semantic_dict["hard_nonsynonyms"]]     
+        return {"id_synonyms": self.get_identity_synonyms(), "synonyms": synonyms,
                 "soft_nonsynonyms": soft_nonsynonyms, "hard_nonsynonyms": hard_nonsynonyms}
     
     @staticmethod
-    def backward_semantic_pairs(semantic_pairs):
-        # (label1, label2, whether_or_not_synonymous)
-        return [(y, x, s) for x, y, s in semantic_pairs]
-    
-    @staticmethod
     def save_semantic_pairs(semantic_data, save_file):
-        """Save all the semantic sentence pairs"""
+        """Save all the semantic sentence pairs (Note: the output column "label" refers to the ground truth)"""
         pd.DataFrame(semantic_data, columns=["sentence1", "sentence2", "label"]).to_csv(save_file, sep='\t', index=False)
     
-    def negative_sample_check(self, sent1, sent2):
+    def negative_sample_check(self, label1, label2):
         """The negative label pair (l1, l2) must satisfy the following conditions:
-           1.  l1 not = l2; 
+           1.  l1 != l2; 
            2. (l1, l2) or (l2, l1) not a synonym; 
         """
-        # edge case to prevent when label 1 or 2 has not been added into the dict 
-        if len(self.corpus[sent1]) == 0: return True
-        if len(self.corpus[sent2]) == 0: return True
         # conduct the negative sample check
-        equiv_cond = sent1 == sent2
-        partition_cond = sent2 in self.corpus[sent1]["synonyms"] or \
-            sent1 in self.corpus[sent2]["synonyms"]
-        if equiv_cond or partition_cond:
-            return False
+        if label1 == label2: return False
+        if label2 in self.corpus[label1]["synonyms"]: return False
+        if label1 in self.corpus[label2]["synonyms"]: return False
         return True
 
     def save_corpus(self, corpus_file):
@@ -124,3 +122,4 @@ class OntologyCorpus:
             self.corpus = json.load(f)
         self.corpus_info = self.corpus[" corpus_info "]
         self.corpus_type = self.corpus_info["type"]
+        self.from_saved = True

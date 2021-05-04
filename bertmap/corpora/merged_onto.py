@@ -3,113 +3,123 @@ Ontology Corpus class that takes as input a base corpus and an additional corpus
 """
 
 
-from bertmap.corpora import OntologyCorpus
+from owlready2.annotation import label
+from bertmap.corpora import OntoCorpus
 from bertmap.utils import uniqify
 from copy import deepcopy
+from typing import Optional
 from sklearn.model_selection import train_test_split
 import random
 
 
-class MergedOntoCorpus(OntologyCorpus):
+class MergedOntoCorpus(OntoCorpus):
     
-    def __init__(self, onto_name, base_onto_corpus=None, to_add_onto_corpus=None, corpus_path=None):
+    def __init__(self, 
+                 base_onto_corpus: Optional[OntoCorpus]=None, 
+                 add_onto_corpus: Optional[OntoCorpus]=None, 
+                 corpus_file: Optional[str]=None):
         self.corpus_type = "merged-onto"
-        super().__init__(base_onto_corpus, to_add_onto_corpus, onto_name=onto_name, corpus_path=corpus_path)
+        super().__init__(base_onto_corpus, add_onto_corpus, corpus_file=corpus_file)
         
-    def init_config(self, base_onto_corpus: OntologyCorpus, to_add_onto_corpus: OntologyCorpus):
-        self.corpus_dict = deepcopy(base_onto_corpus.corpus_dict)
-        self.to_add_corpus_dict = deepcopy(to_add_onto_corpus.corpus_dict)
-        print("Merging the following Source and Target Ontologies ...")
-        self.report(self.corpus_dict)
-        self.report(self.to_add_corpus_dict)
+    def __repr__(self):
+        if self.from_saved: return super().__repr__()
+        report = super().__repr__().replace("\n</OntologyCorpus>", "")
+        report += "\n\t<!--the following two corpora were merged-->"
+        report += f"\n{str(self.base_repr)}".replace("\n", "\n\t")
+        report += f"\n{str(self.add_repr)}".replace("\n", "\n\t")
+        report += "\n</OntologyCorpus>"
+        return report
+        
+    def config(self,
+               base_onto_corpus: OntoCorpus, 
+               add_onto_corpus: OntoCorpus):
+        self.corpus = deepcopy(base_onto_corpus.corpus)
+        self.corpus_info = self.corpus[" corpus_info "]
+        self.corpus_info["others"] = dict()
+        self.add_corpus = deepcopy(add_onto_corpus.corpus)
+        self.add_corpus_info = self.add_corpus[" corpus_info "]
+        self.corpus_info["nonsynonyms"]["removed_violations"] += self.add_corpus_info["nonsynonyms"]["removed_violations"]
+        self.corpus_info["onto"] += self.add_corpus_info["onto"]
+        del self.corpus_info["nonsynonyms"]["soft-back"]; del self.corpus_info["nonsynonyms"]["hard-back"]
+        del self.corpus_info["nonsynonyms"]["soft-raw"]; del self.corpus_info["nonsynonyms"]["hard-raw"]
+        self.violations = []
+        self.base_repr = str(base_onto_corpus)
+        self.add_repr = str(add_onto_corpus)
         
     def create_corpus(self):
-        self.corpus_dict[" corpus_info "]["num_violated"] += self.to_add_corpus_dict[" corpus_info "]["num_violated"]
         self.update_synonyms()
         self.update_nonsynonyms("soft")
         self.update_nonsynonyms("hard")
-        self.corpus_dict[" corpus_info "]["corpus_type"] =  "Merged Ontology Corpus"
-        self.corpus_dict[" corpus_info "]["corpus_onto"] = self.onto_name
-        self.corpus_dict[" corpus_info "]["id_synonyms"] = len(self.corpus_dict)
-        print("Updated Corpora Infomation ...")
-        self.report(self.corpus_dict)
+        self.corpus_info["synonyms"]["id"] = len(self.corpus)
+        self.corpus_info["nonsynonyms"]["removed_violations"] += len(self.violations)
+        self.corpus[" corpus_info "] = self.corpus_info
+        print("finishing merging (print the merged-corpus to see updated details) ...")
 
     def update_synonyms(self):
-        corpus_info = self.corpus_dict[" corpus_info "]
-        for to_add_term, to_add_term_dict in self.to_add_corpus_dict.items():
-            if to_add_term == " corpus_info ":
-                continue
+        for add_label, add_dict in self.add_corpus.items():
+            if add_label == " corpus_info ": continue
             # extract the existed term dict or initialize an empty one
-            term_dict = self.corpus_dict[to_add_term]
-            ###### For updating the synonyms ######
-            synonym_list = deepcopy(term_dict["synonyms"])
-            existed_num = len(synonym_list)
-            to_add_synonym_list = deepcopy(to_add_term_dict["synonyms"])
-            synonym_list = uniqify(synonym_list + to_add_synonym_list)
-            corpus_info["synonyms"] += len(synonym_list) - existed_num
-            ##### Update the dictionary #####
-            term_dict["synonyms"] = synonym_list
-            self.corpus_dict[to_add_term] = term_dict
-        # update the corpus_info
-        self.corpus_dict[" corpus_info "] = corpus_info
+            aliases = deepcopy(self.corpus[add_label]["synonyms"])
+            existed_num = len(aliases)
+            aliases = uniqify(aliases + add_dict["synonyms"])
+            self.corpus_info["synonyms"]["non-id"] += len(aliases) - existed_num
+            self.corpus[add_label]["synonyms"] = aliases
             
-    def update_nonsynonyms(self, flag="soft"):
-        assert flag == "soft" or flag == "hard"
-        nonsynonym_string = flag + "_nonsynonyms"
-        corpus_info = self.corpus_dict[" corpus_info "]
-        for to_add_term, to_add_term_dict in self.to_add_corpus_dict.items():
-            if to_add_term == " corpus_info ":
-                continue
+    def update_nonsynonyms(self, neg_str: str="soft"):
+        assert neg_str == "soft" or neg_str == "hard"
+        for add_label, add_dict in self.add_corpus.items():
+            if add_label == " corpus_info ": continue
             # extract the existed term dict or initialize an empty one
-            term_dict = self.corpus_dict[to_add_term]
-            ###### For updating the synonyms ######
-            nonsynonym_list = deepcopy(term_dict[nonsynonym_string])
-            existed_num = len(nonsynonym_list)
-            tgt_nonsynonym_list = to_add_term_dict[nonsynonym_string] 
-            for tgt_nonsynonym in tgt_nonsynonym_list:
+            negatives = deepcopy(self.corpus[add_label][f"{neg_str}_nonsynonyms"])
+            existed_num = len(negatives)
+            add_negatives = add_dict[f"{neg_str}_nonsynonyms"] 
+            for neg_label in add_negatives:
                 # the negative sample must not be existed in the updated synonym set
-                if self.negative_sample_check(to_add_term, tgt_nonsynonym):
-                    nonsynonym_list.append(tgt_nonsynonym)
-                else:
-                    corpus_info["num_violated"] += 1
-            nonsynonym_list = uniqify(nonsynonym_list)
-            corpus_info[nonsynonym_string] += len(nonsynonym_list) - existed_num
-            ##### Update the dictionary #####
-            term_dict[nonsynonym_string] = nonsynonym_list
-            self.corpus_dict[to_add_term] = term_dict
-        # update the corpus_info
-        self.corpus_dict[" corpus_info "] = corpus_info
+                if self.negative_sample_check(add_label, neg_label):
+                    negatives.append(neg_label)
+                else: self.violations.append([add_label, neg_label])
+            negatives = uniqify(negatives)
+            self.corpus_info["nonsynonyms"][neg_str] += len(negatives) - existed_num
+            self.corpus[add_label][f"{neg_str}_nonsynonyms"] = negatives
         
-    def train_val_split(self, train_ratio=0.8, val_ratio=0.2, backward=False, identity=False, only_train=False):
-        assert train_ratio + val_ratio == 1.0
-        onto_labels = self.extract_label_pairs()
-        # extract cross-ontology labels
-        synonyms = onto_labels["synonyms"]  # forward synonyms
-         
-        # for each synonym, sample a soft and a hard negative
-        # in case there are too many synonyms (especially after adding the identity synonyms)
-        # we use all the nonsynonyms available
-        soft_nonsynonyms = random.sample(onto_labels["soft_nonsynonyms"], len(synonyms)) \
-            if len(synonyms) < len(onto_labels["soft_nonsynonyms"]) else onto_labels["soft_nonsynonyms"]
-        hard_nonsynonyms = random.sample(onto_labels["hard_nonsynonyms"], len(synonyms)) \
-            if len(synonyms) < len(onto_labels["hard_nonsynonyms"]) else onto_labels["hard_nonsynonyms"]
+    def train_val_split(self, 
+                        val_ratio: float=0.2, 
+                        soft_neg_rate: int=1,
+                        hard_neg_rate: int=1):
         
-        # add all the backward label pairs
-        if backward:
-            synonyms += self.backward_label_pairs(synonyms)
-            soft_nonsynonyms += self.backward_label_pairs(soft_nonsynonyms)
-            hard_nonsynonyms += self.backward_label_pairs(hard_nonsynonyms)
-            
-        if identity:
-            synonyms += onto_labels["id_synonyms"]  # add identity synonyms
-            
+        semantic_pairs = self.extract_semantic_pairs()
+        
+        # label data without identity synonyms
+        synonyms = semantic_pairs["synonyms"]  # for-back synonyms
+        # check if the input negative rates are applicable
+        if len(semantic_pairs["soft_nonsynonyms"]) < soft_neg_rate * len(synonyms): 
+            print("# soft-nonsynonyms in the current corpus is not enough, \
+                reduce the soft-negative rate or re-create the corpus with higher sample rate.")
+            return None
+        if len(semantic_pairs["hard_nonsynonyms"]) < hard_neg_rate * len(synonyms): 
+            print("# hard-nonsynonyms in the current corpus is not enough, \
+            reduce the soft-negative rate or re-create the corpus with higher sample rate.")
+            return None
+        # for each synonym, sample {soft_neg_rate} soft and {hard_neg_rate} hard negatives
+        soft_nonsynonyms = random.sample(semantic_pairs["soft_nonsynonyms"], soft_neg_rate * len(synonyms))
+        hard_nonsynonyms = random.sample(semantic_pairs["hard_nonsynonyms"], hard_neg_rate * len(synonyms))
         # form the label data
         label_data = synonyms + soft_nonsynonyms + hard_nonsynonyms
         label_data = uniqify(label_data)
         random.shuffle(label_data)
-        if only_train:
-            return label_data
-        else:
+        
+        # label data with identity synonyms
+        id_synonyms = semantic_pairs["id_synonyms"]
+        # sample negatives according to the size of identity synonyms
+        soft_nonsynonyms_for_ids = random.sample(semantic_pairs["soft_nonsynonyms"], soft_neg_rate * len(id_synonyms))
+        hard_nonsynonyms_for_ids = random.sample(semantic_pairs["hard_nonsynonyms"], hard_neg_rate * len(id_synonyms))
+        label_data_for_ids = id_synonyms + soft_nonsynonyms_for_ids + hard_nonsynonyms_for_ids
+        label_data_for_ids = uniqify(label_data_for_ids)
+        random.shuffle(label_data_for_ids)
+        
+        if val_ratio == 0.0: 
+            return label_data, label_data_for_ids
+        else: 
             train, val = train_test_split(label_data, test_size=val_ratio)
-            return train, val
-
+            train_ids, val_ids = train_test_split(label_data_for_ids, test_size=val_ratio)
+            return train, val, train_ids, val_ids

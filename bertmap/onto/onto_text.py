@@ -55,11 +55,12 @@ class OntoText():
         
     def __repr__(self):
         iri_abbr = self.iri_abbr.replace(":", "")
-        return f"<OntoText abbr='{iri_abbr}' num_classes={len(self.class2idx)} prop={self.properties}>"
+        return f"<OntoText abbr='{iri_abbr}' num_classes={len(self.class2idx)} num_texts={self.num_texts} prop={self.properties}>"
         
     def extract_classtexts(self, *properties):
         """Construct dict(class-iri -> dict(property -> class-text))
         """
+        self.num_texts = 0
         self.texts = defaultdict(lambda: defaultdict(list))
         # default lexicon information is the "labels"
         if not properties: properties = ["label"]
@@ -68,6 +69,7 @@ class OntoText():
             for prop in properties:
                 # lowercase and remove underscores "_"
                 self.texts[cl_iri_abbr][prop] = self.preprocess_classtexts(cl, prop)
+                self.num_texts += len(self.texts[cl_iri_abbr][prop])
     
     def save_classtexts(self, classtexts_file):
         with open(classtexts_file, "w") as f:
@@ -76,7 +78,11 @@ class OntoText():
     def load_classtexts(self, classtexts_file):
         with open(classtexts_file, "r") as f:
             self.texts = json.load(f)
-    
+        self.num_texts = 0
+        for td in self.texts.values():
+            for txts in td.values():
+                self.num_texts += len(txts)
+        
     def batch_iterator(self, batch_size: int):
         """
         Args:

@@ -1,10 +1,13 @@
-from re import sub
 import xml.etree.ElementTree as ET
 import lxml.etree as le
 import pandas as pd
 from bertmap.onto import OntoBox
 
-
+namespaces = {
+    "http://bioontology.org/projects/ontologies/fma/fmaOwlDlComponent_2_0#": "fma:",
+    "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#": "nci:",
+    "http://www.ihtsdo.org/snomed#": "snomed:",
+}
 na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL', 'null', 'n/a'})
 
 def read_tsv_mappings(tsv_file, threshold=0.0):
@@ -14,7 +17,7 @@ def read_tsv_mappings(tsv_file, threshold=0.0):
     return mappings
 
 
-def read_rdf_mappings(rdf_file, src_onto=None, tgt_onto=None):
+def read_rdf_mappings(rdf_file, src_iri=None, tgt_iri=None):
     """
     Args:
         rdf_file: path to mappings in rdf format
@@ -28,10 +31,10 @@ def read_rdf_mappings(rdf_file, src_onto=None, tgt_onto=None):
     xml_root = ET.parse(rdf_file).getroot()
     legal_mappings = []  # where relation is "="
     illegal_mappings = []  # where relation is "?"
-    if src_onto is None or tgt_onto is None:
+    if src_iri is None or tgt_iri is None:
         # Read URIs for ontology 1 and 2 from rdf if not given
         uris = OntoBox.read_onto_uris_from_rdf(rdf_file, "uri1", "uri2")
-        src_onto, tgt_onto = uris["uri1"], uris["uri2"]
+        src_iri, tgt_iri = uris["uri1"], uris["uri2"]
 
     for elem in xml_root.iter():
         # every Cell contains a mapping of en1 -rel(some value)-> en2
@@ -45,7 +48,8 @@ def read_rdf_mappings(rdf_file, src_onto=None, tgt_onto=None):
                     rel = sub_elem.text
                 elif "measure" in sub_elem.tag:
                     measure = sub_elem.text
-            en1, en2 = OntoBox.reformat_entity_uri(en1, src_onto), OntoBox.reformat_entity_uri(en2, tgt_onto)
+            en1 = en1.replace(src_iri, namespaces[src_iri])
+            en2 = en2.replace(tgt_iri, namespaces[tgt_iri])
             row = [en1, en2, measure]
             # =: equivalent; > superset of; < subset of.
             if rel == "=" or rel == ">" or rel == "<":
