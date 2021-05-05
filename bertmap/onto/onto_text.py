@@ -6,7 +6,7 @@ from bertmap.utils import batch_split, uniqify
 import owlready2
 import pandas as pd
 import json
-from collections import defaultdict
+from collections import defaultdict, OrderedDict
 from typing import List, Optional
 
 
@@ -78,6 +78,7 @@ class OntoText():
     def load_classtexts(self, classtexts_file):
         with open(classtexts_file, "r") as f:
             self.texts = json.load(f)
+        # compute number of texts
         self.num_texts = 0
         for td in self.texts.values():
             for txts in td.values():
@@ -92,8 +93,10 @@ class OntoText():
             dict: dictionary that stores a batch of (class-iri, class-text) pairs.
         """
         idx_splits = batch_split(batch_size, max_num=len(self.idx2class))
-        for indices in idx_splits:
-            yield {self.idx2class[i]: self.texts[self.idx2class[i]] for i in indices}
+        for idxs in idx_splits:
+            batch = OrderedDict()
+            for i in idxs: batch[self.idx2class[i]] = self.texts[self.idx2class[i]]
+            yield batch
             
     @staticmethod
     def preprocess_classtexts(cl, prop):

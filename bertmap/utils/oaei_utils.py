@@ -31,10 +31,6 @@ def read_rdf_mappings(rdf_file, src_iri=None, tgt_iri=None):
     xml_root = ET.parse(rdf_file).getroot()
     legal_mappings = []  # where relation is "="
     illegal_mappings = []  # where relation is "?"
-    if src_iri is None or tgt_iri is None:
-        # Read URIs for ontology 1 and 2 from rdf if not given
-        uris = OntoBox.read_onto_uris_from_rdf(rdf_file, "uri1", "uri2")
-        src_iri, tgt_iri = uris["uri1"], uris["uri2"]
 
     for elem in xml_root.iter():
         # every Cell contains a mapping of en1 -rel(some value)-> en2
