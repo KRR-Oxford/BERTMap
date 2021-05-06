@@ -303,9 +303,10 @@ fabric.properties
 *.code-workspace
 
 # Customized
+archive/
 data/
 testing/
 *pt
 experiment/
-scripts/*/test*
+scripts/*
 

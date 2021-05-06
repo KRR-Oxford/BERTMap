@@ -8,8 +8,6 @@
 
 # append the paths
 import os
-
-from scipy.sparse import construct
 main_dir = os.getcwd().split("BERTMap")[0] + "BERTMap"
 import sys
 sys.path.append(main_dir)
@@ -17,14 +15,16 @@ sys.path.append(main_dir)
 # import essentials
 import argparse
 import json
-import random
 from shutil import copy2
 from pathlib import Path
+from transformers import TrainingArguments
+import torch
 
 # import bertmap
-from bertmap.utils import uniqify
+from bertmap.utils import *
 from bertmap.onto import *
 from bertmap.corpora import *
+from bertmap.bert import BERTOntoAlign
 
 def fix_path(path_str: str):
     return main_dir + "/" + path_str
@@ -83,17 +83,76 @@ def construct_corpora(config):
     fine_tune_data_dir = task_dir + "/fine-tune.data"
     if not os.path.exists(fine_tune_data_dir):
         banner("semi-supervised data")
-        ss_data = corpora.semi_supervised_data(**config["corpora"])
+        ss_data, ss_report = corpora.semi_supervised_data(**config["corpora"])
         banner("un-supervised data")
-        us_data = corpora.unsupervised_data(**config["corpora"])
+        us_data, us_report = corpora.unsupervised_data(**config["corpora"])
         Path(fine_tune_data_dir).mkdir(parents=True, exist_ok=True)
         with open(fine_tune_data_dir + "/ss.data.json", "w") as f: 
             json.dump(ss_data, f, indent=4, separators=(',', ': '), sort_keys=True)
+        with open(fine_tune_data_dir + "/ss.info", "w") as f:
+            f.write(ss_report)
         with open(fine_tune_data_dir + "/us.data.json", "w") as f: 
             json.dump(us_data, f, indent=4, separators=(',', ': '), sort_keys=True)
+        with open(fine_tune_data_dir + "/us.info", "w") as f:
+            f.write(us_report)
     
 def fine_tune(config):
-    pass
+    
+    global exp_dir
+    
+    fine_tune_params = config["fine-tune"]
+    learn = fine_tune_params["learning"]
+    assert learn == "us" or learn == "ss"
+    include_ids = fine_tune_params["include_ids"]
+    data_file = fine_tune_data_dir + f"/{learn}.data.json"
+    banner(f"fine-tuning on {learn} settings", sym="#")
+    exp_dir = task_dir + f"/fine-tune.exp/{learn}.exp" if not include_ids else \
+        task_dir + f"/fine-tune.exp/{learn}.ids.exp"
+    
+    with open(data_file, "r") as f: oa_data = json.load(f)
+    train = oa_data["train+"] if include_ids else oa_data["train"]
+    val = oa_data["val+"]  if learn == "us" and include_ids else oa_data["val"]
+    test = oa_data["test"]
+    
+    batch_size = fine_tune_params["batch_size"]
+    # keep logging steps consisitent even for small batch size
+    # report logging on every 3200 examples
+    logging_steps = 100 * (32 // batch_size)  
+    # eval on every 500 steps
+    eval_steps = 5 * logging_steps
+    
+    training_args = TrainingArguments(
+        output_dir=exp_dir,          
+        num_train_epochs=10,              
+        per_device_train_batch_size=batch_size,  
+        per_device_eval_batch_size=batch_size,
+        warmup_steps=eval_steps,          
+        weight_decay=0.01,   
+        logging_steps=logging_steps,
+        logging_dir=f"{exp_dir}/tb",      
+        eval_steps=eval_steps,
+        evaluation_strategy="steps",
+        do_train=True,
+        do_eval=True,
+        save_steps=eval_steps,
+        load_best_model_at_end=True,
+        save_total_limit=1,
+        metric_for_best_model="accuracy",
+        greater_is_better=True,
+    )
+    torch.cuda.empty_cache()
+    bert_oa = BERTOntoAlign(
+        config["bert"]["pretrained_path"], 
+        train, val, test, training_args, 
+        early_stop=fine_tune_params["early_stop"],
+        early_stop_patience=5)
+    bert_oa.trainer.train()
+    # evaluation on test set
+    test_results = fine_tune.trainer.evaluate(fine_tune.test)
+    test_results["train-val-test sizes"] = f"{len(fine_tune.train)}-{len(fine_tune.val)}-{len(fine_tune.test)}"
+    test_results_file = exp_dir + "/test.results.json"
+    with open(test_results_file, "w") as f:
+        json.dump(test_results, f, indent=4, separators=(',', ': '), sort_keys=True)
 
 def compute_maps(config):
     pass
@@ -103,10 +162,12 @@ def eval_maps(config):
 
 if __name__ == "__main__":
     
+    set_seed(888)
+    
     # parse configuration file and specify mode
     parser = argparse.ArgumentParser(description='run bertmap system')
     parser.add_argument('-c', '--config', type=str, help='configuration file for bertmap system', required=True)
-    parser.add_argument('-m', '--mode', type=str, choices={"pre", "train", "map", "all"}, default="all",
+    parser.add_argument('-m', '--mode', type=str, choices={"fine-tune", "baseline"}, default="fine-tune",
                         help='preprocessing data (pre), training BERT model (train), or computing the mappings and evaluate them (map)')
     args = parser.parse_args()
     
@@ -128,8 +189,7 @@ if __name__ == "__main__":
     banner("construct onto corpora and fine-tuning data", sym="#")
     construct_corpora(config=config)
     
-    banner("trigger fine-tuning", sym="#")
-    fine_tune(config=config)
+    # if args.mode == "fine-tune": fine_tune(config=config)
     
 
 
