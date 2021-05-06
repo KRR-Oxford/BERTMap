@@ -1,53 +1,34 @@
 # BERTMap
 
-### Dependencies
+### Essential dependencies
+The following packages are necessary but not sufficient for running BERTMap:
+ ```
+ conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch  # pytorch
+ pip install cython  # the optimized parser of owlready2 relies on Cython
+ pip install owlready2  # for managing ontologies
+ pip install tensorboard  # tensorboard logging (optional)
+ pip install transformers  # huggingface library
+ pip install datasets  # huggingface datasets
+ ```
 
-1. Install the latest version of Pytorch:
-  ```
-  conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch
-  ```
-2. Install Cython before Owlready2:
-  ```
-  pip install Cython  # the optimized parser of owlready2 relies on Cython
-  pip install Owlready2
-  ```
-3. Install Tensorboard (Optional):
-  ```
-  pip install tensorboard
-  ```
-4. Install the packages specified in ``requirements.txt`` after finishing Step 1-3.
-  ```
-  pip install -r requirements.txt
-  ```
-
-### Code and Data Management
-
-Data and Experiment files are available at [here](https://drive.google.com/drive/folders/11_Dj6f7MN3pTKkWUUAKnY-vTWh4mMOdE?usp=sharing).
-
-Please clone this repo and download the folders ``data/`` and ``experiment/`` from the link into the BERTMap repository such that:
+### Running BERTMap
+Clone the repository and run:
 ```
-BERTMap/
+# fine-tuning
+python run_bertmap.py -c config.json -m fine-tune 
+# baseline
+python run_bertmap.py -c config.json -m baseline
+```
+The script skips data construction once built for the first time to ensure that all of the models 
+share the same set of pre-processed data. 
 
-  bertmap/  # essential code
-  data/  # storing different types of data, e.g. .owl (ontologies); .tsv (for class2text data and mappings); .json (for corpora)
-  experiment/  # storing different experiment settings and their results
-  scripts/  # scripts for generating data, running experiments and evaluating the computed mappings
-  .gitignore
-  README.md
-  
+The fine-tuning model is implemented with huggingface Trainer, which by default uses multiple GPUs, 
+for restricting to GPUs of specified indices, please run (for example):
+```
+# only device (1) and (2) are visible to the script
+CUDA_VISIBLE_DEVICES=1,2 python run_bertmap.py -c config.json -m fine-tune 
 ```
 
-### Scripts Usage
-
-#### Data Preparation
-- *Generate the Class2Text (labels) data file*: ``data_scripts/save_class2text.py``.
--------------------
-#### Baseline
-- *BERT Baseline Experiment*: ``data_scripts/save_bert_class_embeds.py`` ➡️ ``exp_scripts/run_bert.py`` ➡️ ``eval_scripts/eval_bert.py``.
-- *Normalized Edit Distance Baseline Experiment*: ``exp_scripts/run_nes.py`` ➡️ ``eval_scripts/eval_nes.py``.  (Not recommended to run on the large ontologies because its time complextity is `O(n^2)`).
---------------------
-#### Fine-tuning on synonym/nonsynonym corpora
-- *Generate the synonym/nonsynonym corpora*: ``corpora_scripts/save_*_corpora.py`.
-- *Sampling training/dev/test sets from corpora for different experiment settings*: ``exp_scripts/set_fine_tune_data.py``
-- *Fine-tuning BERT and evaluate on intermediate test set*: ``exp_scripts/run_fine_tune.py``
-- *Mapping Prediction using Fine-tuned BERT*: ...
+### Configurations
+Here gives the explanations of the variables used in `config.json`.
+...
