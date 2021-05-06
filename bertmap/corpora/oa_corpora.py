@@ -1,8 +1,8 @@
-from bertmap.onto import OntoBox
+from __future__ import annotations
+from bertmap.onto import OntoBox, OntoEvaluator
 from bertmap.corpora import IntraOntoCorpus, MergedOntoCorpus, CrossOntoCorpus
-from bertmap.utils.oaei_utils import read_tsv_mappings
 from bertmap.utils import uniqify
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Dict
 from pathlib import Path
 import pandas as pd
 import re
@@ -28,8 +28,8 @@ class OntoAlignCorpora:
                  from_saved: bool=False):
         if not from_saved:
             # reference mappings
-            self.maps = read_tsv_mappings(src2tgt_mappings_file)
-            if ignored_mappings_file: self.ignored_maps = read_tsv_mappings(ignored_mappings_file)
+            self.maps = OntoEvaluator.read_mappings(src2tgt_mappings_file)
+            if ignored_mappings_file: self.ignored_maps = OntoEvaluator.read_mappings(ignored_mappings_file)
             else: self.ignored_maps = []
             # attributes for extracting label data
             self.tra_map_ratio = train_map_ratio
@@ -73,7 +73,7 @@ class OntoAlignCorpora:
         report += "</OntoAlignCorpora>"
         return report
         
-    def save(self, save_dir):
+    def save(self, save_dir) -> None:
         Path(save_dir + "/refs").mkdir(parents=True, exist_ok=True)
         Path(save_dir + "/corpora").mkdir(parents=True, exist_ok=True)
         # copy and save the reference mappings for record
@@ -91,12 +91,12 @@ class OntoAlignCorpora:
         # save the corpora info
         with open(save_dir + "/corpora/info", "w") as f: f.write(str(self))
     
-    def save_maps(self, loaded_maps, save_file):
+    def save_maps(self, loaded_maps, save_file) -> None:
         maps = [(map.split("\t")[0], map.split("\t")[1], 1.0) for map in loaded_maps]
         pd.DataFrame(maps, columns=["Entity1", "Entity2", "Value"]).to_csv(save_file, sep='\t', index=False)
         
     @classmethod
-    def from_saved(cls, save_dir):
+    def from_saved(cls, save_dir) -> OntoAlignCorpora:
         oa_corpora = cls(from_saved=True)
         oa_corpora.src_tgt_io = MergedOntoCorpus(corpus_file=save_dir + "/corpora/io.corpus.json")
         oa_corpora.train_ss_co = CrossOntoCorpus(corpus_file=save_dir + "/corpora/co.corpus.ss.train.json")
@@ -114,15 +114,15 @@ class OntoAlignCorpora:
                 oa_corpora.tra_map_ratio = float(map_ratios[0])
                 oa_corpora.val_map_ratio = float(map_ratios[1])
                 oa_corpora.test_map_ratio = float(map_ratios[2])
-        oa_corpora.maps = read_tsv_mappings(save_dir + "/refs/maps.ref.us.tsv")
-        oa_corpora.ignored_maps = read_tsv_mappings(save_dir + "/refs/maps.ignored.tsv")
+        oa_corpora.maps = OntoEvaluator.read_mappings(save_dir + "/refs/maps.ref.us.tsv")
+        oa_corpora.ignored_maps = OntoEvaluator.read_mappings(save_dir + "/refs/maps.ignored.tsv")
         return oa_corpora
     
     def semi_supervised_data(self, 
                              io_soft_neg_rate: int, 
                              io_hard_neg_rate: int, 
                              co_soft_neg_rate: int,
-                             **kwargs):
+                             **kwargs) -> Dict[str, List[str]]:
         ss_io_train, ss_io_train_ids = self.src_tgt_io.train_val_split(val_ratio=0.0, 
                                                                        soft_neg_rate=io_soft_neg_rate, 
                                                                        hard_neg_rate=io_hard_neg_rate)
@@ -154,7 +154,7 @@ class OntoAlignCorpora:
                           io_soft_neg_rate: int, 
                           io_hard_neg_rate: int,
                           co_soft_neg_rate: int,
-                          **kwargs):
+                          **kwargs) -> Dict[str, List[str]]:
         us_io_train, us_io_val, us_io_train_ids, us_io_val_ids = self.src_tgt_io.train_val_split(val_ratio=0.2, 
                                                                                                  soft_neg_rate=io_soft_neg_rate, 
                                                                                                  hard_neg_rate=io_hard_neg_rate)

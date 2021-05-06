@@ -2,13 +2,16 @@
 OntoBox class that handles data generation from owlready2 Ontology object.
 """
 
-from owlready2 import get_ontology, entity
+from __future__ import annotations
+from owlready2 import get_ontology
+from owlready2.entity import ThingClass
 from bertmap.onto import OntoText
 from bertmap.onto import OntoInvertedIndex
 import math, os, re, ast
 from typing import Optional, List
 from shutil import copy2
 from pathlib import Path
+from collections import defaultdict
 
 
 class OntoBox():
@@ -36,7 +39,32 @@ class OntoBox():
         report += "</OntoBox>\n"
         return report
     
-    def save(self, save_dir):
+    def select_candidates(self, classtexts: List[str], candidate_limit: int=50) -> List[str]:
+        """Given the texts associated to a class, select a set of 
+           classes in current (self) ontology according to IDF; this
+           set is likely to contain a class aligned to the class that
+           possesses the input classtexts.
+
+        Args:
+            classtexts (List[str]): list of texts associated to a class to be aligned
+            candidate_limit (int, optional): upper limit of the candidate pool. Defaults to 50.
+        """
+        pool = defaultdict(lambda: 0)
+        tokens = self.onto_index.tokenize(classtexts)
+        D = len(self.onto_text.class2idx)  # num of "documents" (classes)
+        for tk in tokens:
+            potential_candidates = self.onto_index.index[tk]  # each token is associated with some classes
+            if not potential_candidates: continue
+            # We use idf instead of tf because the text for each class is of different length, tf is not a fair measure
+            # inverse document frequency: with more classes to have the current token tk, the score decreases
+            idf = math.log10(D / len(potential_candidates))  
+            for class_id in potential_candidates: pool[class_id] += idf  # each candidate class is scored by sum(idf)
+        pool = list(sorted(pool.items(), key=lambda item: item[1], reverse=True))[:candidate_limit]
+        print(f"select {len(pool)} candidates ...")
+        selected_classes = [self.onto_text.idx2class[c[0]] for c in pool]
+        return selected_classes
+    
+    def save(self, save_dir) -> None:
         Path(save_dir).mkdir(parents=True, exist_ok=True)
         copy2(self.onto_file, save_dir)
         self.onto_text.save_classtexts(save_dir + f"/{self.onto.name}.ctxt.json")
@@ -44,7 +72,7 @@ class OntoBox():
         with open(save_dir + "/info", "w") as f: f.write(str(self))
     
     @classmethod
-    def from_saved(cls, save_dir):
+    def from_saved(cls, save_dir) -> OntoBox:
         """Create an OntoBox instance from data files in specified formats
         """
         # check and load onto data files
@@ -72,7 +100,7 @@ class OntoBox():
         ontobox.onto_index = OntoInvertedIndex(cut=cut, index_file=f"{save_dir}/{inv_index_file[0]}")
         return ontobox
     
-    def create_class2depth(self, strategy: str="max"):
+    def create_class2depth(self, strategy: str="max") -> None:
         assert strategy == "max" or strategy == "min"
         class2depth = dict()
         depth_func = getattr(self, "depth_" + strategy)
@@ -82,15 +110,15 @@ class OntoBox():
         setattr(self, f"class2depth_{strategy}", class2depth)
     
     @staticmethod
-    def super_classes(cl):
+    def super_classes(cl: ThingClass) -> List[ThingClass]:
         supclasses = list()
         for supclass in cl.is_a:
-            if type(supclass) == entity.ThingClass:
+            if type(supclass) == ThingClass:
                 supclasses.append(supclass)
         return supclasses
     
     @classmethod
-    def depth_max(cls, cl):
+    def depth_max(cls, cl: ThingClass) -> int:
         """Get te maximum depth of a class to the root"""
         supclasses = cls.super_classes(cl=cl)
         if len(supclasses) == 0:
@@ -103,14 +131,14 @@ class OntoBox():
         return d_max + 1
 
     @classmethod
-    def depth_min(cls, c):
+    def depth_min(cls, cl: ThingClass) -> int:
         """Get te minimum depth of a class to the root"""
-        supclasses = cls.super_classes(cl=c)
+        supclasses = cls.super_classes(cl=cl)
         if len(supclasses) == 0:
             return 0
         d_min = math.inf
         for super_c in supclasses:
-            super_d = cls.depth_min(c=super_c)
+            super_d = cls.depth_min(cl=super_c)
             if super_d < d_min:
                 d_min = super_d
         return d_min + 1

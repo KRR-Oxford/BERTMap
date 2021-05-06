@@ -1,19 +1,29 @@
 """
 Ontology Evaluator class for evaluating the cross-ontology mappings computed by OA models.
 """
-from bertmap.utils.oaei_utils import read_tsv_mappings
+import pandas as pd
+from pandas.core.frame import DataFrame
+from bertmap.onto import OntoText
+from typing import Union, List
 
 
 class OntoEvaluator:
+    
+    na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL', 'null', 'n/a'})
+    namespaces = OntoText.namespaces
 
-    def __init__(self, pre_tsv, ref_tsv, ref_ignored_tsv=None, threshold=0.0):
+    def __init__(self, 
+                 pre_tsv, 
+                 ref_tsv, 
+                 ref_ignored_tsv=None, 
+                 threshold=0.0):
         
         # filter the prediction mappings according to similarity scores
-        self.pre = read_tsv_mappings(pre_tsv, threshold=threshold) 
+        self.pre = self.read_mappings(pre_tsv, threshold=threshold) 
         
         # reference mappings and illegal mappings to be ignored
-        self.ref = read_tsv_mappings(ref_tsv)
-        self.ref_ignored = read_tsv_mappings(ref_ignored_tsv) if ref_ignored_tsv else None
+        self.ref = self.read_mappings(ref_tsv)
+        self.ref_ignored = self.read_mappings(ref_ignored_tsv) if ref_ignored_tsv else None
         
         # compute Precision, Recall and Macro-F1
         self.P = self.precision()
@@ -57,3 +67,13 @@ class OntoEvaluator:
 
     def f1(self):
         return 2 * self.P * self.R / (self.P + self.R)
+    
+    @classmethod
+    def read_mappings(cls, 
+                      mapping_file: Union[str, DataFrame], 
+                      threshold: float=0.0) -> List[str]:
+        """read mappings from tsv file"""
+        if type(mapping_file) is DataFrame: _df = mapping_file
+        else: _df = pd.read_csv(mapping_file, sep="\t", na_values=cls.na_vals, keep_default_na=False)
+        mappings = ["\t".join(_df.iloc[i][:-1]) for i in range(len(_df)) if _df.iloc[i][-1] >= threshold]
+        return mappings

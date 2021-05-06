@@ -7,7 +7,7 @@ from bertmap.onto import OntoText
 from collections import defaultdict
 from itertools import chain
 import json
-from typing import Optional
+from typing import List, Optional
 
 
 class OntoInvertedIndex:
@@ -29,10 +29,10 @@ class OntoInvertedIndex:
     def __repr__(self):
         return f"<OntoInvertedIndex num_entries={len(self.index)} cut={self.cut}>"
         
-    def tokenize(self, texts):
+    def tokenize(self, texts) -> List[str]:
         return chain.from_iterable([self.tokenizer.tokenize(text) for text in texts])
             
-    def construct_index(self, cut: int, *properties):
+    def construct_index(self, cut: int, *properties: str) -> None:
         """Create Inverted Index with sub-word tokens
 
         Args:
@@ -46,10 +46,10 @@ class OntoInvertedIndex:
                 for tk in tokens:
                     if len(tk) > cut: self.index[tk].append(self.ontotext.class2idx[cls_iri])
 
-    def save_index(self, index_file):
+    def save_index(self, index_file: str) -> None:
         with open(index_file, "w") as f:
             json.dump(self.index, f, indent=4, separators=(',', ': '), sort_keys=True)
     
-    def load_index(self, index_file):
+    def load_index(self, index_file: str) -> None:
         with open(index_file, "r") as f:
             self.index = json.load(f)

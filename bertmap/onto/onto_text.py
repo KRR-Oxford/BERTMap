@@ -3,11 +3,13 @@ OntoText class that handles text data generation from owlready2 Ontology object.
 """
 
 from bertmap.utils import batch_split, uniqify
-import owlready2
+from owlready2.entity import ThingClass
+from owlready2.prop import IndividualValueList
+from owlready2.namespace import Ontology
 import pandas as pd
 import json
 from collections import defaultdict, OrderedDict
-from typing import List, Optional
+from typing import List, Optional, Iterable, Dict
 
 
 class OntoText():
@@ -24,7 +26,7 @@ class OntoText():
     na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL', 'null', 'n/a'})
 
     def __init__(self, 
-                 onto: owlready2.namespace.Ontology, 
+                 onto: Ontology, 
                  iri_abbr: Optional[str]=None, 
                  properties: List[str]=["label"], 
                  classtexts_file: Optional[str]=""):
@@ -57,7 +59,7 @@ class OntoText():
         iri_abbr = self.iri_abbr.replace(":", "")
         return f"<OntoText abbr='{iri_abbr}' num_classes={len(self.class2idx)} num_texts={self.num_texts} prop={self.properties}>"
         
-    def extract_classtexts(self, *properties):
+    def extract_classtexts(self, *properties) -> None:
         """Construct dict(class-iri -> dict(property -> class-text))
         """
         self.num_texts = 0
@@ -71,11 +73,11 @@ class OntoText():
                 self.texts[cl_iri_abbr][prop] = self.preprocess_classtexts(cl, prop)
                 self.num_texts += len(self.texts[cl_iri_abbr][prop])
     
-    def save_classtexts(self, classtexts_file):
+    def save_classtexts(self, classtexts_file: str) -> None:
         with open(classtexts_file, "w") as f:
             json.dump(self.texts, f, indent=4, separators=(',', ': '), sort_keys=True)
     
-    def load_classtexts(self, classtexts_file):
+    def load_classtexts(self, classtexts_file: str) -> None:
         with open(classtexts_file, "r") as f:
             self.texts = json.load(f)
         # compute number of texts
@@ -84,7 +86,7 @@ class OntoText():
             for txts in td.values():
                 self.num_texts += len(txts)
         
-    def batch_iterator(self, batch_size: int):
+    def batch_iterator(self, batch_size: int) -> Iterable[Dict[str, List[str]]]:
         """
         Args:
             batch_size (int)
@@ -99,7 +101,7 @@ class OntoText():
             yield batch
             
     @staticmethod
-    def preprocess_classtexts(cl, prop):
+    def preprocess_classtexts(cl: ThingClass, prop: str) -> List[str]:
         """Preprocessing the texts of a class given by a particular property including
         underscores removal and lower-casing.
 
@@ -111,14 +113,14 @@ class OntoText():
             list: cleaned and uniqified class-texts
         """
         raw_texts = getattr(cl, prop)
-        assert type(raw_texts) is owlready2.prop.IndividualValueList
-        cleaned_texts = [lexicon.lower().replace("_", " ") for lexicon in raw_texts]
+        assert type(raw_texts) is IndividualValueList
+        cleaned_texts = [txt.lower().replace("_", " ") for txt in raw_texts]
         return uniqify(cleaned_texts)
 
-    def abbr_entity_iri(self, entity_iri):
+    def abbr_entity_iri(self, entity_iri: str) -> str:
         """onto_iri#fragment => onto_prefix:fragment"""
         return entity_iri.replace(self.iri, self.namespaces[self.iri])
     
-    def expand_entity_iri(self, entity_iri_abbr):
+    def expand_entity_iri(self, entity_iri_abbr: str) -> str:
         """onto_iri#fragment <= onto_prefix:fragment"""
         return entity_iri_abbr.replace(self.iri_abbr, self.inv_namespaces[self.iri_abbr])

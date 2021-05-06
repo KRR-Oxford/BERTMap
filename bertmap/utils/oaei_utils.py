@@ -1,7 +1,6 @@
 import xml.etree.ElementTree as ET
 import lxml.etree as le
 import pandas as pd
-from bertmap.onto import OntoBox
 
 namespaces = {
     "http://bioontology.org/projects/ontologies/fma/fmaOwlDlComponent_2_0#": "fma:",
@@ -10,14 +9,7 @@ namespaces = {
 }
 na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL', 'null', 'n/a'})
 
-def read_tsv_mappings(tsv_file, threshold=0.0):
-    """read mappings from tsv file"""
-    _df = pd.read_csv(tsv_file, sep="\t", na_values=na_vals, keep_default_na=False) if type(tsv_file) is str else tsv_file
-    mappings = ["\t".join(_df.iloc[i][:-1]) for i in range(len(_df)) if _df.iloc[i][-1] >= threshold]
-    return mappings
-
-
-def read_rdf_mappings(rdf_file, src_iri=None, tgt_iri=None):
+def read_oaei_mappings(rdf_file, src_iri=None, tgt_iri=None):
     """
     Args:
         rdf_file: path to mappings in rdf format
@@ -29,8 +21,8 @@ def read_rdf_mappings(rdf_file, src_iri=None, tgt_iri=None):
         mappings(=;>,<), mappings(?)
     """
     xml_root = ET.parse(rdf_file).getroot()
-    legal_mappings = []  # where relation is "="
-    illegal_mappings = []  # where relation is "?"
+    ref_mappings = []  # where relation is "="
+    ignored_mappings = []  # where relation is "?"
 
     for elem in xml_root.iter():
         # every Cell contains a mapping of en1 -rel(some value)-> en2
@@ -50,26 +42,24 @@ def read_rdf_mappings(rdf_file, src_iri=None, tgt_iri=None):
             # =: equivalent; > superset of; < subset of.
             if rel == "=" or rel == ">" or rel == "<":
                 # rel.replace("&gt;", ">").replace("&lt;", "<")
-                legal_mappings.append(row)
+                ref_mappings.append(row)
             elif rel == "?":
-                illegal_mappings.append(row)
+                ignored_mappings.append(row)
             else:
                 print("Unknown Relation Warning: ", rel)
 
-    print("#Maps (\"=\"):", len(legal_mappings))
-    print("#Maps (\"?\"):", len(illegal_mappings))
+    print("#Maps (\"=\"):", len(ref_mappings))
+    print("#Maps (\"?\"):", len(ignored_mappings))
 
-    return legal_mappings, illegal_mappings
+    return ref_mappings, ignored_mappings
 
-
-def rdf_to_tsv_mappings(rdf_file, src_onto=None, tgt_onto=None):
+def save_oaei_mappings(rdf_file, src_onto=None, tgt_onto=None):
     output_dir = rdf_file.replace(".rdf", "")
-    legal_mappings, illegal_mappings = read_rdf_mappings(rdf_file, src_onto, tgt_onto)
-    _df = pd.DataFrame(legal_mappings, columns=["Entity1", "Entity2", "Value"])
+    ref_mappings, ignored_mappings = read_oaei_mappings(rdf_file, src_onto, tgt_onto)
+    _df = pd.DataFrame(ref_mappings, columns=["Entity1", "Entity2", "Value"])
     _df.to_csv(output_dir + "_legal.tsv", index=False, sep='\t')
-    _df = pd.DataFrame(illegal_mappings, columns=["Entity1", "Entity2", "Value"])
+    _df = pd.DataFrame(ignored_mappings, columns=["Entity1", "Entity2", "Value"])
     _df.to_csv(output_dir + "_illegal.tsv", index=False, sep='\t')
-
 
 def create_rdf_template(rdf_file):
     """Create rdf template without mappings"""
@@ -80,7 +70,6 @@ def create_rdf_template(rdf_file):
             align.remove(elem)
     with open("template.rdf", "wb+") as f:
         le.ElementTree(root).write(f, pretty_print=True, xml_declaration=True, encoding="utf-8")
-
 
 def logmap_text_to_rdf(logmap_text, rdf_template):
     """Write LogMap output text into RDF format with given template
