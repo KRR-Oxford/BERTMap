@@ -16,8 +16,8 @@ co.create_class2text_dict(co.src_onto_class2text)
 fixed_src_class2text = pd.DataFrame(columns=["Class-IRI", "Class-Text"])
 fixed_src_classes = []
 fixed_src_texts = []
-for i in range(len(co.known_mappings)):
-    ref_map = co.known_mappings[i]
+for i in range(len(co.maps)):
+    ref_map = co.maps[i]
     src_class, tgt_class = ref_map.split("\t")
     fixed_src_classes.append(src_class)
     fixed_src_texts.append(co.src_onto_class2text_dict[src_class])

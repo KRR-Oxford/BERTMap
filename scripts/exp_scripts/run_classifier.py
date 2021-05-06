@@ -4,7 +4,7 @@ main_dir = main_dir.replace("\\", "/")
 import sys
 sys.path.append(main_dir)
 import pandas as pd
-from bertmap.onto import Ontology, OntoEvaluator
+from bertmap.onto import OntoBox, OntoEvaluator
 from bertmap.map import BERTClassifierMapping
 import torch
  

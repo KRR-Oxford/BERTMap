@@ -2,7 +2,7 @@ import os
 main_dir = os.getcwd().split("BERTMap")[0] + "BERTMap"
 import sys
 sys.path.append(main_dir)
-from bertmap.bert import OntoLabelBERT
+from bertmap.bert import BERTOntoAlign
 from bertmap.utils import get_device, set_seed
 from transformers import TrainingArguments
 import torch
@@ -50,7 +50,7 @@ training_args = TrainingArguments(
 set_seed(888)
 
 # fine-tuning 
-fine_tune = OntoLabelBERT("emilyalsentzer/Bio_ClinicalBERT", train_path, val_path, test_path, 
+fine_tune = BERTOntoAlign("emilyalsentzer/Bio_ClinicalBERT", train_path, val_path, test_path, 
                           training_args, early_stop=True)
 fine_tune.trainer.train()
 # evaluation on test set
