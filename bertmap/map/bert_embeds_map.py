@@ -12,9 +12,9 @@
     Possible Improvement: we can compute batch-to-batch for source and target sides simultaneously. However, it won't be practical for very large ontologies.
 """
 
-from bertmap.onto import Ontology
+from bertmap.onto import OntoBox
 from bertmap.map import OntoMapping
-from bertmap.bert import BERTClassEmbedding, PretrainedBERT
+from bertmap.bert import BERTClassEmbedding, BERTEmbeddings
 from bertmap.utils import get_device
 from sklearn.metrics.pairwise import cosine_similarity
 import torch
@@ -34,7 +34,7 @@ class BERTEmbedsMapping(OntoMapping):
         self.string_match = string_match
         
         self.device = get_device(device_num=device_num)
-        pretrained_bert = pretrained_bert=PretrainedBERT(pretrained_path=bert_path, with_classifier=False)
+        pretrained_bert = pretrained_bert=BERTEmbeddings(bert_checkpoint=bert_path, with_classifier=False)
         pretrained_bert.model.to(self.device)
         self.embed = BERTClassEmbedding(pretrained_bert=pretrained_bert, neg_layer_num=-1)
         
@@ -60,16 +60,16 @@ class BERTEmbedsMapping(OntoMapping):
         # configurations
         self.start_time = time.time()     
         from_onto_class2text_path, to_onto_class2text_path, _, to_index, map_name = self.align_config(flag)
-        from_onto_class2text = Ontology.load_class2text(from_onto_class2text_path)
-        to_onto_class2text = Ontology.load_class2text(to_onto_class2text_path)
+        from_onto_class2text = OntoBox.load_classtexts(from_onto_class2text_path)
+        to_onto_class2text = OntoBox.load_classtexts(to_onto_class2text_path)
         results = []
         for i, dp in from_onto_class2text.iterrows():
-            from_labels, from_len = Ontology.parse_class_text(dp["Class-Text"])
+            from_labels, from_len = OntoBox.parse_class_text(dp["Class-Text"])
             search_space = to_onto_class2text if not to_index else self.select_candidates(dp["Class-Text"], flag=flag)
             if len(search_space) == 0:
                 self.log_print("[Time: {round(time.time() - self.start_time)}][{self.name}][{print_flag}][#Class: {i}] No candidates available for for current entity ...")
                 continue
-            to_batch_generator = Ontology.class2text_batch_generator(search_space, batch_size=self.batch_size)
+            to_batch_generator = OntoBox.batch_iterator(search_space, batch_size=self.batch_size)
             nbest_results = self.batch_alignment(from_labels, from_len, to_batch_generator, self.batch_size, flag=flag)
             # collect the results
             for to_class_ind, mapping_score in nbest_results:
@@ -91,7 +91,7 @@ class BERTEmbedsMapping(OntoMapping):
         for to_batch in to_batch_generator:
             if self.string_match:
                 for m, to_class_dp in to_batch.iterrows():
-                    to_labels, _ = Ontology.parse_class_text(to_class_dp["Class-Text"])
+                    to_labels, _ = OntoBox.parse_class_text(to_class_dp["Class-Text"])
                     label_pairs = [[from_label, to_label] for to_label in to_labels for from_label in from_labels]
                     # return the map if the to-class has a label that is exactly the same as one of the labels of the from-class
                     for pair in label_pairs:

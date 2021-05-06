@@ -2,7 +2,7 @@ from __future__ import annotations
 from bertmap.onto import OntoBox, OntoEvaluator
 from bertmap.corpora import IntraOntoCorpus, MergedOntoCorpus, CrossOntoCorpus
 from bertmap.utils import uniqify
-from typing import Optional, Union, List, Dict
+from typing import Optional, Union, List, Dict, Tuple
 from pathlib import Path
 import pandas as pd
 import re
@@ -122,7 +122,7 @@ class OntoAlignCorpora:
                              io_soft_neg_rate: int, 
                              io_hard_neg_rate: int, 
                              co_soft_neg_rate: int,
-                             **kwargs) -> Dict[str, List[str]]:
+                             **kwargs) -> Tuple[Dict[str, List[str]], str]:
         ss_io_train, ss_io_train_ids = self.src_tgt_io.train_val_split(val_ratio=0.0, 
                                                                        soft_neg_rate=io_soft_neg_rate, 
                                                                        hard_neg_rate=io_hard_neg_rate)
@@ -130,10 +130,10 @@ class OntoAlignCorpora:
         ss_co_train = self.train_ss_co.generate_label_data(soft_neg_rate=co_soft_neg_rate)
         ss_co_val = self.val_ss_co.generate_label_data(soft_neg_rate=co_soft_neg_rate)
         ss_co_test = self.test_ss_co.generate_label_data(soft_neg_rate=co_soft_neg_rate)
-        print(f"data sizes before merging and duplicates removal ...")
-        print(f"\tio_train: {len(ss_io_train)}")
-        print(f"\tio_train_ids: {len(ss_io_train_ids)}")
-        print(f"\tco_train: {len(ss_co_train)}, co_val: {len(ss_co_val)} co_test: {len(ss_co_test)}")
+        report = f"data sizes before merging and duplicates removal ...\n"
+        report += f"\tio_train: {len(ss_io_train)}\n"
+        report += f"\tio_train_ids: {len(ss_io_train_ids)}\n"
+        report += f"\tco_train: {len(ss_co_train)}, co_val: {len(ss_co_val)} co_test: {len(ss_co_test)}\n"
         
         ss_train = uniqify(ss_io_train + ss_co_train)
         ss_train_with_ids = uniqify(ss_io_train + ss_co_train + ss_io_train_ids)
@@ -145,25 +145,28 @@ class OntoAlignCorpora:
             "val": ss_co_val,
             "test": ss_co_test
         }
-        print("generate semi-supervised data files with following sizes ...")
+        report += "generate semi-supervised data files with following sizes ...\n"
         for k, v in ss_data.items():
-            print(f"\t{k}: {len(v)}")
-        return ss_data
+            report += f"\t{k}: {len(v)}\n"
+        print(report)
+        return ss_data, report
     
     def unsupervised_data(self, 
                           io_soft_neg_rate: int, 
                           io_hard_neg_rate: int,
                           co_soft_neg_rate: int,
-                          **kwargs) -> Dict[str, List[str]]:
+                          **kwargs) -> Tuple[Dict[str, List[str]], str]:
         us_io_train, us_io_val, us_io_train_ids, us_io_val_ids = self.src_tgt_io.train_val_split(val_ratio=0.2, 
                                                                                                  soft_neg_rate=io_soft_neg_rate, 
                                                                                                  hard_neg_rate=io_hard_neg_rate)
         us_co_test = self.src_tgt_co.generate_label_data(soft_neg_rate=co_soft_neg_rate)
-        print(f"data sizes before merging and duplicates removal ...")
-        print(f"\tus_io_train: {len(us_io_train)}")
-        print(f"\tus_io_train_ids: {len(us_io_train_ids)}")
-        print(f"\tus_io_val: {len(us_io_val)}")
-        print(f"\tus_io_val_ids: {len(us_io_val_ids)}")
+        report = f"data sizes before merging and duplicates removal ...\n"
+        report += f"\tus_io_train: {len(us_io_train)}\n"
+        report += f"\tus_io_train_ids: {len(us_io_train_ids)}\n"
+        report += f"\tus_io_val: {len(us_io_val)}\n"
+        report += f"\tus_io_val: {len(us_io_val)}\n"
+        report += f"\tus_io_val_ids: {len(us_io_val_ids)}\n"
+        
         us_train_with_ids = uniqify(us_io_train + us_io_train_ids)
         us_val_with_ids = uniqify(us_io_val + us_io_val_ids)
         random.shuffle(us_io_train); random.shuffle(us_train_with_ids)
@@ -176,8 +179,9 @@ class OntoAlignCorpora:
             "val+": us_val_with_ids,
             "test": us_co_test
         }
-        print("generate unsupervised data files with following sizes ...")
+        report += "generate unsupervised data files with following sizes ...\n"
         for k, v in us_data.items():
-            print(f"\t{k}: {len(v)}")
-        return us_data
+            report += f"\t{k}: {len(v)}\n"
+        print(report)
+        return us_data, report
     

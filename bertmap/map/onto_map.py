@@ -20,7 +20,7 @@ Mapping Generation superclass on using some kind of normalized distance metric o
 """
 
 import pandas as pd
-from bertmap.onto import Ontology, OntoEvaluator, OntoInvertedIndex
+from bertmap.onto import OntoBox, OntoEvaluator, OntoInvertedIndex
 from bertmap.utils import log_print
 from collections import defaultdict
 from copy import deepcopy
@@ -32,23 +32,27 @@ import re
 
 class OntoMapping:
     
-    def __init__(self, src, tgt, src_class2text_path, tgt_class2text_path, save_path, 
-                 task_suffix="undefined_task", name="undefined_exp"):
+    def __init__(self, 
+                 src_ob: OntoBox, 
+                 tgt_ob: OntoBox, 
+                 save_path, 
+                 task_suffix="undefined_task", 
+                 name="undefined_exp"):
         
         # basic information
         self.src = src  # iri abbreviation of source ontology without ":"
-        self.src_iri = Ontology.abbr2iri_dict[self.src+":"]  # full source iri
+        self.src_iri = OntoBox.abbr2iri_dict[self.src+":"]  # full source iri
         self.tgt = tgt  # iri abbreviation of target ontology without ":"
-        self.tgt_iri = Ontology.abbr2iri_dict[self.tgt+":"]  # full target iri
+        self.tgt_iri = OntoBox.abbr2iri_dict[self.tgt+":"]  # full target iri
         self.task_suffix = task_suffix  # small or whole
         self.name = name
         self.save_path = save_path
         
         # onto text data
         self.src_onto_class2text_path = src_class2text_path
-        self.src_onto_class2text = Ontology.load_class2text(self.src_onto_class2text_path)
+        self.src_onto_class2text = OntoBox.load_classtexts(self.src_onto_class2text_path)
         self.tgt_onto_class2text_path = tgt_class2text_path
-        self.tgt_onto_class2text = Ontology.load_class2text(self.tgt_onto_class2text_path)
+        self.tgt_onto_class2text = OntoBox.load_classtexts(self.tgt_onto_class2text_path)
         
         # for candidate selections
         self.src_index = None
@@ -113,9 +117,9 @@ class OntoMapping:
     def evaluate(pre_tsv, ref_tsv, except_tsv=None, task_name = "0", threshold=0.0):
         evaluator = OntoEvaluator(pre_tsv, ref_tsv, except_tsv, threshold=threshold)
         print(f"# Mappings after thresholding: {len(evaluator.pre)}")
-        result_df = pd.DataFrame(columns=["Precision", "Recall", "F1", "#Illegal"])
+        result_df = pd.DataFrame(columns=["#Mappings", "#Illegal", "Precision", "Recall", "F1",])
         task_name = task_name + ":" + str(threshold)
-        result_df.loc[task_name] = [evaluator.P, evaluator.R, evaluator.F1, evaluator.num_illegal]
+        result_df.loc[task_name] = [len(evaluator.pre), evaluator.num_illegal, evaluator.P, evaluator.R, evaluator.F1]
         result_df = result_df.round({"Precision": 3, "Recall": 3, "F1": 3})
         return result_df
 

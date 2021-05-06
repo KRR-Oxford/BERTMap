@@ -4,7 +4,7 @@ Direct Search Mapping Generation on using the *normalized edit distance score* a
 Unlike the BERT experiment where the batched (vectorization) algorithm is used, here we apply the multiprocessing on each batch.
 """
 
-from bertmap.onto import Ontology
+from bertmap.onto import OntoBox
 from bertmap.map import OntoMapping
 from itertools import product
 from textdistance import levenshtein
@@ -68,11 +68,11 @@ class NormEditSimMapping(OntoMapping):
     
     def fix_one_class_alignment(self, from_ind, from_dp, to_onto_class2text, flag="SRC"):
         from_class_iri = from_dp["Class-IRI"]
-        from_class_text = Ontology.parse_class_text(from_dp["Class-Text"])[0]
+        from_class_text = OntoBox.parse_class_text(from_dp["Class-Text"])[0]
         max_sim_score= 0
         max_sim_ind = 0
         for j, dp in to_onto_class2text.iterrows():
-            to_class_text = Ontology.parse_class_text(dp["Class-Text"])[0]
+            to_class_text = OntoBox.parse_class_text(dp["Class-Text"])[0]
             sim_score = self.max_norm_edit_sim(from_class_text, to_class_text)
             if sim_score > max_sim_score:
                 max_sim_score = sim_score

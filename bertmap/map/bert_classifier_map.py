@@ -1,6 +1,6 @@
 from bertmap.map import OntoMapping
-from bertmap.bert import PretrainedBERT
-from bertmap.onto import Ontology
+from bertmap.bert import BERTEmbeddings
+from bertmap.onto import OntoBox
 from bertmap.utils import get_device
 import torch
 import time
@@ -18,7 +18,7 @@ class BERTClassifierMapping(OntoMapping):
         self.nbest = nbest
         self.string_match = string_match
         
-        self.bert = PretrainedBERT(pretrained_path=bert_path, tokenizer_path=tokenizer_path, with_classifier=True)
+        self.bert = BERTEmbeddings(bert_checkpoint=bert_path, tokenizer_path=tokenizer_path, with_classifier=True)
         self.device = get_device(device_num=device_num)
         self.bert.model.to(self.device)
         
@@ -43,15 +43,15 @@ class BERTClassifierMapping(OntoMapping):
         # configurations
         self.start_time = time.time()
         from_onto_class2text_path, to_onto_class2text_path, _, to_index, map_name = self.align_config(flag=flag)
-        from_onto_class2text = Ontology.load_class2text(from_onto_class2text_path)
-        to_onto_class2text = Ontology.load_class2text(to_onto_class2text_path)
+        from_onto_class2text = OntoBox.load_classtexts(from_onto_class2text_path)
+        to_onto_class2text = OntoBox.load_classtexts(to_onto_class2text_path)
         # fix each from-onto class and calculate the mappings
         results = []
         for i, dp in from_onto_class2text.iterrows():
             # set up a start point to prevent unexpected intervention of the program
             # if i < start:
             #     continue
-            from_labels, from_len = Ontology.parse_class_text(dp["Class-Text"])
+            from_labels, from_len = OntoBox.parse_class_text(dp["Class-Text"])
             # reduce search space if the sub-word level inverted index is provided
             search_space = to_onto_class2text if not to_index else self.select_candidates(dp["Class-Text"], flag=flag)
             if len(search_space) == 0:
@@ -59,7 +59,7 @@ class BERTClassifierMapping(OntoMapping):
                 continue
             # normalize the batch size to prevent memory overflow while preserving the KTop functionality
             to_batch_size = max(self.batch_size // from_len, self.nbest + 1)  
-            to_batch_generator = Ontology.class2text_batch_generator(search_space, batch_size=to_batch_size)
+            to_batch_generator = OntoBox.batch_iterator(search_space, batch_size=to_batch_size)
             nbest_results = self.batch_alignment(from_labels, from_len, to_batch_generator, to_batch_size, flag=flag)
             # collect the results
             for to_class_ind, mapping_score in nbest_results:
@@ -81,7 +81,7 @@ class BERTClassifierMapping(OntoMapping):
             batch_lens = []
             # prepare a batch of label pairs for a given from-onto class 
             for m, to_class_dp in to_batch.iterrows():
-                to_labels, to_len = Ontology.parse_class_text(to_class_dp["Class-Text"])
+                to_labels, to_len = OntoBox.parse_class_text(to_class_dp["Class-Text"])
                 label_pairs = [[from_label, to_label] for to_label in to_labels for from_label in from_labels]
                 # return the map if the to-class has a label that is exactly the same as one of the labels of the from-class
                 if self.string_match:

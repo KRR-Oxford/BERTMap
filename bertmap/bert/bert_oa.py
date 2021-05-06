@@ -13,9 +13,9 @@ class BERTOntoAlign:
     
     def __init__(self, 
                  bert_checkpoint: str, 
-                 train_data: List[List[str, str, int]],
-                 val_data: List[List[str, str, int]],
-                 test_data: List[List[str, str, int]], 
+                 train_data: List,
+                 val_data: List,
+                 test_data: List, 
                  training_args: TrainingArguments, 
                  early_stop: bool=True,
                  early_stop_patience: int=5):
@@ -45,7 +45,7 @@ class BERTOntoAlign:
         acc = accuracy_score(labels, preds)
         return {'accuracy': acc}
     
-    def load_dataset(self, data: List[List[str, str, int]], batch_size: int=1024, max_length: int=512) -> Dataset:
+    def load_dataset(self, data: List, batch_size: int=1024, max_length: int=512) -> Dataset:
         data_df = pd.DataFrame(data, columns=["sent1", "sent2", "labels"])
         dataset = Dataset.from_pandas(data_df)
         dataset = dataset.map(lambda examples: 
