@@ -88,11 +88,11 @@ class OntoMapping:
         for line in lines:
             if re.findall(src_pa, line):
                 src_class, tgt_class, value = re.findall(src_pa, line)[0]
-                src_maps[src_class] = (tgt_class, value)
+                src_maps[src_class].append((tgt_class, value))
                 src_maps[src_class].sort(key=lambda x: x[1], reverse=True)
             elif re.findall(tgt_pa, line):
                 tgt_class, src_class, value = re.findall(tgt_pa, line)[0]
-                tgt_maps[tgt_class] = (src_class, value)
+                tgt_maps[tgt_class].append((src_class, value))
                 tgt_maps[tgt_class].sort(key=lambda x: x[1], reverse=True)
         src_maps_kept = []; tgt_maps_kept = []
         for src_class, v in src_maps:

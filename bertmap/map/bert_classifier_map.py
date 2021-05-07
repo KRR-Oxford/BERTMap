@@ -45,12 +45,14 @@ class BERTClassifierMapping(OntoMapping):
         self.start_time = time.time()
         print_flag = f"{flag}: {self.src_ob.onto_text.iri_abbr}" if flag == "SRC" else f"{flag}: {self.tgt_ob.onto_text.iri_abbr}"
         from_ob, to_ob = self.from_to_config(flag=flag)
+        i = 0
         for from_class in from_ob.onto.classes():
             from_class_iri = from_ob.onto_text.abbr_entity_iri(from_class.iri)
             from_labels = from_ob.onto_text.texts[from_class_iri]["label"]
             search_space = to_ob.onto_text.text.keys() if not self.candidate_limit \
                 else to_ob.select_candidates(from_labels, self.candidate_limit)
             from_class_idx = from_ob.onto_text.class2idx[from_class_iri]
+            assert from_class_idx == i; i += 1  # to test the order preservation in OntoText dict
             if len(search_space) == 0:
                 self.log_print(f"[Time: {round(time.time() - self.start_time)}][{print_flag}][Class-idx: {from_class_idx}] No candidates available for for current entity ...")
                 continue

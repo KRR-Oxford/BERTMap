@@ -7,6 +7,7 @@ from owlready2 import get_ontology
 from owlready2.entity import ThingClass
 from bertmap.onto import OntoText
 from bertmap.onto import OntoInvertedIndex
+from transformers import AutoTokenizer
 import math, os, re, ast
 from typing import Optional, List
 from shutil import copy2
@@ -60,8 +61,9 @@ class OntoBox():
             idf = math.log10(D / len(potential_candidates))  
             for class_id in potential_candidates: candidate_pool[class_id] += idf  # each candidate class is scored by sum(idf)
         candidate_pool = list(sorted(candidate_pool.items(), key=lambda item: item[1], reverse=True))[:candidate_limit]
-        print(f"select {len(candidate_pool)} candidates ...")
         selected_classes = [self.onto_text.idx2class[c[0]] for c in candidate_pool]
+        show = min(candidate_limit, 3)
+        print(f"select {len(candidate_pool)} candidates, e.g. {selected_classes[:show]}")
         return selected_classes
     
     def save(self, save_dir) -> None:
@@ -92,12 +94,14 @@ class OntoBox():
             lines = f.readlines()
             iri_abbr = re.findall(r"iri=\'(.+)\'", lines[0])[0]
             properties = ast.literal_eval(re.findall(r"prop=(\[.+\])", lines[1])[0])
-            cut = int(re.findall(r"cut=([0-9]+)", lines[2])[0])    
+            cut = int(re.findall(r"cut=([0-9]+)", lines[2])[0]) 
+            tokenizer_path = re.findall(r"tokenizer_path=(.+)>", lines[2])[0]
         # construct the OntoBox instance   
         print(f"found files of correct formats, trying to load ontology data from {save_dir}")
         ontobox = cls(onto_file=f"{save_dir}/{onto_file[0]}", from_saved=True)
         ontobox.onto_text = OntoText(ontobox.onto, iri_abbr, properties, f"{save_dir}/{classtexts_file[0]}")
         ontobox.onto_index = OntoInvertedIndex(cut=cut, index_file=f"{save_dir}/{inv_index_file[0]}")
+        ontobox.onto_index.set_tokenizer(tokenizer_path)
         return ontobox
     
     def create_class2depth(self, strategy: str="max") -> None:

@@ -22,6 +22,8 @@ from pathlib import Path
 from copy import deepcopy
 from transformers import TrainingArguments
 import torch
+import multiprocessing
+import pandas as pd
 
 # import bertmap
 from bertmap.utils import *
@@ -130,7 +132,7 @@ def fine_tune(config):
     training_args = TrainingArguments(
         output_dir=exp_dir,
         # max_steps=eval_steps*4 + 1,          
-        num_train_epochs=5,              
+        num_train_epochs=30,              
         per_device_train_batch_size=batch_size,  
         per_device_eval_batch_size=batch_size,
         warmup_steps=0,          
@@ -185,10 +187,44 @@ def compute_maps(config):
                                                  save_dir=exp_dir,
                                                  **map_params)
         mapping_computer.run()
-        mapping_computer.read_mappings_from_log(f"{exp_dir}/map.{candidate_limit}.log", keep=1)
+        src_df, tgt_df, combined_df = mapping_computer.read_mappings_from_log(f"{exp_dir}/map.{candidate_limit}.log", keep=1)
+        src_df.to_csv(f"{exp_dir}/src.{candidate_limit}.csv")
+        tgt_df.to_csv(f"{exp_dir}/tgt.{candidate_limit}.csv")
+        combined_df.to_csv(f"{exp_dir}/combined.{candidate_limit}.csv")
         
 def eval_maps(config):
-    pass
+    limits = deepcopy(config["map"]["candidate_limits"])
+    
+    for candidate_limit in limits:
+        eval_file = f"{exp_dir}/eval.{candidate_limit}.csv"
+        if os.path.exists(eval_file): 
+            print(f"skip map evaluation for candidate limit {candidate_limit} as existed ...")
+            continue
+        report = pd.DataFrame(columns=["Precision", "Recall", "F1", "#Illegal"])
+        ref = f"{task_dir}/refs/maps.ref.us.tsv"
+        ref_ignored = f"{task_dir}/refs/maps.ignored.tsv" if config["corpora"]["ignored_mappings_file"] else None
+        pool = multiprocessing.Pool(10) 
+        eval_results = []
+        for threshold in [0.0, 0.3, 0.5, 0.7, 0.9, 0.92] + evenly_divide(0.95, 1.0, 50):
+            threshold = round(threshold, 6)
+            eval_results.append(pool.apply_async(OntoMapping.evaluate, \
+                args=(f"{exp_dir}/combined.{candidate_limit}.csv", ref, ref_ignored, f"combined", threshold)))
+            eval_results.append(pool.apply_async(OntoMapping.evaluate, \
+                args=(f"{exp_dir}/src.{candidate_limit}.csv", ref, ref_ignored, f"src", threshold)))
+            eval_results.append(pool.apply_async(OntoMapping.evaluate, \
+                args=(f"{exp_dir}/tgt.{candidate_limit}.csv", ref, ref_ignored, f"tgt", threshold)))
+        pool.close(); pool.join()
+
+        for result in eval_results:
+            result = result.get()
+            report = report.append(result)
+        print(report)
+        max_scores = list(report.max()[["Precision", "Recall", "F1"]])
+        max_inds = list(report.idxmax()[["Precision", "Recall", "F1"]])
+        min_illegal = list(report.min()[["#Illegal"]])
+        print(f"Best results are: P: {max_scores[0]} ({max_inds[0]}); R: {max_scores[1]} ({max_inds[1]}); \
+            F1: {max_scores[2]} ({max_inds[2]}); #Illegal: {min_illegal[0]}.")
+        report.to_csv(eval_file)
 
 if __name__ == "__main__":
     
@@ -223,6 +259,9 @@ if __name__ == "__main__":
     
     banner("compute mappings", sym="#")
     compute_maps(config=config)
+    
+    banner("evaluate mappings", sym="#")
+    eval_maps(config=config)
     
 
 

@@ -37,7 +37,7 @@
     },
 
     "map": {
-        "candidate_limits": [25],
+        "candidate_limits": [3],
         "batch_size": 32,
         "nbest": 1,
         "string_match": true,

@@ -74,8 +74,9 @@ class OntoText():
                 self.num_texts += len(self.texts[cl_iri_abbr][prop])
     
     def save_classtexts(self, classtexts_file: str) -> None:
+        # do not sort keys otherwise class2idx and idx2class will be mis-used later
         with open(classtexts_file, "w") as f:
-            json.dump(self.texts, f, indent=4, separators=(',', ': '), sort_keys=True)
+            json.dump(self.texts, f, indent=4, separators=(',', ': '))
     
     def load_classtexts(self, classtexts_file: str) -> None:
         with open(classtexts_file, "r") as f:
