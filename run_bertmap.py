@@ -129,8 +129,8 @@ def fine_tune(config):
     
     training_args = TrainingArguments(
         output_dir=exp_dir,
-        max_steps=eval_steps*4 + 1,          
-        # num_train_epochs=10,              
+        # max_steps=eval_steps*4 + 1,          
+        num_train_epochs=10,              
         per_device_train_batch_size=batch_size,  
         per_device_eval_batch_size=batch_size,
         warmup_steps=eval_steps,          
