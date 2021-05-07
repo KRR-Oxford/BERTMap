@@ -169,7 +169,7 @@ def compute_maps(config):
     limits = map_params["candidate_limits"]
     del map_params["candidate_limits"]
     for candidate_limit in limits:
-        map_file = f"{exp_dir}/map.{candidate_limit}.log"
+        map_file = f"{exp_dir}/map.{candidate_limit}/map.{candidate_limit}.log"
         if os.path.exists(map_file): 
             print(f"skip map computation for candidate limit {candidate_limit} as existed ...")
             continue
@@ -177,19 +177,19 @@ def compute_maps(config):
                                                  candidate_limit=candidate_limit,
                                                  bert_checkpoint=checkpoint, 
                                                  tokenizer_path=config["bert"]["tokenizer_path"],
-                                                 save_dir=exp_dir,
+                                                 save_dir=f"{exp_dir}/map.{candidate_limit}",
                                                  **map_params)
         mapping_computer.run()
-        src_df, tgt_df, combined_df = mapping_computer.read_mappings_from_log(f"{exp_dir}/map.{candidate_limit}.log", keep=1)
-        src_df.to_csv(f"{exp_dir}/src.{candidate_limit}.tsv", sep="\t")
-        tgt_df.to_csv(f"{exp_dir}/tgt.{candidate_limit}.tsv", sep="\t")
-        combined_df.to_csv(f"{exp_dir}/combined.{candidate_limit}.tsv", sep="\t")
+        src_df, tgt_df, combined_df = OntoMapping.read_mappings_from_log(f"{exp_dir}/map.{candidate_limit}/map.{candidate_limit}.log", keep=1)
+        src_df.to_csv(f"{exp_dir}/map.{candidate_limit}/src.{candidate_limit}.tsv", sep="\t")
+        tgt_df.to_csv(f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.tsv", sep="\t")
+        combined_df.to_csv(f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", sep="\t")
         
 def eval_maps(config):
     limits = deepcopy(config["map"]["candidate_limits"])
     
     for candidate_limit in limits:
-        eval_file = f"{exp_dir}/eval.{candidate_limit}.csv"
+        eval_file = f"{exp_dir}/map.{candidate_limit}/eval.{candidate_limit}.csv"
         if os.path.exists(eval_file): 
             print(f"skip map evaluation for candidate limit {candidate_limit} as existed ...")
             continue
@@ -201,11 +201,11 @@ def eval_maps(config):
         for threshold in [0.0, 0.3, 0.5, 0.7, 0.9, 0.92] + evenly_divide(0.95, 1.0, 50):
             threshold = round(threshold, 6)
             eval_results.append(pool.apply_async(OntoMapping.evaluate, \
-                args=(f"{exp_dir}/combined.{candidate_limit}.csv", ref, ref_ignored, f"combined", threshold)))
+                args=(f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.csv", ref, ref_ignored, f"combined", threshold)))
             eval_results.append(pool.apply_async(OntoMapping.evaluate, \
-                args=(f"{exp_dir}/src.{candidate_limit}.csv", ref, ref_ignored, f"src", threshold)))
+                args=(f"{exp_dir}/map.{candidate_limit}/src.{candidate_limit}.csv", ref, ref_ignored, f"src", threshold)))
             eval_results.append(pool.apply_async(OntoMapping.evaluate, \
-                args=(f"{exp_dir}/tgt.{candidate_limit}.csv", ref, ref_ignored, f"tgt", threshold)))
+                args=(f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.csv", ref, ref_ignored, f"tgt", threshold)))
         pool.close(); pool.join()
 
         for result in eval_results:
