@@ -133,7 +133,7 @@ def fine_tune(config):
         num_train_epochs=10,              
         per_device_train_batch_size=batch_size,  
         per_device_eval_batch_size=batch_size,
-        warmup_steps=eval_steps,          
+        warmup_steps=0,          
         weight_decay=0.01,   
         logging_steps=logging_steps,
         logging_dir=f"{exp_dir}/tb",      
@@ -152,10 +152,10 @@ def fine_tune(config):
         config["bert"]["pretrained_path"], 
         train, val, test, training_args, 
         early_stop=fine_tune_params["early_stop"],
-        early_stop_patience=5)
+        early_stop_patience=10)
     bert_oa.trainer.train()
     # evaluation on test set
-    test_results = bert_oa.trainer.evaluate(fine_tune.test)
+    test_results = bert_oa.trainer.evaluate(bert_oa.test)
     test_results["train-val-test sizes"] = f"{len(fine_tune.train)}-{len(fine_tune.val)}-{len(fine_tune.test)}"
     test_results_file = exp_dir + "/test.results.json"
     with open(test_results_file, "w") as f:
