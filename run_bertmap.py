@@ -173,6 +173,7 @@ def compute_maps(config):
         if os.path.exists(map_file): 
             print(f"skip map computation for candidate limit {candidate_limit} as existed ...")
         else:
+            Path( f"{exp_dir}/map.{candidate_limit}").mkdir(parents=True, exist_ok=True)
             mapping_computer = BERTClassifierMapping(src_ob=src_ob, tgt_ob=tgt_ob, 
                                                     candidate_limit=candidate_limit,
                                                     bert_checkpoint=checkpoint, 
