@@ -48,7 +48,7 @@ class NormEditSimMapping(OntoMapping):
                         flag: str) -> None:
         from_ob, to_ob = self.from_to_config(flag=flag)
         from_class_idx = from_ob.onto_text.class2idx[from_class_iri]
-        print_flag = f"{flag}: {self.src}" if flag == "SRC" else f"{flag}: {self.tgt}"
+        print_flag = f"{flag}: {self.src_ob.onto_text.iri_abbr}" if flag == "SRC" else f"{flag}: {self.tgt_ob.onto_text.iri_abbr}"
         if len(to_search_space) == 0:
             self.log_print(f"[Time: {round(time.time() - self.start_time)}][{self.name}][{print_flag}]\
                 [#Class: {from_class_idx}] No candidates available for for current entity ..."); return

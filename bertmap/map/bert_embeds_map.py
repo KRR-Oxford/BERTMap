@@ -72,7 +72,7 @@ class BERTEmbedsMapping(OntoMapping):
                 to_class_iri = search_space.iloc[to_class_ind]["Class-IRI"]
                 result = (dp["Class-IRI"], to_class_iri, mapping_score) if flag == "SRC" else (to_class_iri, dp["Class-IRI"], mapping_score)
                 results.append(result)
-                print_flag = f"{flag}: {self.src}" if flag == "SRC" else f"{flag}: {self.tgt}"
+                print_flag = f"{flag}: {self.src_ob.onto_text.iri_abbr}" if flag == "SRC" else f"{flag}: {self.tgt_ob.onto_text.iri_abbr}"
                 self.log_print(f"[Time: {round(time.time() - self.start_time)}][{self.name}][{print_flag}][#Class: {i}][Mapping: {result}]")
         setattr(self, map_name, pd.DataFrame(results, columns=["Entity1", "Entity2", "Value"]))
 
