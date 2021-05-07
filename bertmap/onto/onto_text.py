@@ -86,7 +86,7 @@ class OntoText():
             for txts in td.values():
                 self.num_texts += len(txts)
         
-    def batch_iterator(self, batch_size: int) -> Iterable[Dict[str, List[str]]]:
+    def batch_iterator(self, batch_size: int) -> Iterable[Dict[str, Dict]]:
         """
         Args:
             batch_size (int)

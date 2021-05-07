@@ -6,7 +6,7 @@ from typing import Dict, List, Optional
 import torch
 import itertools
 
-class BERTEmbeddings:
+class BERTStatic:
 
     def __init__(self, 
                  bert_checkpoint: str="emilyalsentzer/Bio_ClinicalBERT", 

@@ -1,115 +1,106 @@
 from bertmap.map import OntoMapping
-from bertmap.bert import BERTEmbeddings
+from bertmap.bert import BERTStatic
 from bertmap.onto import OntoBox
 from bertmap.utils import get_device
+from typing import Optional, Iterable, Dict, List
 import torch
 import time
 import pandas as pd
 
 class BERTClassifierMapping(OntoMapping):
     
-    def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_class2text_tsv, tgt_onto_class2text_tsv, 
-                 save_path, batch_size, nbest=2, task_suffix="small", name="bc-tuned-mean", 
-                 bert_path="", tokenizer_path="emilyalsentzer/Bio_ClinicalBERT", string_match=True, device_num=0):
-        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_class2text_tsv, 
-                         tgt_onto_class2text_tsv, save_path, task_suffix=task_suffix, name=name)    
-        self.strategy = name.split("-")[2]  # ["bc", "tuned", "mean"]
+    def __init__(self,
+                 src_ob: OntoBox,
+                 tgt_ob: OntoBox,
+                 candidate_limit: Optional[int] = 50,
+                 batch_size: int=32,
+                 nbest: int=1, 
+                 bert_checkpoint: str="some checkpoint", 
+                 tokenizer_path: str="emilyalsentzer/Bio_ClinicalBERT", 
+                 string_match: bool=True, 
+                 strategy: str="mean",
+                 device_num: int=0):
+        
+        super().__init__(src_ob, tgt_ob, candidate_limit) 
+        
+        # basic attributes 
         self.batch_size = batch_size   
         self.nbest = nbest
         self.string_match = string_match
+        self.strategy = strategy
+        assert self.strategy == "mean" or self.strategy == "max"
         
-        self.bert = BERTEmbeddings(bert_checkpoint=bert_path, tokenizer_path=tokenizer_path, with_classifier=True)
+        # load fine-tuned BERT in static mode
+        self.bert = BERTStatic(bert_checkpoint=bert_checkpoint, tokenizer_path=tokenizer_path, with_classifier=True)
         self.device = get_device(device_num=device_num)
         self.bert.model.to(self.device)
         
+        # alignment pipeline
         self.tokenize = lambda x: self.bert.tokenizer(x, padding=True, return_tensors="pt")
-        self.softmax = torch.nn.Softmax(dim=1)
+        self.softmax = torch.nn.Softmax(dim=1).to(self.device)
         self.classifier = lambda x: self.softmax(self.bert.model(**x).logits)[:, 1]
-        
-    def align_config(self, flag="SRC"):
-        assert flag == "SRC" or flag == "TGT"
-        from_onto_class2text_path = self.src_onto_class2text_path
-        to_onto_class2text_path = self.tgt_onto_class2text_path
-        from_index = self.src_index
-        to_index = self.tgt_index
-        map_name = "src2tgt_mappings"
-        if flag == "TGT":
-            from_onto_class2text_path, to_onto_class2text_path = to_onto_class2text_path, from_onto_class2text_path
-            from_index, to_index = to_index, from_index
-            map_name = "tgt2src_mappings"
-        return from_onto_class2text_path, to_onto_class2text_path, from_index, to_index, map_name
     
-    def fixed_one_side_alignment(self, flag="SRC"):
-        # configurations
+    def alignment(self, flag="SRC") -> None:
         self.start_time = time.time()
-        from_onto_class2text_path, to_onto_class2text_path, _, to_index, map_name = self.align_config(flag=flag)
-        from_onto_class2text = OntoBox.load_classtexts(from_onto_class2text_path)
-        to_onto_class2text = OntoBox.load_classtexts(to_onto_class2text_path)
-        # fix each from-onto class and calculate the mappings
-        results = []
-        for i, dp in from_onto_class2text.iterrows():
-            # set up a start point to prevent unexpected intervention of the program
-            # if i < start:
-            #     continue
-            from_labels, from_len = OntoBox.parse_class_text(dp["Class-Text"])
-            # reduce search space if the sub-word level inverted index is provided
-            search_space = to_onto_class2text if not to_index else self.select_candidates(dp["Class-Text"], flag=flag)
+        print_flag = f"{flag}: {self.src}" if flag == "SRC" else f"{flag}: {self.tgt}"
+        from_ob, to_ob = self.from_to_config(flag=flag)
+        for from_class_iri, text_dict in from_ob.onto_text.texts.items():
+            from_labels = text_dict["label"]
+            search_space = to_ob.onto_text.text.keys() if not self.candidate_limit \
+                else to_ob.select_candidates(from_labels, self.candidate_limit)
+            from_class_idx = from_ob.onto_text.class2idx[from_class_iri]
             if len(search_space) == 0:
-                self.log_print("[Time: {round(time.time() - self.start_time)}][{self.name}][{print_flag}][#Class: {i}] No candidates available for for current entity ...")
-                continue
-            # normalize the batch size to prevent memory overflow while preserving the KTop functionality
-            to_batch_size = max(self.batch_size // from_len, self.nbest + 1)  
-            to_batch_generator = OntoBox.batch_iterator(search_space, batch_size=to_batch_size)
-            nbest_results = self.batch_alignment(from_labels, from_len, to_batch_generator, to_batch_size, flag=flag)
-            # collect the results
-            for to_class_ind, mapping_score in nbest_results:
-                if mapping_score <= 0.01:
-                    mapping_score = 0.0
-                to_class_iri = search_space.iloc[to_class_ind]["Class-IRI"]
-                result = (dp["Class-IRI"], to_class_iri, mapping_score) if flag == "SRC" else (to_class_iri, dp["Class-IRI"], mapping_score)
-                results.append(result)
-                print_flag = f"{flag}: {self.src}" if flag == "SRC" else f"{flag}: {self.tgt}"
-                self.log_print(f"[Time: {round(time.time() - self.start_time)}][{self.name}][{print_flag}][#Class: {i}][Mapping: {result}]")
-        setattr(self, map_name, pd.DataFrame(results, columns=["Entity1", "Entity2", "Value"]))
+                self.log_print(f"[Time: {round(time.time() - self.start_time)}][{self.name}][{print_flag}]\
+                    [#Class: {from_class_idx}] No candidates available for for current entity ..."); continue
+            to_batch_size = max(self.batch_size // len(from_labels), self.nbest + 1)
+            to_texts_iterator = to_ob.onto_text.batch_iterator(to_batch_size)
+            nbest_results = self.batch_alignment(from_labels, to_texts_iterator, flag=flag)
+            for to_class_iri, mapping_score in nbest_results:
+                if mapping_score <= 0.01: mapping_score = 0.0
+                result = (from_class_iri, to_class_iri, mapping_score)
+                self.log_print(f"[Time: {round(time.time() - self.start_time)}][{self.name}][{print_flag}]\
+                    [#Class: {from_class_idx}][Mapping: {result}]")
             
-    def batch_alignment(self, from_labels, from_len, to_batch_generator, to_batch_size, flag="SRC"):
+    def batch_alignment(self, 
+                        from_labels: List[str], 
+                        to_texts_iterator: Iterable[Dict[str, Dict]],
+                        flag: str):
+        _, to_ob = self.from_to_config(flag=flag)
         j = 0
         batch_nbest_scores = torch.tensor([-1] * self.nbest).to(self.device)
-        batch_nbest_indices = torch.tensor([-1] * self.nbest).to(self.device)
-        for to_batch in to_batch_generator:
-            batch_label_pairs = []
-            batch_lens = []
+        batch_nbest_idxs = torch.tensor([-1] * self.nbest).to(self.device)
+        for to_batch in to_texts_iterator:
+            batch_label_pairs = []; batch_lens = []
             # prepare a batch of label pairs for a given from-onto class 
-            for m, to_class_dp in to_batch.iterrows():
-                to_labels, to_len = OntoBox.parse_class_text(to_class_dp["Class-Text"])
+            for to_class_iri, text_dict in to_batch.items():
+                to_labels = text_dict["label"]
                 label_pairs = [[from_label, to_label] for to_label in to_labels for from_label in from_labels]
                 # return the map if the to-class has a label that is exactly the same as one of the labels of the from-class
-                if self.string_match:
+                if self.string_match: 
                     for pair in label_pairs:
-                        if pair[0] == pair[1]:
-                            return [(m, 1.0)]
+                        if pair[0] == pair[1]: return [(to_class_iri, 1.0)]
                 batch_label_pairs += label_pairs
-                batch_lens.append(to_len * from_len)
+                batch_lens.append(len(to_labels) * len(from_labels))
             # compute the classification scores
             with torch.no_grad():
                 model_inputs_dict = self.tokenize(batch_label_pairs)
-                for k in model_inputs_dict.keys():
+                # assign everything to the current device
+                for k in model_inputs_dict.keys(): 
                     model_inputs_dict[k] = model_inputs_dict[k].to(self.device)
                 batch_scores = self.classifier(model_inputs_dict)
                 pooled_batch_scores = self.batch_pooling(batch_scores, batch_lens)
                 K = len(pooled_batch_scores) if len(pooled_batch_scores) < self.nbest else self.nbest
                 nbest_scores, nbest_indices = torch.topk(pooled_batch_scores, k=K)
-                nbest_indices += j * to_batch_size
+                nbest_indices += j * len(to_batch)
                 # we do the substituion for every batch to prevent from memory overflow
-                batch_nbest_scores, temp_indices = torch.topk(torch.cat([batch_nbest_scores, nbest_scores]), k=self.nbest)
-                batch_nbest_indices = torch.cat([batch_nbest_indices, nbest_indices])[temp_indices]
-                # print(f"[batch {j}] current time: {time.time() - self.start_time}")
+                batch_nbest_scores, temp_idxs = torch.topk(torch.cat([batch_nbest_scores, nbest_scores]), k=self.nbest)
+                batch_nbest_idxs = torch.cat([batch_nbest_idxs, nbest_indices])[temp_idxs]
                 j += 1
-        return list(zip(batch_nbest_indices.cpu().detach().numpy(), batch_nbest_scores.cpu().detach().numpy()))
+        batch_nbest_class_iris = [to_ob.onto_text.idx2class[idx] for idx in batch_nbest_idxs]
+        return list(zip(batch_nbest_class_iris, batch_nbest_scores.cpu().detach().numpy()))
             
-    def batch_pooling(self, batch_scores, batch_lens):
+    def batch_pooling(self, batch_scores: torch.Tensor, batch_lens: List[int]) -> torch.Tensor:
         seq_of_scores = torch.split(batch_scores, split_size_or_sections=batch_lens)
-        assert self.strategy == "mean" or self.strategy == "max"
         pooling_fn = torch.max if self.strategy == "max" else torch.mean
         pooled_batch_scores = [pooling_fn(chunk) for chunk in seq_of_scores]
         return torch.stack(pooled_batch_scores)

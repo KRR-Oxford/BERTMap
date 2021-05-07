@@ -19,14 +19,15 @@ Mapping Generation superclass on using some kind of normalized distance metric o
     Current supported candidate selection: [Subword-level Inverted Index, ]
 """
 
-import pandas as pd
-from bertmap.onto import OntoBox, OntoEvaluator, OntoInvertedIndex
+from transformers.file_utils import to_py_obj
+from bertmap.onto import OntoBox, OntoEvaluator
 from bertmap.utils import log_print
+from typing import Optional, Union, Tuple
+from pandas import DataFrame
 from collections import defaultdict
-from copy import deepcopy
+import pandas as pd
 import time
 import seaborn as sns 
-import math
 import re
 
 
@@ -34,94 +35,73 @@ class OntoMapping:
     
     def __init__(self, 
                  src_ob: OntoBox, 
-                 tgt_ob: OntoBox, 
-                 save_path, 
-                 task_suffix="undefined_task", 
-                 name="undefined_exp"):
+                 tgt_ob: OntoBox,
+                 candidate_limit: Optional[int] = 50):
         
-        # basic information
-        self.src = src  # iri abbreviation of source ontology without ":"
-        self.src_iri = OntoBox.abbr2iri_dict[self.src+":"]  # full source iri
-        self.tgt = tgt  # iri abbreviation of target ontology without ":"
-        self.tgt_iri = OntoBox.abbr2iri_dict[self.tgt+":"]  # full target iri
-        self.task_suffix = task_suffix  # small or whole
-        self.name = name
-        self.save_path = save_path
-        
-        # onto text data
-        self.src_onto_class2text_path = src_class2text_path
-        self.src_onto_class2text = OntoBox.load_classtexts(self.src_onto_class2text_path)
-        self.tgt_onto_class2text_path = tgt_class2text_path
-        self.tgt_onto_class2text = OntoBox.load_classtexts(self.tgt_onto_class2text_path)
-        
-        # for candidate selections
-        self.src_index = None
-        self.tgt_index = None
-        self.candidate_limit = 100
-        
+        self.src_ob = src_ob
+        self.tgt_ob = tgt_ob
+        self.candidate_limit = candidate_limit
         # define log print function
         self.log_print = lambda info: log_print(info, f"{self.save_path}/map.{self.candidate_limit}.log")
 
-    def run(self):
+    def run(self) -> None:
         t_start = time.time()
         self.log_print(f'Candidate Limit: {self.candidate_limit}')
-        # fix SRC side
-        self.fixed_one_side_alignment("SRC")
-        t_src = time.time()
+        self.alignment("SRC"); t_src = time.time()
         self.log_print(f'the program time for computing src2tgt mappings is :{t_src - t_start}')
-        # fix TGT side
-        self.fixed_one_side_alignment("TGT")
-        t_tgt= time.time()
+        self.alignment("TGT"); t_tgt= time.time()
         self.log_print(f'the program time for computing tgt2src mappings is :{t_tgt - t_src}')
         t_end = time.time()
-        self.log2maps(f"{self.save_path}/map.{self.candidate_limit}.log", keep=1)
+        self.read_mappings_from_log(f"{self.save_path}/map.{self.candidate_limit}.log", keep=1)
         self.log_print(f'the overall program time is :{t_end - t_start}')
         
-        
-    def align_config(self, flag="SRC"):
-        """Configurations for swithcing the fixed ontology side."""
-        raise NotImplementedError
-    
-    def fixed_one_side_alignment(self, flag="SRC"):
-        raise NotImplementedError
-    
-    def select_candidates(self, class_text, flag="SRC"):
+    def from_to_config(self, flag: str="SRC") -> Tuple[OntoBox, OntoBox]:
         assert flag == "SRC" or flag == "TGT"
-        onto_index = self.tgt_index if flag == "SRC" else self.src_index
-        class2text = self.tgt_onto_class2text if flag == "SRC" else self.src_onto_class2text
-        candidates = defaultdict(lambda: 0)
-        tokens = onto_index.tokenize_class_text(class_text)
-        D = len(class2text)  # num of "documents" (classes)
-        for tk in tokens:
-            sharing_classes = onto_index.index[tk]
-            if not sharing_classes:
-                continue
-            # We use idf instead of tf because the text for each class is of different length, tf is not a fair measure
-            idf = math.log10(D / len(sharing_classes))
-            for class_id in sharing_classes:
-                candidates[class_id] += idf
-        candidates = list(sorted(candidates.items(), key=lambda item: item[1], reverse=True))[:self.candidate_limit]
-        print(f"Select {len(candidates)} candidates ...")
-        return class2text.iloc[[c[0] for c in candidates]].reset_index(drop=True)
+        if flag == "SRC": from_ob, to_ob = self.src_ob, self.tgt_ob
+        else: from_ob, to_ob = self.tgt_ob, self.src_ob
+        return from_ob, to_ob
     
-    def set_inverted_index(self, flag="SRC", tokenizer_path="emilyalsentzer/Bio_ClinicalBERT", cut=0, clear=True):
-        assert flag == "SRC" or flag == "TGT"
-        onto_index = OntoInvertedIndex(tokenizer_path)
-        onto_name = self.src if flag == "SRC" else self.tgt
-        onto_class2text = self.src_onto_class2text if flag == "SRC" else self.tgt_onto_class2text
-        onto_index.construct_index(onto_name, onto_class2text, cut=cut, clear=clear)
-        index_name = f"{flag.lower()}_index"
-        setattr(self, index_name, deepcopy(onto_index))
+    def alignment(self, flag: str="SRC") -> None:
+        raise NotImplementedError
         
     @staticmethod
-    def evaluate(pre_tsv, ref_tsv, except_tsv=None, task_name = "0", threshold=0.0):
-        evaluator = OntoEvaluator(pre_tsv, ref_tsv, except_tsv, threshold=threshold)
+    def evaluate(pre_tsv: Union[str, DataFrame], 
+                 ref_tsv: Union[str, DataFrame], 
+                 ref_ignored_tsv: Optional[Union[str, DataFrame]]=None,  
+                 threshold: float=0.0, 
+                 prefix: str="") -> DataFrame:
+        evaluator = OntoEvaluator(pre_tsv, ref_tsv, ref_ignored_tsv, threshold=threshold)
         print(f"# Mappings after thresholding: {len(evaluator.pre)}")
         result_df = pd.DataFrame(columns=["#Mappings", "#Illegal", "Precision", "Recall", "F1",])
-        task_name = task_name + ":" + str(threshold)
-        result_df.loc[task_name] = [len(evaluator.pre), evaluator.num_illegal, evaluator.P, evaluator.R, evaluator.F1]
+        prefix = prefix + ":" + str(threshold)
+        result_df.loc[prefix] = [len(evaluator.pre), evaluator.num_illegal, evaluator.P, evaluator.R, evaluator.F1]
         result_df = result_df.round({"Precision": 3, "Recall": 3, "F1": 3})
         return result_df
+    
+    @staticmethod
+    def read_mappings_from_log(log_path: str, keep: int=1):
+        with open(log_path, "r") as f: lines = f.readlines()
+        src_maps = defaultdict(list); tgt_maps = defaultdict(list)
+        src_pa = r"\[SRC:.*Mapping: [\(|\[]'(.+)', '(.+)', (.+)[\)|\]]\]"
+        tgt_pa = r"\[TGT:.*Mapping: [\(|\[]'(.+)', '(.+)', (.+)[\)|\]]\]"
+        for line in lines:
+            if re.findall(src_pa, line):
+                src_class, tgt_class, value = re.findall(src_pa, line)[0]
+                src_maps[src_class] = (tgt_class, value)
+                src_maps[src_class].sort(key=lambda x: x[1], reverse=True)
+            elif re.findall(tgt_pa, line):
+                tgt_class, src_class, value = re.findall(tgt_pa, line)[0]
+                tgt_maps[tgt_class] = (src_class, value)
+                tgt_maps[tgt_class].sort(key=lambda x: x[1], reverse=True)
+        src_maps_kept = []; tgt_maps_kept = []
+        for src_class, v in src_maps:
+            for tgt_class, value in v[:keep]: src_maps_kept.append((src_class, tgt_class, value))
+        for tgt_class, v in tgt_maps:
+            for src_class, value in v[:keep]: tgt_maps_kept.append((src_class, tgt_class, value))
+        src_df = pd.DataFrame(src_maps_kept, columns=["Entity1", "Entity2", "Value"])
+        tgt_df = pd.DataFrame(tgt_maps_kept, columns=["Entity1", "Entity2", "Value"])
+        combined_df = src_df.append(tgt_df).drop_duplicates().dropna()
+        return src_df, tgt_df, combined_df
 
     @staticmethod
     def plot_eval(eval_csv, start_col=0):
@@ -151,36 +131,3 @@ class OntoMapping:
             ax.set_title(name, color="gray")
         g.fig.suptitle("Plots of Precision, Recall, Macro-F1 against Threshold for Combined, SRC2TGT and TGT2SRC Mappings", y=1.02, fontsize=20, weight="bold")
         return g
-    
-    @staticmethod
-    def log2maps(log_path, keep=1):
-        with open(log_path, "r") as f:
-            lines = f.readlines()
-        src_maps = []
-        tgt_maps = []
-        src_pa = r"\[SRC:.*Mapping: [\(|\[]'(.+)', '(.+)', (.+)[\)|\]]\]"
-        tgt_pa = r"\[TGT:.*Mapping: [\(|\[]'(.+)', '(.+)', (.+)[\)|\]]\]"
-        # tgt_pa2 = r"\[nci2fma.*Mapping: \['(.+)', '(.+)', (.+)\]\]"
-        record = {"src": (None, 0), "tgt": (None, 0)}
-        for line in lines:
-            if re.findall(src_pa, line):
-                map = re.findall(src_pa, line)[0]
-                if (not map[0] == record["src"][0]) or record["src"][1] < keep:
-                    record["src"] = (map[0], record["src"][1] + 1)
-                    src_maps.append(map)
-            elif re.findall(tgt_pa, line):
-                map = re.findall(tgt_pa, line)[0]
-                if (not map[1] == record["tgt"][0]) or record["tgt"][1] < keep:
-                    record["tgt"] = (map[1], record["tgt"][1] + 1)
-                    tgt_maps.append(map)
-        
-        save_path = "/".join(log_path.split("/")[:-1])
-        # even_maps = [maps[i] for i in range(0, len(maps), 2)]
-        src_df = pd.DataFrame(src_maps, columns=["Entity1", "Entity2", "Value"])
-        src_df.to_csv(f"{save_path}/src2tgt.maps.tsv", index=False, sep='\t')
-
-        tgt_df = pd.DataFrame(tgt_maps, columns=["Entity1", "Entity2", "Value"])
-        tgt_df.to_csv(f"{save_path}/tgt2src.maps.tsv", index=False, sep='\t')
-        
-        combined_df = src_df.append(tgt_df).drop_duplicates().dropna()
-        combined_df.to_csv(f"{save_path}/combined.maps.tsv", index=False, sep='\t')

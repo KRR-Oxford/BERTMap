@@ -2,9 +2,10 @@
 Ontology Evaluator class for evaluating the cross-ontology mappings computed by OA models.
 """
 import pandas as pd
+from bertmap.utils import uniqify
 from pandas.core.frame import DataFrame
 from bertmap.onto import OntoText
-from typing import Union, List
+from typing import Optional, Union, List
 
 
 class OntoEvaluator:
@@ -13,10 +14,10 @@ class OntoEvaluator:
     namespaces = OntoText.namespaces
 
     def __init__(self, 
-                 pre_tsv, 
-                 ref_tsv, 
-                 ref_ignored_tsv=None, 
-                 threshold=0.0):
+                 pre_tsv: Union[str, DataFrame], 
+                 ref_tsv: Union[str, DataFrame], 
+                 ref_ignored_tsv: Optional[Union[str, DataFrame]]=None, 
+                 threshold: float=0.0):
         
         # filter the prediction mappings according to similarity scores
         self.pre = self.read_mappings(pre_tsv, threshold=threshold) 
@@ -31,7 +32,7 @@ class OntoEvaluator:
         try: self.F1 = self.f1()
         except: self.F1 = "Undefined"
         
-    def precision(self):
+    def precision(self) -> float:
         """
         % of predictions are correct:
             P = TP / (TP + FP)
@@ -51,7 +52,7 @@ class OntoEvaluator:
                 fp += 1
         return tp / (tp + fp)
 
-    def recall(self):
+    def recall(self) -> float:
         """
         % of correct retrieved
             R = TP / (TP + FN)
@@ -65,15 +66,16 @@ class OntoEvaluator:
                 fn += 1
         return tp / (tp + fn)
 
-    def f1(self):
+    def f1(self) -> float:
         return 2 * self.P * self.R / (self.P + self.R)
     
     @classmethod
     def read_mappings(cls, 
                       mapping_file: Union[str, DataFrame], 
                       threshold: float=0.0) -> List[str]:
-        """read mappings from tsv file"""
+        """read unique mappings from tsv file or pandas.DataFrame
+        """
         if type(mapping_file) is DataFrame: _df = mapping_file
         else: _df = pd.read_csv(mapping_file, sep="\t", na_values=cls.na_vals, keep_default_na=False)
         mappings = ["\t".join(_df.iloc[i][:-1]) for i in range(len(_df)) if _df.iloc[i][-1] >= threshold]
-        return mappings
+        return uniqify(mappings)

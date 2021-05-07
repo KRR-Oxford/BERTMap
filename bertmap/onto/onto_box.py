@@ -49,7 +49,7 @@ class OntoBox():
             classtexts (List[str]): list of texts associated to a class to be aligned
             candidate_limit (int, optional): upper limit of the candidate pool. Defaults to 50.
         """
-        pool = defaultdict(lambda: 0)
+        candidate_pool = defaultdict(lambda: 0)
         tokens = self.onto_index.tokenize(classtexts)
         D = len(self.onto_text.class2idx)  # num of "documents" (classes)
         for tk in tokens:
@@ -58,10 +58,10 @@ class OntoBox():
             # We use idf instead of tf because the text for each class is of different length, tf is not a fair measure
             # inverse document frequency: with more classes to have the current token tk, the score decreases
             idf = math.log10(D / len(potential_candidates))  
-            for class_id in potential_candidates: pool[class_id] += idf  # each candidate class is scored by sum(idf)
-        pool = list(sorted(pool.items(), key=lambda item: item[1], reverse=True))[:candidate_limit]
-        print(f"select {len(pool)} candidates ...")
-        selected_classes = [self.onto_text.idx2class[c[0]] for c in pool]
+            for class_id in potential_candidates: candidate_pool[class_id] += idf  # each candidate class is scored by sum(idf)
+        candidate_pool = list(sorted(candidate_pool.items(), key=lambda item: item[1], reverse=True))[:candidate_limit]
+        print(f"select {len(candidate_pool)} candidates ...")
+        selected_classes = [self.onto_text.idx2class[c[0]] for c in candidate_pool]
         return selected_classes
     
     def save(self, save_dir) -> None:

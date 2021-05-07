@@ -14,46 +14,40 @@
 
 from bertmap.onto import OntoBox
 from bertmap.map import OntoMapping
-from bertmap.bert import BERTClassEmbedding, BERTEmbeddings
+from bertmap.bert import BERTStatic
 from bertmap.utils import get_device
 from sklearn.metrics.pairwise import cosine_similarity
+from typing import Optional
 import torch
 import time
 import pandas as pd
 
+
 class BERTEmbedsMapping(OntoMapping):
     
-    def __init__(self, src_onto_iri_abbr, tgt_onto_iri_abbr, 
-                 src_onto_class2text_tsv, tgt_onto_class2text_tsv, save_path, 
-                 batch_size=32, nbest=2, task_suffix="small", name="bc-mean", 
-                 bert_path="emilyalsentzer/Bio_ClinicalBERT", string_match=True, device_num=0):
-        super().__init__(src_onto_iri_abbr, tgt_onto_iri_abbr, src_onto_class2text_tsv, 
-                         tgt_onto_class2text_tsv, save_path, task_suffix=task_suffix, name=name)
-        self.batch_size = batch_size
+    def __init__(self,
+                 src_ob: OntoBox,
+                 tgt_ob: OntoBox,
+                 candidate_limit: Optional[int] = 50,
+                 batch_size: int=32,
+                 nbest: int=1, 
+                 bert_checkpoint: str="some checkpoint", 
+                 tokenizer_path: str="emilyalsentzer/Bio_ClinicalBERT", 
+                 string_match: bool=True, 
+                 strategy: str="mean",
+                 device_num: int=0):
+        
+        super().__init__(src_ob, tgt_ob, candidate_limit)
+        # basic attributes 
+        self.batch_size = batch_size   
         self.nbest = nbest
         self.string_match = string_match
+        self.strategy = strategy
+        assert self.strategy == "mean" or self.strategy == "max"
         
+        self.bert = BERTStatic(bert_checkpoint=bert_checkpoint, with_classifier=False)
         self.device = get_device(device_num=device_num)
-        pretrained_bert = pretrained_bert=BERTEmbeddings(bert_checkpoint=bert_path, with_classifier=False)
-        pretrained_bert.model.to(self.device)
-        self.embed = BERTClassEmbedding(pretrained_bert=pretrained_bert, neg_layer_num=-1)
-        
-        self.strategy = name.split("-")[1]  # ["bc", "mean"]
-        self.embed_func = lambda x, y: self.embed.class_embeds_from_batched_class2text(f"batch_sent_embeds_{self.strategy}", [x], y)
-        self.embed_func_batch = lambda x: self.embed.class_embeds_from_ontology(f"batch_sent_embeds_{self.strategy}", x, batch_size=self.batch_size)
-        
-    def align_config(self, flag="SRC"):
-        assert flag == "SRC" or flag == "TGT"
-        from_onto_class2text_path = self.src_onto_class2text_path
-        to_onto_class2text_path = self.tgt_onto_class2text_path
-        from_index = self.src_index
-        to_index = self.tgt_index
-        map_name = "src2tgt_mappings"
-        if flag == "TGT":
-            from_onto_class2text_path, to_onto_class2text_path = to_onto_class2text_path, from_onto_class2text_path
-            from_index, to_index = to_index, from_index
-            map_name = "tgt2src_mappings"
-        return from_onto_class2text_path, to_onto_class2text_path, from_index, to_index, map_name
+        self.bert.model.to(self.device)
   
     def fixed_one_side_alignment(self, flag="SRC"):
         """Fix one ontology, generate the target entities for each entity in the fixed ontology"""

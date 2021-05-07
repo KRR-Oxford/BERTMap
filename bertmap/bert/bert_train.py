@@ -6,10 +6,9 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trai
 from sklearn.metrics import accuracy_score
 from typing import List
 from datasets import Dataset
-import json
 import pandas as pd
 
-class BERTOntoAlign:
+class BERTTrainer:
     
     def __init__(self, 
                  bert_checkpoint: str, 
