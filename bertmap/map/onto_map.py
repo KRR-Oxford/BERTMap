@@ -36,13 +36,15 @@ class OntoMapping:
     def __init__(self, 
                  src_ob: OntoBox, 
                  tgt_ob: OntoBox,
-                 candidate_limit: Optional[int] = 50):
+                 candidate_limit: Optional[int] = 50,
+                 save_dir: str=""):
         
         self.src_ob = src_ob
         self.tgt_ob = tgt_ob
         self.candidate_limit = candidate_limit
         # define log print function
-        self.log_print = lambda info: log_print(info, f"{self.save_path}/map.{self.candidate_limit}.log")
+        self.save_dir = save_dir
+        self.log_print = lambda info: log_print(info, f"{self.save_dir}/map.{self.candidate_limit}.log")
 
     def run(self) -> None:
         t_start = time.time()
@@ -52,7 +54,6 @@ class OntoMapping:
         self.alignment("TGT"); t_tgt= time.time()
         self.log_print(f'the program time for computing tgt2src mappings is :{t_tgt - t_src}')
         t_end = time.time()
-        self.read_mappings_from_log(f"{self.save_path}/map.{self.candidate_limit}.log", keep=1)
         self.log_print(f'the overall program time is :{t_end - t_start}')
         
     def from_to_config(self, flag: str="SRC") -> Tuple[OntoBox, OntoBox]:

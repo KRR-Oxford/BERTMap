@@ -6,7 +6,7 @@ from transformers import AutoTokenizer
 from bertmap.onto import OntoText
 from collections import defaultdict
 from itertools import chain
-import json
+import json, os, re
 from typing import List, Optional
 
 
@@ -23,11 +23,12 @@ class OntoInvertedIndex:
             self.load_index(index_file)
         else:
             self.ontotext = ontotext
+            self.tokenizer_path = tokenizer_path
             self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
             self.construct_index(cut, *self.ontotext.properties)
 
     def __repr__(self):
-        return f"<OntoInvertedIndex num_entries={len(self.index)} cut={self.cut}>"
+        return f"<OntoInvertedIndex num_entries={len(self.index)} cut={self.cut} tokenizer_path={self.tokenizer_path}>"
         
     def tokenize(self, texts) -> List[str]:
         return chain.from_iterable([self.tokenizer.tokenize(text) for text in texts])
@@ -53,3 +54,10 @@ class OntoInvertedIndex:
     def load_index(self, index_file: str) -> None:
         with open(index_file, "r") as f:
             self.index = json.load(f)
+        file = index_file.split("/")[-1]
+        if os.path.exists(index_file.replace(file, "info")):
+            with open(index_file.replace(file, "info"), "r") as f:
+                self.tokenizer_path = re.findall(r"tokenizer_path=(.+)>", f.readlines()[2])[0]
+            print(f"load tokenizer from {self.tokenizer_path}")
+            self.tokenizer = AutoTokenizer.from_pretrained(self.tokenizer_path)
+        else: self.tokenizer_path = "missing"

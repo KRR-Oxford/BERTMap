@@ -8,6 +8,8 @@
 
 # append the paths
 import os
+
+from transformers.trainer_utils import get_last_checkpoint
 main_dir = os.getcwd().split("BERTMap")[0] + "BERTMap"
 import sys
 sys.path.append(main_dir)
@@ -17,6 +19,7 @@ import argparse
 import json
 from shutil import copy2
 from pathlib import Path
+from copy import deepcopy
 from transformers import TrainingArguments
 import torch
 
@@ -24,7 +27,8 @@ import torch
 from bertmap.utils import *
 from bertmap.onto import *
 from bertmap.corpora import *
-from bertmap.bert import BERTOntoAlign
+from bertmap.bert import *
+from bertmap.map import *
 
 def fix_path(path_str: str):
     return main_dir + "/" + path_str
@@ -108,6 +112,8 @@ def fine_tune(config):
     banner(f"fine-tuning on {learn} settings", sym="#")
     exp_dir = task_dir + f"/fine-tune.exp/{learn}.exp" if not include_ids else \
         task_dir + f"/fine-tune.exp/{learn}.ids.exp"
+    if os.path.exists(exp_dir):
+        banner(f"skip fine-tuning as checkpoints exist"); return
     
     with open(data_file, "r") as f: oa_data = json.load(f)
     train = oa_data["train+"] if include_ids else oa_data["train"]
@@ -122,8 +128,9 @@ def fine_tune(config):
     eval_steps = 5 * logging_steps
     
     training_args = TrainingArguments(
-        output_dir=exp_dir,          
-        num_train_epochs=10,              
+        output_dir=exp_dir,
+        max_steps=eval_steps*4 + 1,          
+        # num_train_epochs=10,              
         per_device_train_batch_size=batch_size,  
         per_device_eval_batch_size=batch_size,
         warmup_steps=eval_steps,          
@@ -141,22 +148,45 @@ def fine_tune(config):
         greater_is_better=True,
     )
     torch.cuda.empty_cache()
-    bert_oa = BERTOntoAlign(
+    bert_oa = BERTTrainer(
         config["bert"]["pretrained_path"], 
         train, val, test, training_args, 
         early_stop=fine_tune_params["early_stop"],
         early_stop_patience=5)
     bert_oa.trainer.train()
     # evaluation on test set
-    test_results = fine_tune.trainer.evaluate(fine_tune.test)
+    test_results = bert_oa.trainer.evaluate(fine_tune.test)
     test_results["train-val-test sizes"] = f"{len(fine_tune.train)}-{len(fine_tune.val)}-{len(fine_tune.test)}"
     test_results_file = exp_dir + "/test.results.json"
     with open(test_results_file, "w") as f:
         json.dump(test_results, f, indent=4, separators=(',', ': '), sort_keys=True)
 
 def compute_maps(config):
-    pass
-
+    
+    global checkpoint 
+    checkpoint = exp_dir
+    for file in os.listdir(exp_dir):
+        if file.startswith("checkpoint"): checkpoint += f"/{file}"; break
+    best_ckp = checkpoint.split("/")[-1]
+    banner(f"find best {best_ckp}")
+    
+    map_params = deepcopy(config["map"])
+    limits = map_params["candidate_limits"]
+    del map_params["candidate_limits"]
+    for candidate_limit in limits:
+        map_file = f"{exp_dir}/map.{candidate_limit}.log"
+        if os.path.exists(map_file): 
+            print(f"skip map computation for candidate limit {candidate_limit} as existed ...")
+            continue
+        mapping_computer = BERTClassifierMapping(src_ob=src_ob, tgt_ob=tgt_ob, 
+                                                 candidate_limit=candidate_limit,
+                                                 bert_checkpoint=checkpoint, 
+                                                 tokenizer_path=config["bert"]["tokenizer_path"],
+                                                 save_dir=exp_dir,
+                                                 **map_params)
+        mapping_computer.run()
+        mapping_computer.read_mappings_from_log(f"{exp_dir}/map.{candidate_limit}.log", keep=1)
+        
 def eval_maps(config):
     pass
 
@@ -167,7 +197,7 @@ if __name__ == "__main__":
     # parse configuration file and specify mode
     parser = argparse.ArgumentParser(description='run bertmap system')
     parser.add_argument('-c', '--config', type=str, help='configuration file for bertmap system', required=True)
-    parser.add_argument('-m', '--mode', type=str, choices={"fine-tune", "baseline"}, default="fine-tune",
+    parser.add_argument('-m', '--mode', type=str, choices={"bertmap", "bertembeds", "edit"}, default="bertmap",
                         help='preprocessing data (pre), training BERT model (train), or computing the mappings and evaluate them (map)')
     args = parser.parse_args()
     
@@ -189,7 +219,10 @@ if __name__ == "__main__":
     banner("construct onto corpora and fine-tuning data", sym="#")
     construct_corpora(config=config)
     
-    # if args.mode == "fine-tune": fine_tune(config=config)
+    if args.mode == "bertmap": fine_tune(config=config)
+    
+    banner("compute mappings", sym="#")
+    compute_maps(config=config)
     
 
 

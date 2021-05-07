@@ -37,6 +37,10 @@
     },
 
     "map": {
-
+        "candidate_limits": [25],
+        "batch_size": 32,
+        "nbest": 1,
+        "string_match": true,
+        "strategy": "mean"
     }
 }

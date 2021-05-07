@@ -53,7 +53,7 @@ class OntoBox():
         tokens = self.onto_index.tokenize(classtexts)
         D = len(self.onto_text.class2idx)  # num of "documents" (classes)
         for tk in tokens:
-            potential_candidates = self.onto_index.index[tk]  # each token is associated with some classes
+            potential_candidates = self.onto_index.index.setdefault(tk, [])  # each token is associated with some classes
             if not potential_candidates: continue
             # We use idf instead of tf because the text for each class is of different length, tf is not a fair measure
             # inverse document frequency: with more classes to have the current token tk, the score decreases

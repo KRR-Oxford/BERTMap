@@ -19,8 +19,9 @@ class NormEditSimMapping(OntoMapping):
                  src_ob: OntoBox, 
                  tgt_ob: OntoBox,
                  candidate_limit: Optional[int] = 50,
+                 save_dir: str="",
                  num_pools: int=18):
-        super().__init__(src_ob, tgt_ob, candidate_limit)
+        super().__init__(src_ob, tgt_ob, candidate_limit, save_dir)
         self.num_pools = num_pools
 
     def run(self) -> None:

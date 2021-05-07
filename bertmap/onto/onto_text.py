@@ -86,18 +86,21 @@ class OntoText():
             for txts in td.values():
                 self.num_texts += len(txts)
         
-    def batch_iterator(self, batch_size: int) -> Iterable[Dict[str, Dict]]:
+    def batch_iterator(self, 
+                       selected_classes: List[str], 
+                       batch_size: int) -> Iterable[Dict[str, Dict]]:
         """
         Args:
+            selected_classes (List[str])
             batch_size (int)
 
         Yields:
             dict: dictionary that stores a batch of (class-iri, class-text) pairs.
         """
-        idx_splits = batch_split(batch_size, max_num=len(self.idx2class))
+        idx_splits = batch_split(batch_size, max_num=len(selected_classes))
         for idxs in idx_splits:
             batch = OrderedDict()
-            for i in idxs: batch[self.idx2class[i]] = self.texts[self.idx2class[i]]
+            for i in idxs: batch[selected_classes[i]] = self.texts[selected_classes[i]]
             yield batch
             
     @staticmethod

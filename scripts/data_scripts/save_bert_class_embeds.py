@@ -1,13 +1,13 @@
 import sys
 sys.path.append("/home/yuahe/projects/BERTMap")
-from bertmap.bert import BERTEmbeddings
+from bertmap.bert import BERTStatic
 from bertmap.bert import BERTClassEmbedding
 import torch
 
 label_dir = "/home/yuahe/projects/BERTMap/data/largebio/labels"
 save_dir = "/home/yuahe/projects/BERTMap/experiment/bert_baseline/class_embeds"
 
-bert = BERTEmbeddings("emilyalsentzer/Bio_ClinicalBERT")
+bert = BERTStatic("emilyalsentzer/Bio_ClinicalBERT")
 bert_cls_embed = BERTClassEmbedding(bert, neg_layer_num=-1)
 choice = "small"
 
