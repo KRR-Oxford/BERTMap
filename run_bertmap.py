@@ -201,11 +201,11 @@ def eval_maps(config):
         for threshold in [0.0, 0.3, 0.5, 0.7, 0.9, 0.92] + evenly_divide(0.95, 1.0, 50):
             threshold = round(threshold, 6)
             eval_results.append(pool.apply_async(OntoMapping.evaluate, \
-                args=(f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", ref, ref_ignored, f"combined", threshold)))
+                args=(f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", ref, ref_ignored, threshold, f"combined")))
             eval_results.append(pool.apply_async(OntoMapping.evaluate, \
-                args=(f"{exp_dir}/map.{candidate_limit}/src.{candidate_limit}.tsv", ref, ref_ignored, f"src", threshold)))
+                args=(f"{exp_dir}/map.{candidate_limit}/src.{candidate_limit}.tsv", ref, ref_ignored, threshold, f"src")))
             eval_results.append(pool.apply_async(OntoMapping.evaluate, \
-                args=(f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.tsv", ref, ref_ignored, f"tgt", threshold)))
+                args=(f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.tsv", ref, ref_ignored, threshold, f"tgt")))
         pool.close(); pool.join()
 
         for result in eval_results:
