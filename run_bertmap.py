@@ -172,50 +172,49 @@ def compute_maps(config):
         map_file = f"{exp_dir}/map.{candidate_limit}/map.{candidate_limit}.log"
         if os.path.exists(map_file): 
             print(f"skip map computation for candidate limit {candidate_limit} as existed ...")
-            continue
-        mapping_computer = BERTClassifierMapping(src_ob=src_ob, tgt_ob=tgt_ob, 
-                                                 candidate_limit=candidate_limit,
-                                                 bert_checkpoint=checkpoint, 
-                                                 tokenizer_path=config["bert"]["tokenizer_path"],
-                                                 save_dir=f"{exp_dir}/map.{candidate_limit}",
-                                                 **map_params)
-        mapping_computer.run()
-        src_df, tgt_df, combined_df = OntoMapping.read_mappings_from_log(f"{exp_dir}/map.{candidate_limit}/map.{candidate_limit}.log", keep=1)
-        src_df.to_csv(f"{exp_dir}/map.{candidate_limit}/src.{candidate_limit}.tsv", sep="\t", index=False)
-        tgt_df.to_csv(f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.tsv", sep="\t", index=False)
-        combined_df.to_csv(f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", sep="\t", index=False)
+        else:
+            mapping_computer = BERTClassifierMapping(src_ob=src_ob, tgt_ob=tgt_ob, 
+                                                    candidate_limit=candidate_limit,
+                                                    bert_checkpoint=checkpoint, 
+                                                    tokenizer_path=config["bert"]["tokenizer_path"],
+                                                    save_dir=f"{exp_dir}/map.{candidate_limit}",
+                                                    **map_params)
+            mapping_computer.run()
+            src_df, tgt_df, combined_df = OntoMapping.read_mappings_from_log(f"{exp_dir}/map.{candidate_limit}/map.{candidate_limit}.log", keep=1)
+            src_df.to_csv(f"{exp_dir}/map.{candidate_limit}/src.{candidate_limit}.tsv", sep="\t", index=False)
+            tgt_df.to_csv(f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.tsv", sep="\t", index=False)
+            combined_df.to_csv(f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", sep="\t", index=False)
+            banner(f"evaluate mappings for candidate limit {candidate_limit}")
+            eval_maps(config=config, candidate_limit=candidate_limit)
         
-def eval_maps(config):
-    limits = deepcopy(config["map"]["candidate_limits"])
-    
-    for candidate_limit in limits:
-        eval_file = f"{exp_dir}/map.{candidate_limit}/eval.{candidate_limit}.csv"
-        if os.path.exists(eval_file): 
-            print(f"skip map evaluation for candidate limit {candidate_limit} as existed ...")
-            continue
-        report = pd.DataFrame(columns=["#Mappings", "#Ignored", "Precision", "Recall", "F1"])
-        ref = f"{task_dir}/refs/maps.ref.us.tsv"
-        ref_ignored = f"{task_dir}/refs/maps.ignored.tsv" if config["corpora"]["ignored_mappings_file"] else None
-        pool = multiprocessing.Pool(10) 
-        eval_results = []
-        for threshold in [0.0, 0.3, 0.5, 0.7, 0.9, 0.92] + evenly_divide(0.95, 1.0, 50):
-            threshold = round(threshold, 6)
-            eval_results.append(pool.apply_async(OntoMapping.evaluate, \
-                args=(f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", ref, ref_ignored, threshold, f"combined")))
-            eval_results.append(pool.apply_async(OntoMapping.evaluate, \
-                args=(f"{exp_dir}/map.{candidate_limit}/src.{candidate_limit}.tsv", ref, ref_ignored, threshold, f"src")))
-            eval_results.append(pool.apply_async(OntoMapping.evaluate, \
-                args=(f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.tsv", ref, ref_ignored, threshold, f"tgt")))
-        pool.close(); pool.join()
+def eval_maps(config, candidate_limit: int):
+    eval_file = f"{exp_dir}/map.{candidate_limit}/eval.{candidate_limit}.csv"
+    if os.path.exists(eval_file): 
+        print(f"skip map evaluation for candidate limit {candidate_limit} as existed ...")
+        return
+    report = pd.DataFrame(columns=["#Mappings", "#Ignored", "Precision", "Recall", "F1"])
+    ref = f"{task_dir}/refs/maps.ref.us.tsv"
+    ref_ignored = f"{task_dir}/refs/maps.ignored.tsv" if config["corpora"]["ignored_mappings_file"] else None
+    pool = multiprocessing.Pool(10) 
+    eval_results = []
+    for threshold in [0.0, 0.3, 0.5, 0.7, 0.9, 0.92] + evenly_divide(0.95, 1.0, 50):
+        threshold = round(threshold, 6)
+        eval_results.append(pool.apply_async(OntoMapping.evaluate, \
+            args=(f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", ref, ref_ignored, threshold, f"combined")))
+        eval_results.append(pool.apply_async(OntoMapping.evaluate, \
+            args=(f"{exp_dir}/map.{candidate_limit}/src.{candidate_limit}.tsv", ref, ref_ignored, threshold, f"src")))
+        eval_results.append(pool.apply_async(OntoMapping.evaluate, \
+            args=(f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.tsv", ref, ref_ignored, threshold, f"tgt")))
+    pool.close(); pool.join()
 
-        for result in eval_results:
-            result = result.get()
-            report = report.append(result)
-        print(report)
-        max_scores = list(report.max()[["Precision", "Recall", "F1"]])
-        max_inds = list(report.idxmax()[["Precision", "Recall", "F1"]])
-        print(f"Best results are: P: {max_scores[0]} ({max_inds[0]}); R: {max_scores[1]} ({max_inds[1]}); F1: {max_scores[2]} ({max_inds[2]}).")
-        report.to_csv(eval_file)
+    for result in eval_results:
+        result = result.get()
+        report = report.append(result)
+    print(report)
+    max_scores = list(report.max()[["Precision", "Recall", "F1"]])
+    max_inds = list(report.idxmax()[["Precision", "Recall", "F1"]])
+    print(f"Best results are: P: {max_scores[0]} ({max_inds[0]}); R: {max_scores[1]} ({max_inds[1]}); F1: {max_scores[2]} ({max_inds[2]}).")
+    report.to_csv(eval_file)
 
 if __name__ == "__main__":
     
@@ -248,11 +247,10 @@ if __name__ == "__main__":
     
     if args.mode == "bertmap": fine_tune(config=config)
     
-    banner("compute mappings", sym="#")
+    banner("compute and evaluate mappings", sym="#")
     compute_maps(config=config)
-    
-    banner("evaluate mappings", sym="#")
-    eval_maps(config=config)
+
+
     
 
 
