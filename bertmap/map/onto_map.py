@@ -94,9 +94,9 @@ class OntoMapping:
                 tgt_maps[tgt_class].append((src_class, value))
                 tgt_maps[tgt_class].sort(key=lambda x: x[1], reverse=True)
         src_maps_kept = []; tgt_maps_kept = []
-        for src_class, v in src_maps:
+        for src_class, v in src_maps.items():
             for tgt_class, value in v[:keep]: src_maps_kept.append((src_class, tgt_class, value))
-        for tgt_class, v in tgt_maps:
+        for tgt_class, v in tgt_maps.items():
             for src_class, value in v[:keep]: tgt_maps_kept.append((src_class, tgt_class, value))
         src_df = pd.DataFrame(src_maps_kept, columns=["Entity1", "Entity2", "Value"])
         tgt_df = pd.DataFrame(tgt_maps_kept, columns=["Entity1", "Entity2", "Value"])
