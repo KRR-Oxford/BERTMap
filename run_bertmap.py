@@ -181,9 +181,9 @@ def compute_maps(config):
                                                  **map_params)
         mapping_computer.run()
         src_df, tgt_df, combined_df = mapping_computer.read_mappings_from_log(f"{exp_dir}/map.{candidate_limit}.log", keep=1)
-        src_df.to_csv(f"{exp_dir}/src.{candidate_limit}.csv")
-        tgt_df.to_csv(f"{exp_dir}/tgt.{candidate_limit}.csv")
-        combined_df.to_csv(f"{exp_dir}/combined.{candidate_limit}.csv")
+        src_df.to_csv(f"{exp_dir}/src.{candidate_limit}.tsv", sep="\t")
+        tgt_df.to_csv(f"{exp_dir}/tgt.{candidate_limit}.tsv", sep="\t")
+        combined_df.to_csv(f"{exp_dir}/combined.{candidate_limit}.tsv", sep="\t")
         
 def eval_maps(config):
     limits = deepcopy(config["map"]["candidate_limits"])
