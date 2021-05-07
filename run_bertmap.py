@@ -193,7 +193,7 @@ def eval_maps(config):
         if os.path.exists(eval_file): 
             print(f"skip map evaluation for candidate limit {candidate_limit} as existed ...")
             continue
-        report = pd.DataFrame(columns=["Precision", "Recall", "F1", "#Illegal"])
+        report = pd.DataFrame(columns=["#Mappings", "#Ignored", "Precision", "Recall", "F1"])
         ref = f"{task_dir}/refs/maps.ref.us.tsv"
         ref_ignored = f"{task_dir}/refs/maps.ignored.tsv" if config["corpora"]["ignored_mappings_file"] else None
         pool = multiprocessing.Pool(10) 
@@ -214,9 +214,8 @@ def eval_maps(config):
         print(report)
         max_scores = list(report.max()[["Precision", "Recall", "F1"]])
         max_inds = list(report.idxmax()[["Precision", "Recall", "F1"]])
-        min_illegal = list(report.min()[["#Illegal"]])
         print(f"Best results are: P: {max_scores[0]} ({max_inds[0]}); R: {max_scores[1]} ({max_inds[1]}); \
-            F1: {max_scores[2]} ({max_inds[2]}); #Illegal: {min_illegal[0]}.")
+            F1: {max_scores[2]} ({max_inds[2]}).")
         report.to_csv(eval_file)
 
 if __name__ == "__main__":

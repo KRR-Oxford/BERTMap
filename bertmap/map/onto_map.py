@@ -71,10 +71,10 @@ class OntoMapping:
                  threshold: float=0.0, 
                  prefix: str="") -> DataFrame:
         evaluator = OntoEvaluator(pre_tsv, ref_tsv, ref_ignored_tsv, threshold=threshold)
-        print(f"# Mappings after thresholding: {len(evaluator.pre)}")
-        result_df = pd.DataFrame(columns=["#Mappings", "#Illegal", "Precision", "Recall", "F1",])
+        # print(f"# Mappings after thresholding: {len(evaluator.pre)}")
+        result_df = pd.DataFrame(columns=["#Mappings", "#Ignored", "Precision", "Recall", "F1"])
         prefix = prefix + ":" + str(threshold)
-        result_df.loc[prefix] = [len(evaluator.pre), evaluator.num_illegal, evaluator.P, evaluator.R, evaluator.F1]
+        result_df.loc[prefix] = [len(evaluator.pre), evaluator.num_ignored, evaluator.P, evaluator.R, evaluator.F1]
         result_df = result_df.round({"Precision": 3, "Recall": 3, "F1": 3})
         return result_df
     
