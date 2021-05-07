@@ -130,7 +130,7 @@ def fine_tune(config):
     training_args = TrainingArguments(
         output_dir=exp_dir,
         # max_steps=eval_steps*4 + 1,          
-        num_train_epochs=10,              
+        num_train_epochs=5,              
         per_device_train_batch_size=batch_size,  
         per_device_eval_batch_size=batch_size,
         warmup_steps=0,          
@@ -156,7 +156,7 @@ def fine_tune(config):
     bert_oa.trainer.train()
     # evaluation on test set
     test_results = bert_oa.trainer.evaluate(bert_oa.test)
-    test_results["train-val-test sizes"] = f"{len(fine_tune.train)}-{len(fine_tune.val)}-{len(fine_tune.test)}"
+    test_results["train-val-test sizes"] = f"{len(bert_oa.train)}-{len(bert_oa.val)}-{len(bert_oa.test)}"
     test_results_file = exp_dir + "/test.results.json"
     with open(test_results_file, "w") as f:
         json.dump(test_results, f, indent=4, separators=(',', ': '), sort_keys=True)
