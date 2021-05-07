@@ -1,15 +1,18 @@
 """Script for running the whole process of BERTMap system as follows:
-    1.
-    2.
-    3.
-    4.
+
+    1. parse source and target ontologies and retrieve classtexts and sub-word index 
+    2. construct corpora for both un-supervised and semi-supervised settings 
+    3. fine-tuning BERT classifier if "bertmap" chosen for mode
+    4. compute mappings for selected model including
+        (a) "bertmap": BERT fine-tuned classifier;
+        (b) "bertembeds": BERT embeddings + cosine-similarity;
+        (c) "edit": normalized-edit-distance.
+    5. evaluate the computed mappings (one can disable the evaluation part and insert your customized evaluation method)
 
 """
 
 # append the paths
 import os
-
-from transformers.trainer_utils import get_last_checkpoint
 main_dir = os.getcwd().split("BERTMap")[0] + "BERTMap"
 import sys
 sys.path.append(main_dir)
@@ -34,16 +37,6 @@ from bertmap.map import *
 
 def fix_path(path_str: str):
     return main_dir + "/" + path_str
-
-def banner(info=None, banner_len=60, sym="-"):
-    print()
-    if not info: 
-        print(sym * banner_len)
-    else: 
-        info = sym * ((banner_len - len(info)) // 2 - 1) + " " + info
-        info = info + " " + sym * (banner_len - len(info) - 1)
-        print(info)
-    print()
     
 def prepare_data(config):
     

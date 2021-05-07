@@ -1,6 +1,16 @@
 import sys
 import random
 
+def banner(info=None, banner_len=60, sym="-"):
+    print()
+    if not info: 
+        print(sym * banner_len)
+    else: 
+        info = sym * ((banner_len - len(info)) // 2 - 1) + " " + info
+        info = info + " " + sym * (banner_len - len(info) - 1)
+        print(info)
+    print()
+
 def evenly_divide(start, end, num_splits):
     step = (end - start) / num_splits
     return [start + step * i for i in range(num_splits + 1)]

@@ -19,9 +19,8 @@ Mapping Generation superclass on using some kind of normalized distance metric o
     Current supported candidate selection: [Subword-level Inverted Index, ]
 """
 
-from transformers.file_utils import to_py_obj
 from bertmap.onto import OntoBox, OntoEvaluator
-from bertmap.utils import log_print
+from bertmap.utils import log_print, banner
 from typing import Optional, Union, Tuple
 from pandas import DataFrame
 from collections import defaultdict
@@ -103,6 +102,13 @@ class OntoMapping:
         tgt_df = pd.DataFrame(tgt_maps_kept, columns=["Entity1", "Entity2", "Value"])
         combined_df = src_df.append(tgt_df).drop_duplicates().dropna()
         return src_df, tgt_df, combined_df
+    
+    @staticmethod
+    def print_eval(eval_csv: str):
+        df = pd.read_csv(eval_csv, index_col=0)
+        banner("Evaluation Results"); print(df)
+        banner("Best String Match Results"); print(df.loc[df["F1"][-3:].idxmax()])
+        banner("Best Results without String Match"); print(df.loc[df["F1"][:-3].idxmax()])
 
     @staticmethod
     def plot_eval(eval_csv, start_col=0):
