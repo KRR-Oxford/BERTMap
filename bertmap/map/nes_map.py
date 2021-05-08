@@ -26,9 +26,11 @@ class NormEditSimMapping(OntoMapping):
 
     def run(self) -> None:
         self.pool = Pool(self.num_pools)
+        # self.results = []
         t_start = time.time()
         self.alignment("SRC"); self.alignment("TGT")
         self.pool.close(); self.pool.join()
+        # for result in self.results: result.get()
         t_end = time.time()
         self.log_print(f'the overall program time is :{t_end - t_start}')
             
@@ -47,6 +49,7 @@ class NormEditSimMapping(OntoMapping):
             if len(search_space) == 0:
                 self.log_print(f"[Time: {round(time.time() - self.start_time)}][{print_flag}][Class-idx: {from_class_idx}] No candidates available for for current entity ...")
                 continue
+            self.align_one_class(from_class_iri, search_space, flag)
             self.pool.apply_async(self.align_one_class, args=(from_class_iri, search_space, flag, ))
     
     def align_one_class(self, 
@@ -67,6 +70,7 @@ class NormEditSimMapping(OntoMapping):
         result = (from_class_iri, max_sim_class, max_sim_score)
         print_flag = f"{flag}: {self.src_ob.onto_text.iri_abbr}" if flag == "SRC" else f"{flag}: {self.tgt_ob.onto_text.iri_abbr}"
         self.log_print(f"[Time: {round(time.time() - self.start_time)}][PID {os.getpid()}][{print_flag}][Class-idx: {from_class_idx}][Mapping: {result}]")
+        return result
 
     @staticmethod    
     def max_norm_edit_sim(from_labels: List[str], to_labels: List[str]) -> float:
