@@ -104,11 +104,11 @@ class BERTEmbedsMapping(OntoMapping):
             # compare the cosine similarity scores between two batches
             sim_scores = torch.tensor(cosine_similarity(from_embed, to_batch_embeds)).to(self.device).squeeze(0)
             K = len(sim_scores) if len(sim_scores) < self.nbest else self.nbest
-            nbest_scores, nbest_indices = torch.topk(sim_scores, k=K)
-            nbest_indices += j * to_batch_size
+            nbest_scores, nbest_idxs = torch.topk(sim_scores, k=K)
+            nbest_idxs += j * len(to_batch)
             # we do the substituion for every batch to prevent from memory overflow
-            batch_nbest_scores, temp_indices = torch.topk(torch.cat([batch_nbest_scores, nbest_scores]), k=self.nbest)
-            batch_nbest_indices = torch.cat([batch_nbest_indices, nbest_indices])[temp_indices]
+            batch_nbest_scores, temp_idxs = torch.topk(torch.cat([batch_nbest_scores, nbest_scores]), k=self.nbest)
+            batch_nbest_idxs = torch.cat([batch_nbest_idxs, nbest_idxs])[temp_idxs]
             j += 1
             
         batch_nbest_class_iris = [search_space[idx] for idx in batch_nbest_idxs]

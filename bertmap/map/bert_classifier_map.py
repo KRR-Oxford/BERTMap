@@ -95,11 +95,11 @@ class BERTClassifierMapping(OntoMapping):
                 batch_scores = self.classifier(model_inputs_dict)
                 pooled_batch_scores = self.batch_pooling(batch_scores, batch_lens)
                 K = len(pooled_batch_scores) if len(pooled_batch_scores) < self.nbest else self.nbest
-                nbest_scores, nbest_indices = torch.topk(pooled_batch_scores, k=K)
-                nbest_indices += j * len(to_batch)
+                nbest_scores, nbest_idxs = torch.topk(pooled_batch_scores, k=K)
+                nbest_idxs += j * len(to_batch)
                 # we do the substituion for every batch to prevent from memory overflow
                 batch_nbest_scores, temp_idxs = torch.topk(torch.cat([batch_nbest_scores, nbest_scores]), k=self.nbest)
-                batch_nbest_idxs = torch.cat([batch_nbest_idxs, nbest_indices])[temp_idxs]
+                batch_nbest_idxs = torch.cat([batch_nbest_idxs, nbest_idxs])[temp_idxs]
                 j += 1
         batch_nbest_class_iris = [search_space[idx] for idx in batch_nbest_idxs]
         return list(zip(batch_nbest_class_iris, batch_nbest_scores.cpu().detach().numpy()))
