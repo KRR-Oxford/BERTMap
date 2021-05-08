@@ -106,7 +106,7 @@ class OntoMapping:
     @staticmethod
     def print_eval(eval_csv: str):
         df = pd.read_csv(eval_csv, index_col=0)
-        best_string_match_idx =  = df["F1"][-3:].idxmax()
+        best_string_match_idx = df["F1"][-3:].idxmax()
         best_system_idx = df["F1"][:-3].idxmax()
         banner("Evaluation Results"); print(df)
         banner("Best String Match Results"); print(df.loc(best_string_match_idx))
