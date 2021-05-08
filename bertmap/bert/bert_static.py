@@ -80,5 +80,5 @@ class BERTStatic:
             class_embed = torch.mean(class_texts_embeds, dim=0)
             class_embeds.append(class_embed)
             
-        return classes_batch, torch.stack(class_embeds)
+        return torch.stack(class_embeds)
     

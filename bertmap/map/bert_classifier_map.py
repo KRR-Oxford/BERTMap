@@ -66,10 +66,12 @@ class BERTClassifierMapping(OntoMapping):
                         from_labels: List[str], 
                         search_space: List[str],
                         flag: str):
+        
         _, to_ob = self.from_to_config(flag=flag)
         to_batch_size = max(self.batch_size // len(from_labels), self.nbest + 1)
         to_texts_iterator = to_ob.onto_text.batch_iterator(search_space, to_batch_size)
         j = 0
+        
         batch_nbest_scores = torch.tensor([-1] * self.nbest).to(self.device)
         batch_nbest_idxs = torch.tensor([-1] * self.nbest).to(self.device)
         for to_batch in to_texts_iterator:
