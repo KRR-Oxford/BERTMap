@@ -14,7 +14,7 @@
 # append the paths
 import os
 main_dir = os.getcwd().split("BERTMap")[0] + "BERTMap"
-os.environ["TOKENIZERS_PARALLELISM"] = "false"  # disable huggingface tokenizer paralellism
+# os.environ["TOKENIZERS_PARALLELISM"] = "false"  # disable huggingface tokenizer paralellism
 import sys
 sys.path.append(main_dir)
 
@@ -26,7 +26,7 @@ from pathlib import Path
 from copy import deepcopy
 from transformers import TrainingArguments
 import torch
-from multiprocessing_on_dill import Pool
+from multiprocessing_on_dill import Pool, Process
 import pandas as pd
 import time
 
@@ -214,9 +214,24 @@ def compute_nes_maps(config):
             mapping_computer = NormEditSimMapping(src_ob=src_ob, 
                                                 tgt_ob=tgt_ob, 
                                                 candidate_limit=candidate_limit, 
-                                                save_dir=f"{exp_dir}/map.{candidate_limit}", 
-                                                num_pools=18)
-            mapping_computer.run()
+                                                save_dir=f"{exp_dir}/map.{candidate_limit}")
+            # mapping_computer.run()  # single-thread NES experiment
+            ############## chunk for setting up multiprocessing on NES experiment ############
+            mapping_computer.start_time = time.time()
+            procs = []
+            src_classes = list(src_ob.onto.classes()); src_idxs = equal_split(8, len(src_classes))
+            tgt_classes = list(tgt_ob.onto.classes()); tgt_idxs = equal_split(8, len(tgt_classes))
+            def align_batch(batch_classes, flag):
+                for cl in batch_classes: mapping_computer.align_one_class(cl, flag=flag)
+            for idxs in src_idxs:
+                batch = [src_classes[i] for i in idxs]
+                p = Process(target=align_batch, args=(batch, "SRC", )); p.start(); procs.append(p)
+            for idxs in tgt_idxs:
+                batch = [tgt_classes[i] for i in idxs]
+                p = Process(target=align_batch, args=(batch, "TGT", )); p.start(); procs.append(p)
+            for p in procs: p.join()
+            ############## chunk for setting up multiprocessing on NES experiment ############
+            
             src_df, tgt_df, combined_df = OntoMapping.read_mappings_from_log(f"{exp_dir}/map.{candidate_limit}/map.{candidate_limit}.log", keep=1)
             src_df.to_csv(f"{exp_dir}/map.{candidate_limit}/src.{candidate_limit}.tsv", sep="\t", index=False)
             tgt_df.to_csv(f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.tsv", sep="\t", index=False)
@@ -225,7 +240,6 @@ def compute_nes_maps(config):
             time.sleep(120)
         eval_maps(config=config, candidate_limit=candidate_limit)
         # eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
-    
     
 def eval_maps(config, candidate_limit: int, semi_supervised=False):
     
