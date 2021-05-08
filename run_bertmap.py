@@ -25,7 +25,7 @@ from pathlib import Path
 from copy import deepcopy
 from transformers import TrainingArguments
 import torch
-import multiprocessing
+from multiprocessing_on_dill import Pool
 import pandas as pd
 import time
 
@@ -190,6 +190,7 @@ def compute_maps(config):
             combined_df.to_csv(f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", sep="\t", index=False)
             banner(f"evaluate mappings for candidate limit {candidate_limit}")
             time.sleep(120)
+            torch.cuda.empty_cache()
         eval_maps(config=config, candidate_limit=candidate_limit)
         if learn == "ss": eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
         
@@ -219,7 +220,7 @@ def eval_maps(config, candidate_limit: int, semi_supervised=False):
             ref_ignored = ref_ignored.append(train_maps_df).append(val_maps_df).reset_index(drop=True)
             ref_ignored.to_csv(f"{task_dir}/refs/maps.ignored.ss.tsv", sep="\t", index=False)
     
-    pool = multiprocessing.Pool(10) 
+    pool = Pool(10) 
     eval_results = []
     for threshold in [0.0, 0.3, 0.5, 0.7, 0.9, 0.92] + evenly_divide(0.95, 1.0, 50):
         threshold = round(threshold, 6)
