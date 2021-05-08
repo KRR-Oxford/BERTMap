@@ -268,7 +268,7 @@ def eval_maps(config, candidate_limit: int, semi_supervised=False):
     
     pool = Pool(10) 
     eval_results = []
-    for threshold in [0.0, 0.3, 0.5, 0.7, 0.9, 0.92] + evenly_divide(0.95, 1.0, 50):
+    for threshold in evenly_divide(0, 0.9, 18) + evenly_divide(0.91, 0.94, 3) + evenly_divide(0.95, 1.0, 50):
         threshold = round(threshold, 6)
         eval_results.append(pool.apply_async(OntoMapping.evaluate, \
             args=(f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", ref, ref_ignored, threshold, f"combined")))
