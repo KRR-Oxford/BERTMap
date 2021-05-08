@@ -194,6 +194,44 @@ def compute_fine_tune_maps(config):
             torch.cuda.empty_cache()
         eval_maps(config=config, candidate_limit=candidate_limit)
         if learn == "ss": eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
+
+def compute_embeds_maps(config):
+    
+    map_params = deepcopy(config["map"])
+    limits = map_params["candidate_limits"]
+    del map_params["candidate_limits"]
+    del map_params["strategy"]
+    
+    for strategy in ["mean", "cls"]:
+        global exp_dir
+        exp_dir = task_dir + f"/{strategy}-embeds.exp"
+        if os.path.exists(exp_dir): print("found /embeds.exp directory")
+        else: Path( f"{exp_dir}").mkdir(parents=True, exist_ok=True)
+        
+        for candidate_limit in limits:
+            map_file = f"{exp_dir}/map.{candidate_limit}/map.{candidate_limit}.log"
+            if os.path.exists(map_file): 
+                print(f"skip map computation for candidate limit {candidate_limit} as existed ...")
+            else:
+                Path( f"{exp_dir}/map.{candidate_limit}").mkdir(parents=True, exist_ok=True)
+                
+                mapping_computer = BERTEmbedsMapping(src_ob=src_ob, tgt_ob=tgt_ob, 
+                                                     candidate_limit=candidate_limit, 
+                                                     bert_checkpoint=config["bert"]["pretrained_path"],
+                                                     tokenizer_path=config["bert"]["tokenizer_path"], 
+                                                     save_dir=f"{exp_dir}/map.{candidate_limit}",
+                                                     strategy=strategy, **map_params)
+                mapping_computer.run()
+                src_df, tgt_df, combined_df = OntoMapping.read_mappings_from_log(f"{exp_dir}/map.{candidate_limit}/map.{candidate_limit}.log", keep=1)
+                src_df.to_csv(f"{exp_dir}/map.{candidate_limit}/src.{candidate_limit}.tsv", sep="\t", index=False)
+                tgt_df.to_csv(f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.tsv", sep="\t", index=False)
+                combined_df.to_csv(f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", sep="\t", index=False)
+                banner(f"evaluate mappings for candidate limit {candidate_limit}")
+                banner(f"evaluate mappings for candidate limit {candidate_limit}")
+                time.sleep(120)
+                torch.cuda.empty_cache()
+            eval_maps(config=config, candidate_limit=candidate_limit)
+            # if learn == "ss": eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
         
 def compute_nes_maps(config):
     
@@ -212,9 +250,9 @@ def compute_nes_maps(config):
         else:
             Path( f"{exp_dir}/map.{candidate_limit}").mkdir(parents=True, exist_ok=True)
             mapping_computer = NormEditSimMapping(src_ob=src_ob, 
-                                                tgt_ob=tgt_ob, 
-                                                candidate_limit=candidate_limit, 
-                                                save_dir=f"{exp_dir}/map.{candidate_limit}")
+                                                  tgt_ob=tgt_ob, 
+                                                  candidate_limit=candidate_limit, 
+                                                  save_dir=f"{exp_dir}/map.{candidate_limit}")
             # mapping_computer.run()  # single-thread NES experiment
             ############## chunk for setting up multiprocessing on NES experiment ############
             mapping_computer.start_time = time.time()
@@ -322,12 +360,7 @@ if __name__ == "__main__":
         compute_fine_tune_maps(config=config)
     elif args.mode == "bertembeds":
         banner(f"compute and evaluate baseline BERT embeddings mappings", sym="#")
+        compute_embeds_maps(config=config)
     elif args.mode == "edit":
         banner(f"compute and evaluate normalized edit distance mappings", sym="#")
         compute_nes_maps(config=config)
-
-
-    
-
-
-

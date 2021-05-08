@@ -28,6 +28,7 @@ class BERTEmbedsMapping(OntoMapping):
                  src_ob: OntoBox,
                  tgt_ob: OntoBox,
                  candidate_limit: Optional[int] = 50,
+                 save_dir: str="",
                  batch_size: int=32,
                  nbest: int=1, 
                  bert_checkpoint: str="some checkpoint", 
@@ -36,7 +37,7 @@ class BERTEmbedsMapping(OntoMapping):
                  strategy: str="mean",
                  device_num: int=0):
         
-        super().__init__(src_ob, tgt_ob, candidate_limit)
+        super().__init__(src_ob, tgt_ob, candidate_limit, save_dir)
         # basic attributes 
         self.batch_size = batch_size   
         self.nbest = nbest
