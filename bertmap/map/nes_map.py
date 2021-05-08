@@ -9,7 +9,7 @@ from bertmap.map import OntoMapping
 from itertools import product
 from textdistance import levenshtein
 from multiprocessing_on_dill import Pool
-from typing import List, Optional
+from typing import List, Optional, Tuple
 import time
 import os
 
@@ -25,16 +25,16 @@ class NormEditSimMapping(OntoMapping):
         self.num_pools = num_pools
 
     def run(self) -> None:
-        self.pool = Pool(self.num_pools)
-        # self.results = []
+        self.results = []
+        pool = Pool(self.num_pools)
         t_start = time.time()
-        self.alignment("SRC"); self.alignment("TGT")
-        self.pool.close(); self.pool.join()
-        # for result in self.results: result.get()
+        self.alignment(pool, "SRC"); self.alignment(pool, "TGT")
+        pool.close(); pool.join()
+        for r in self.results: r.get()
         t_end = time.time()
         self.log_print(f'the overall program time is :{t_end - t_start}')
             
-    def alignment(self, flag: str="SRC") -> None:
+    def alignment(self, pool, flag: str="SRC") -> None:
         self.start_time = time.time()
         print_flag = f"{flag}: {self.src_ob.onto_text.iri_abbr}" if flag == "SRC" else f"{flag}: {self.tgt_ob.onto_text.iri_abbr}"
         from_ob, to_ob = self.from_to_config(flag=flag)
@@ -49,13 +49,12 @@ class NormEditSimMapping(OntoMapping):
             if len(search_space) == 0:
                 self.log_print(f"[Time: {round(time.time() - self.start_time)}][{print_flag}][Class-idx: {from_class_idx}] No candidates available for for current entity ...")
                 continue
-            self.align_one_class(from_class_iri, search_space, flag)
-            self.pool.apply_async(self.align_one_class, args=(from_class_iri, search_space, flag, ))
+            self.results.append(pool.apply_async(self.align_one_class, args=(from_class_iri, search_space, flag)))
     
     def align_one_class(self, 
                         from_class_iri: str, 
                         to_search_space: List[str],
-                        flag: str) -> None:
+                        flag: str) -> Tuple:
         from_ob, to_ob = self.from_to_config(flag=flag)
         from_class_idx = from_ob.onto_text.class2idx[from_class_iri]
         from_labels = from_ob.onto_text.texts[from_class_iri]["label"]
