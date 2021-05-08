@@ -33,27 +33,30 @@ class NormEditSimMapping(OntoMapping):
         self.log_print(f'the overall program time is :{t_end - t_start}')
             
     def alignment(self, flag: str="SRC") -> None:
-        self.start_time = time.time()  # start time for one-side alignment
+        self.start_time = time.time()
+        print_flag = f"{flag}: {self.src_ob.onto_text.iri_abbr}" if flag == "SRC" else f"{flag}: {self.tgt_ob.onto_text.iri_abbr}"
         from_ob, to_ob = self.from_to_config(flag=flag)
-        for from_class_iri, text_dict in from_ob.onto_text.texts.items():
-            labels = text_dict["label"]
+        i = 0
+        for from_class in from_ob.onto.classes():
+            from_class_iri = from_ob.onto_text.abbr_entity_iri(from_class.iri)
+            from_labels = from_ob.onto_text.texts[from_class_iri]["label"]
             search_space = to_ob.onto_text.text.keys() if not self.candidate_limit \
-                else to_ob.select_candidates(labels, self.candidate_limit)
+                else to_ob.select_candidates(from_labels, self.candidate_limit)
+            from_class_idx = from_ob.onto_text.class2idx[from_class_iri]
+            assert from_class_idx == i; i += 1  # to test the order preservation in OntoText dict
+            if len(search_space) == 0:
+                self.log_print(f"[Time: {round(time.time() - self.start_time)}][{print_flag}][Class-idx: {from_class_idx}] No candidates available for for current entity ...")
+                continue
             self.pool.apply_async(self.align_one_class, args=(from_class_iri, search_space, flag, ))
     
     def align_one_class(self, 
                         from_class_iri: str, 
-                        to_search_space: List[str], 
-                        to_ob: OntoBox,
+                        to_search_space: List[str],
                         flag: str) -> None:
         from_ob, to_ob = self.from_to_config(flag=flag)
         from_class_idx = from_ob.onto_text.class2idx[from_class_iri]
-        print_flag = f"{flag}: {self.src_ob.onto_text.iri_abbr}" if flag == "SRC" else f"{flag}: {self.tgt_ob.onto_text.iri_abbr}"
-        if len(to_search_space) == 0:
-            self.log_print(f"[Time: {round(time.time() - self.start_time)}][{self.name}][{print_flag}]\
-                [#Class: {from_class_idx}] No candidates available for for current entity ..."); return
+        from_labels = from_ob.onto_text.texts[from_class_iri]["label"]
         max_sim_score= 0; max_sim_class = ""
-        from_labels = from_ob.onto_text.texts["label"]
         for to_class_iri in to_search_space:
             to_labels = to_ob.onto_text.texts[to_class_iri]["label"]
             sim_score = self.max_norm_edit_sim(from_labels, to_labels)
@@ -62,8 +65,8 @@ class NormEditSimMapping(OntoMapping):
                 max_sim_class = to_class_iri
                 if max_sim_score == 1.0: break
         result = (from_class_iri, max_sim_class, max_sim_score)
-        self.log_print(f"[Time: {round(time.time() - self.start_time)}][PID {os.getpid()}]\
-            [{self.name}][{print_flag}][#Class: {from_class_idx}][Mapping: {result}]")
+        print_flag = f"{flag}: {self.src_ob.onto_text.iri_abbr}" if flag == "SRC" else f"{flag}: {self.tgt_ob.onto_text.iri_abbr}"
+        self.log_print(f"[Time: {round(time.time() - self.start_time)}][PID {os.getpid()}][{print_flag}][Class-idx: {from_class_idx}][Mapping: {result}]")
 
     @staticmethod    
     def max_norm_edit_sim(from_labels: List[str], to_labels: List[str]) -> float:

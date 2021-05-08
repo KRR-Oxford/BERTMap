@@ -14,6 +14,7 @@
 # append the paths
 import os
 main_dir = os.getcwd().split("BERTMap")[0] + "BERTMap"
+os.environ["TOKENIZERS_PARALLELISM"] = "false"  # disable huggingface tokenizer paralellism
 import sys
 sys.path.append(main_dir)
 
@@ -215,6 +216,7 @@ def compute_nes_maps(config):
                                                 candidate_limit=candidate_limit, 
                                                 save_dir=f"{exp_dir}/map.{candidate_limit}", 
                                                 num_pools=18)
+            mapping_computer.run()
             src_df, tgt_df, combined_df = OntoMapping.read_mappings_from_log(f"{exp_dir}/map.{candidate_limit}/map.{candidate_limit}.log", keep=1)
             src_df.to_csv(f"{exp_dir}/map.{candidate_limit}/src.{candidate_limit}.tsv", sep="\t", index=False)
             tgt_df.to_csv(f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.tsv", sep="\t", index=False)
