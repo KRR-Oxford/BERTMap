@@ -109,9 +109,9 @@ class OntoMapping:
         best_string_match_idx = df["F1"][-3:].idxmax()
         best_system_idx = df["F1"][:-3].idxmax()
         banner("Evaluation Results"); print(df)
-        banner("Best String Match Results"); print(df.loc(best_string_match_idx))
-        banner("Best BERTMap results"); print(df.loc(best_system_idx))
-        return df.loc[best_string_match_idx, best_system_idx].to_latex()
+        banner("Best String Match Results"); print(df.loc[best_string_match_idx])
+        banner("Best BERTMap results"); print(df.loc[best_system_idx])
+        return df.loc[[best_string_match_idx, best_system_idx]][["Precision", "Recall", "F1"]].to_latex()
 
     @staticmethod
     def plot_eval(eval_csv, start_col=0):
