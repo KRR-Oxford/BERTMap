@@ -345,8 +345,8 @@ if __name__ == "__main__":
         print(f"{stage} params:")
         for param, value in stage_config.items():
             print(f"\t{param}: {value}")
-    Path(config["data"]["task_dir"]).mkdir(parents=True, exist_ok=True)
-    copy2(args.config, config["data"]["task_dir"])
+    Path(config["data"]["task_dir"] + "/configs").mkdir(parents=True, exist_ok=True)
+    copy2(args.config, config["data"]["task_dir"] + "/configs")
             
     banner("prepare onto data", sym="#")
     prepare_data(config=config)
