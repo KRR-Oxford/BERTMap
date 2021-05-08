@@ -106,12 +106,12 @@ class OntoMapping:
     @staticmethod
     def print_eval(eval_csv: str):
         df = pd.read_csv(eval_csv, index_col=0)
-        best_string_match = df.loc[df["F1"][-3:].idxmax()]
-        best_system = df.loc[df["F1"][:-3].idxmax()]
+        best_string_match_idx =  = df["F1"][-3:].idxmax()
+        best_system_idx = df["F1"][:-3].idxmax()
         banner("Evaluation Results"); print(df)
-        banner("Best String Match Results"); print(best_string_match)
-        banner("Best BERTMap results"); print(best_system)
-        return best_string_match.append(best_system).to_latex()
+        banner("Best String Match Results"); print(df.loc(best_string_match_idx))
+        banner("Best BERTMap results"); print(df.loc(best_system_idx))
+        return df.loc[best_string_match_idx, best_system_idx].to_latex()
 
     @staticmethod
     def plot_eval(eval_csv, start_col=0):
