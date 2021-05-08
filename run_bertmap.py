@@ -36,6 +36,8 @@ from bertmap.corpora import *
 from bertmap.bert import *
 from bertmap.map import *
 
+na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL', 'null', 'n/a'})
+
 def fix_path(path_str: str):
     return main_dir + "/" + path_str
     
@@ -98,7 +100,7 @@ def construct_corpora(config):
     
 def fine_tune(config):
     
-    global exp_dir
+    global exp_dir, learn
     
     fine_tune_params = config["fine-tune"]
     learn = fine_tune_params["learning"]
@@ -188,16 +190,31 @@ def compute_maps(config):
             combined_df.to_csv(f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", sep="\t", index=False)
             banner(f"evaluate mappings for candidate limit {candidate_limit}")
             time.sleep(120)
-            eval_maps(config=config, candidate_limit=candidate_limit)
+        eval_maps(config=config, candidate_limit=candidate_limit)
+        if learn == "ss": eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
         
-def eval_maps(config, candidate_limit: int):
+        
+def eval_maps(config, candidate_limit: int, semi_supervised=False):
+    
     eval_file = f"{exp_dir}/map.{candidate_limit}/eval.{candidate_limit}.csv"
+    # In semi-supervised setting, besides considering all the mappings, we should also test it on the test mappings
+    if semi_supervised: eval_file = f"{exp_dir}/map.{candidate_limit}/eval.{candidate_limit}.test.csv"
+    
     if os.path.exists(eval_file): 
-        print(f"skip map evaluation for candidate limit {candidate_limit} as existed ...")
-        return
+        print(f"skip map evaluation for candidate limit {candidate_limit} as existed ..."); return
+        
     report = pd.DataFrame(columns=["#Mappings", "#Ignored", "Precision", "Recall", "F1"])
-    ref = f"{task_dir}/refs/maps.ref.us.tsv"
+    ref = f"{task_dir}/refs/maps.ref.us.tsv"  
     ref_ignored = f"{task_dir}/refs/maps.ignored.tsv" if config["corpora"]["ignored_mappings_file"] else None
+    # for semi-supervised setting, we should ignore all the mappings in th train an val splits
+    if semi_supervised:
+        train_maps_df = pd.read_csv(f"{task_dir}/refs/maps.ref.ss.train.tsv", sep="\t", na_values=na_vals, keep_default_na=False)
+        val_maps_df = pd.read_csv(f"{task_dir}/refs/maps.ref.ss.val.tsv", sep="\t", na_values=na_vals, keep_default_na=False)
+        ref = f"{task_dir}/refs/maps.ref.ss.test.tsv"
+        if ref_ignored: ref_ignored = pd.read_csv(ref_ignored, sep="\t", na_values=na_vals, keep_default_na=False)
+        else: ref_ignored = pd.DataFrame(columns=["Entity1", "Entity2", "Value"])
+        ref_ignored = ref_ignored.append(train_maps_df).append(val_maps_df).reset_index(drop=True)
+    
     pool = multiprocessing.Pool(10) 
     eval_results = []
     for threshold in [0.0, 0.3, 0.5, 0.7, 0.9, 0.92] + evenly_divide(0.95, 1.0, 50):

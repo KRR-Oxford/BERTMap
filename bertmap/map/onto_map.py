@@ -107,8 +107,10 @@ class OntoMapping:
     def print_eval(eval_csv: str):
         df = pd.read_csv(eval_csv, index_col=0)
         banner("Evaluation Results"); print(df)
+        banner("Best String Match Results (Latex)"); print(df.loc[df["F1"][-3:].idxmax()].to_latex())
+        banner("Best BERTMap Results (Latex)"); print(df.loc[df["F1"][:-3].idxmax()].to_latex())
         banner("Best String Match Results"); print(df.loc[df["F1"][-3:].idxmax()])
-        banner("Best Results without String Match"); print(df.loc[df["F1"][:-3].idxmax()])
+        banner("Best BERTMap results"); print(df.loc[df["F1"][:-3].idxmax()])
 
     @staticmethod
     def plot_eval(eval_csv, start_col=0):
