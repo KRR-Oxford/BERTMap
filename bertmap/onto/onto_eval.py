@@ -24,7 +24,8 @@ class OntoEvaluator:
         
         # reference mappings and illegal mappings to be ignored
         self.ref = self.read_mappings(ref_tsv)
-        self.ref_ignored = self.read_mappings(ref_ignored_tsv) if ref_ignored_tsv else None
+        if ref_ignored_tsv is None: self.ref_ignored = None
+        else: self.ref_ignored = self.read_mappings(ref_ignored_tsv)
         
         # compute Precision, Recall and Macro-F1
         self.P = self.precision()

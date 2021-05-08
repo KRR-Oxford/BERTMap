@@ -208,12 +208,16 @@ def eval_maps(config, candidate_limit: int, semi_supervised=False):
     ref_ignored = f"{task_dir}/refs/maps.ignored.tsv" if config["corpora"]["ignored_mappings_file"] else None
     # for semi-supervised setting, we should ignore all the mappings in th train an val splits
     if semi_supervised:
-        train_maps_df = pd.read_csv(f"{task_dir}/refs/maps.ref.ss.train.tsv", sep="\t", na_values=na_vals, keep_default_na=False)
-        val_maps_df = pd.read_csv(f"{task_dir}/refs/maps.ref.ss.val.tsv", sep="\t", na_values=na_vals, keep_default_na=False)
-        ref = f"{task_dir}/refs/maps.ref.ss.test.tsv"
-        if ref_ignored: ref_ignored = pd.read_csv(ref_ignored, sep="\t", na_values=na_vals, keep_default_na=False)
-        else: ref_ignored = pd.DataFrame(columns=["Entity1", "Entity2", "Value"])
-        ref_ignored = ref_ignored.append(train_maps_df).append(val_maps_df).reset_index(drop=True)
+        ss_ignored = f"{task_dir}/refs/maps.ignored.ss.tsv"
+        if os.path.exists(ss_ignored): ref_ignored = ss_ignored
+        else:
+            train_maps_df = pd.read_csv(f"{task_dir}/refs/maps.ref.ss.train.tsv", sep="\t", na_values=na_vals, keep_default_na=False)
+            val_maps_df = pd.read_csv(f"{task_dir}/refs/maps.ref.ss.val.tsv", sep="\t", na_values=na_vals, keep_default_na=False)
+            ref = f"{task_dir}/refs/maps.ref.ss.test.tsv"
+            if ref_ignored: ref_ignored = pd.read_csv(ref_ignored, sep="\t", na_values=na_vals, keep_default_na=False)
+            else: ref_ignored = pd.DataFrame(columns=["Entity1", "Entity2", "Value"])
+            ref_ignored = ref_ignored.append(train_maps_df).append(val_maps_df).reset_index(drop=True)
+            ref_ignored.to_csv(f"{task_dir}/refs/maps.ignored.ss.tsv", sep="\t", index=False)
     
     pool = multiprocessing.Pool(10) 
     eval_results = []
