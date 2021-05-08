@@ -159,7 +159,7 @@ def fine_tune(config):
     with open(test_results_file, "w") as f:
         json.dump(test_results, f, indent=4, separators=(',', ': '), sort_keys=True)
 
-def compute_maps(config):
+def compute_fine_tune_maps(config):
     
     global checkpoint 
     checkpoint = exp_dir
@@ -194,7 +194,37 @@ def compute_maps(config):
         eval_maps(config=config, candidate_limit=candidate_limit)
         if learn == "ss": eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
         
-        
+def compute_nes_maps(config):
+    
+    global exp_dir
+    exp_dir = task_dir + "/nes.exp"
+    if os.path.exists(exp_dir): print("found /nes.exp directory")
+    else: Path( f"{exp_dir}").mkdir(parents=True, exist_ok=True)
+    
+    map_params = deepcopy(config["map"])
+    limits = map_params["candidate_limits"]
+    
+    for candidate_limit in limits:
+        map_file = f"{exp_dir}/map.{candidate_limit}/map.{candidate_limit}.log"
+        if os.path.exists(map_file): 
+            print(f"skip map computation for candidate limit {candidate_limit} as existed ...")
+        else:
+            Path( f"{exp_dir}/map.{candidate_limit}").mkdir(parents=True, exist_ok=True)
+            mapping_computer = NormEditSimMapping(src_ob=src_ob, 
+                                                tgt_ob=tgt_ob, 
+                                                candidate_limit=candidate_limit, 
+                                                save_dir=f"{exp_dir}/map.{candidate_limit}", 
+                                                num_pools=18)
+            src_df, tgt_df, combined_df = OntoMapping.read_mappings_from_log(f"{exp_dir}/map.{candidate_limit}/map.{candidate_limit}.log", keep=1)
+            src_df.to_csv(f"{exp_dir}/map.{candidate_limit}/src.{candidate_limit}.tsv", sep="\t", index=False)
+            tgt_df.to_csv(f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.tsv", sep="\t", index=False)
+            combined_df.to_csv(f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", sep="\t", index=False)
+            banner(f"evaluate mappings for candidate limit {candidate_limit}")
+            time.sleep(120)
+        eval_maps(config=config, candidate_limit=candidate_limit)
+        # eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
+    
+    
 def eval_maps(config, candidate_limit: int, semi_supervised=False):
     
     eval_file = f"{exp_dir}/map.{candidate_limit}/eval.{candidate_limit}.csv"
@@ -270,10 +300,15 @@ if __name__ == "__main__":
     banner("construct onto corpora and fine-tuning data", sym="#")
     construct_corpora(config=config)
     
-    if args.mode == "bertmap": fine_tune(config=config)
-    
-    banner("compute and evaluate mappings", sym="#")
-    compute_maps(config=config)
+    if args.mode == "bertmap": 
+        fine_tune(config=config)
+        banner("compute and evaluate fine-tuning mappings", sym="#")
+        compute_fine_tune_maps(config=config)
+    elif args.mode == "bertembeds":
+        banner(f"compute and evaluate baseline BERT embeddings mappings", sym="#")
+    elif args.mode == "edit":
+        banner(f"compute and evaluate normalized edit distance mappings", sym="#")
+        compute_nes_maps(config=config)
 
 
     
