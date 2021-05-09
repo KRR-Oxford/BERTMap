@@ -43,7 +43,7 @@ class BERTEmbedsMapping(OntoMapping):
         self.nbest = nbest
         self.string_match = string_match
         self.strategy = strategy
-        assert self.strategy == "mean" or self.strategy == "max"
+        assert self.strategy == "mean" or self.strategy == "cls"
         
         self.bert = BERTStatic(bert_checkpoint=bert_checkpoint, tokenizer_path=tokenizer_path, with_classifier=False)
         self.device = get_device(device_num=device_num)
