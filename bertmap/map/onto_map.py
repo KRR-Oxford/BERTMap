@@ -110,12 +110,16 @@ class OntoMapping:
         best_system_idx = df["F1"][:-3].idxmax()
         # banner("Evaluation Results"); print(df)
         banner(f"Evaluation results for mapping at {eval_csv}", sym="#")
-        banner("Best string match results"); print(df.loc[best_string_match_idx])
-        banner("Best BERTMap results"); print(df.loc[best_system_idx])
+        # banner("Best string match results"); print(df.loc[best_string_match_idx])
+        # banner("Best BERTMap results"); print(df.loc[best_system_idx])
+        # return df.loc[[best_string_match_idx, best_system_idx]][["Precision", "Recall", "F1"]].to_latex()
+        banner("Best string match results")
+        P = df.loc[best_string_match_idx]["Precision"]; R = df.loc[best_string_match_idx]["Recall"]; 
+        F1 = df.loc[best_string_match_idx]["F1"]
+        print(f"P={round(P, 3)}", f"R={round(R, 3)}", f"F1={round(F1, 3)}", str(best_string_match_idx).replace("combined", "cb"))
+        banner("Best BERTMap results")
         P = df.loc[best_system_idx]["Precision"]; R = df.loc[best_system_idx]["Recall"]; 
         F1 = df.loc[best_system_idx]["F1"]
-        # return df.loc[[best_string_match_idx, best_system_idx]][["Precision", "Recall", "F1"]].to_latex()
-        banner("For recording")
         print(f"P={round(P, 3)}", f"R={round(R, 3)}", f"F1={round(F1, 3)}", str(best_system_idx).replace("combined", "cb"))
 
     @staticmethod
