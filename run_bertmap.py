@@ -275,7 +275,7 @@ def compute_nes_maps(config):
             tgt_df.to_csv(f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.tsv", sep="\t", index=False)
             combined_df.to_csv(f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", sep="\t", index=False)
             banner(f"evaluate mappings for candidate limit {candidate_limit}")
-            time.sleep(120)
+            # time.sleep(120)
         eval_maps(config=config, candidate_limit=candidate_limit)
         # eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
     
