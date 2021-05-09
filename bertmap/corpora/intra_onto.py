@@ -1,27 +1,17 @@
 """
 Ontology Corpus class from within the input ontology.
-
-Data structure illustration:
-{   
-    ...,
-    class_label:{ 
-        synonyms: []
-        soft_nonsynonyms: []
-        hard_nonsynonyms: []
-    },
-    ...
-}
 """
 
 
-from bertmap.onto import OntoBox
-from bertmap.utils import uniqify, exclude_randrange
-from bertmap.corpora import OntoCorpus
-import random
 import itertools
-from typing import Optional
-from copy import deepcopy
+import random
 from collections import defaultdict
+from copy import deepcopy
+from typing import Optional
+
+from bertmap.corpora import OntoCorpus
+from bertmap.onto import OntoBox
+from bertmap.utils import exclude_randrange, uniqify
 
 
 class IntraOntoCorpus(OntoCorpus):

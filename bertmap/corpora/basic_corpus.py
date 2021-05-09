@@ -16,11 +16,24 @@ The corpus essentially stores pairs of texts that are semantically related, incl
     {Hard nonsynonyms} are pairs of classtexts from *disjoint* classes (e.g. sibling classes up to certain depth)
     
     The concepts of forward and backward apply to nonsynonyms as well.
+
+    Data structure illustration:
+    {   
+        ...,
+        class_label:{ 
+            synonyms: []
+            soft_nonsynonyms: []
+            hard_nonsynonyms: []
+        },
+        ...
+    }
 """
 
 import json
-import pandas as pd
 from typing import Optional
+
+import pandas as pd
+
 
 class OntoCorpus:
     
@@ -80,12 +93,14 @@ class OntoCorpus:
         }
 
     def get_identity_synonyms(self):
-        """[Reflexivity]: Map each classtext to itself"""
+        """[Reflexivity]: Map each classtext to itself
+        """
         classtexts = list(self.corpus.keys())[1:]  
         return list(zip(classtexts, classtexts, [1]*len(classtexts)))
     
     def extract_semantic_pairs(self):
-        """Extract classtext pairs from corpus"""
+        """Extract classtext pairs from corpus
+        """
         synonyms = []
         soft_nonsynonyms = []
         hard_nonsynonyms = []
@@ -99,7 +114,8 @@ class OntoCorpus:
     
     @staticmethod
     def save_semantic_pairs(semantic_data, save_file):
-        """Save all the semantic sentence pairs (Note: the output column "label" refers to the ground truth)"""
+        """Save all the semantic sentence pairs (Note: the output column "label" refers to the ground truth)
+        """
         pd.DataFrame(semantic_data, columns=["sentence1", "sentence2", "label"]).to_csv(save_file, sep='\t', index=False)
     
     def negative_sample_check(self, label1, label2):

@@ -1,12 +1,18 @@
+"""
+Corpora class for handling all kinds of sub-corpora involved in an alignment task
+"""
+
 from __future__ import annotations
-from bertmap.onto import OntoBox, OntoEvaluator
-from bertmap.corpora import IntraOntoCorpus, MergedOntoCorpus, CrossOntoCorpus
-from bertmap.utils import uniqify
-from typing import Optional, Union, List, Dict, Tuple
-from pathlib import Path
-import pandas as pd
-import re
+
 import random
+import re
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
+
+import pandas as pd
+from bertmap.corpora import CrossOntoCorpus, IntraOntoCorpus, MergedOntoCorpus
+from bertmap.onto import OntoBox, OntoEvaluator
+from bertmap.utils import uniqify
 
 
 class OntoAlignCorpora:

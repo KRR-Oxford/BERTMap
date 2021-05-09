@@ -2,12 +2,13 @@
 OntoInvertedIndex class with as entries the subword tokens retrieved from ontological class texts.
 """
 
-from transformers import AutoTokenizer
-from bertmap.onto import OntoText
+import json
 from collections import defaultdict
 from itertools import chain
-import json, os, re
 from typing import List, Optional
+
+from bertmap.onto import OntoText
+from transformers import AutoTokenizer
 
 
 class OntoInvertedIndex:
@@ -30,6 +31,10 @@ class OntoInvertedIndex:
         return f"<OntoInvertedIndex num_entries={len(self.index)} cut={self.cut} tokenizer_path={self.tokenizer_path}>"
     
     def set_tokenizer(self, tokenizer_path: str) -> None:
+        """Set or change the tokenizer used for creating the Index,
+           note that when loading, the tokenizer is not loaded by default,
+           but in the OntoBox class, the tokenizer info is stored 
+        """
         self.tokenizer_path = tokenizer_path
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
         

@@ -1,18 +1,32 @@
 """
 OntoBox class that handles data generation from owlready2 Ontology object.
+
+The main components are:
+    1. owlready2 Ontology;
+    2. OntoText for creating classtexts;
+    3. OntoIndex for creating sub-word level inverted index based on classtexts created in (2)
+
+This class supports saving all ontology data files into a single directory in a specific format,
+thus everything can be reloaded from saved without extra efforts.
+
+More importantly, the *candidate selection* function based on inverted index is implemented here 
+because it relies on both OntoText and OntoIndex objects.
 """
 
 from __future__ import annotations
+
+import ast
+import math
+import os
+import re
+from collections import defaultdict
+from pathlib import Path
+from shutil import copy2
+from typing import List, Optional
+
+from bertmap.onto import OntoInvertedIndex, OntoText
 from owlready2 import get_ontology
 from owlready2.entity import ThingClass
-from bertmap.onto import OntoText
-from bertmap.onto import OntoInvertedIndex
-from transformers import AutoTokenizer
-import math, os, re, ast
-from typing import Optional, List
-from shutil import copy2
-from pathlib import Path
-from collections import defaultdict
 
 
 class OntoBox():

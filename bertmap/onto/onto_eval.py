@@ -1,11 +1,12 @@
 """
 Ontology Evaluator class for evaluating the cross-ontology mappings computed by OA models.
 """
+from typing import List, Optional, Union
+
 import pandas as pd
+from bertmap.onto import OntoText
 from bertmap.utils import uniqify
 from pandas.core.frame import DataFrame
-from bertmap.onto import OntoText
-from typing import Optional, Union, List
 
 
 class OntoEvaluator:

@@ -1,18 +1,19 @@
 """
 Direct Search Mapping Generation on using the *normalized edit distance score* as the distance metric.
 
-Unlike the BERT experiment where the batched (vectorization) algorithm is used, here we apply the multiprocessing on each batch.
+Unlike the BERT experiment where the batched (vectorization) algorithm is used, we need multiprocessing on each batch.
 """
 
-from bertmap.onto import OntoBox
-from bertmap.map import OntoMapping
-from itertools import product
-from textdistance import levenshtein
-from multiprocessing_on_dill import Process
-from typing import List, Optional
-from owlready2.entity import ThingClass
-import time
 import os
+import time
+from itertools import product
+from typing import List, Optional
+
+from bertmap.map import OntoMapping
+from bertmap.onto import OntoBox
+from owlready2.entity import ThingClass
+from textdistance import levenshtein
+
 
 class NormEditSimMapping(OntoMapping):
     

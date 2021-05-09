@@ -1,11 +1,16 @@
-from bertmap.map import OntoMapping
+"""Mapping Generation on using the classifier of Fine-tuned BERT with "near majorty vote" scoring method.
+"""
+
+import time
+from typing import Dict, Iterable, List, Optional
+
+import pandas as pd
+import torch
 from bertmap.bert import BERTStatic
+from bertmap.map import OntoMapping
 from bertmap.onto import OntoBox
 from bertmap.utils import get_device
-from typing import Optional, Iterable, Dict, List
-import torch
-import time
-import pandas as pd
+
 
 class BERTClassifierMapping(OntoMapping):
     
@@ -42,13 +47,15 @@ class BERTClassifierMapping(OntoMapping):
         self.classifier = lambda x: self.softmax(self.bert.model(**x).logits)[:, 1]
     
     def alignment(self, flag="SRC") -> None:
-        self.start_time = time.time()
+        self.start_time = time.time()  # the beginning of one side alignment
         print_flag = f"{flag}: {self.src_ob.onto_text.iri_abbr}" if flag == "SRC" else f"{flag}: {self.tgt_ob.onto_text.iri_abbr}"
         from_ob, to_ob = self.from_to_config(flag=flag)
         i = 0
+        # for each from-class, search for topK to-class(es)
         for from_class in from_ob.onto.classes():
-            from_class_iri = from_ob.onto_text.abbr_entity_iri(from_class.iri)
+            from_class_iri = from_ob.onto_text.abbr_entity_iri(from_class.iri)  
             from_labels = from_ob.onto_text.texts[from_class_iri]["label"]
+            # select the candidates if limit is given, otherwise using full space
             search_space = to_ob.onto_text.text.keys() if not self.candidate_limit \
                 else to_ob.select_candidates(from_labels, self.candidate_limit)
             from_class_idx = from_ob.onto_text.class2idx[from_class_iri]

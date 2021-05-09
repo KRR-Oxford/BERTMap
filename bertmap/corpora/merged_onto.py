@@ -3,13 +3,13 @@ Ontology Corpus class that takes as input a base corpus and an additional corpus
 """
 
 
-from owlready2.annotation import label
-from bertmap.corpora import OntoCorpus
-from bertmap.utils import uniqify
+import random
 from copy import deepcopy
 from typing import Optional
+
+from bertmap.corpora import OntoCorpus
+from bertmap.utils import uniqify
 from sklearn.model_selection import train_test_split
-import random
 
 
 class MergedOntoCorpus(OntoCorpus):

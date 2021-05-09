@@ -3,14 +3,17 @@ Ontology Corpus class from known/seed cross-ontology mappings.
 """
 
 from __future__ import annotations
-from bertmap.onto import OntoBox, OntoEvaluator
-from bertmap.corpora import OntoCorpus
-from bertmap.utils import uniqify, exclude_randrange
-from collections import defaultdict
-from sklearn.model_selection import train_test_split
-from copy import deepcopy
-from typing import Tuple, Union, Optional, List
+
 import random
+from collections import defaultdict
+from copy import deepcopy
+from typing import List, Optional, Tuple, Union
+
+from bertmap.corpora import OntoCorpus
+from bertmap.onto import OntoBox, OntoEvaluator
+from bertmap.utils import exclude_randrange, uniqify
+from sklearn.model_selection import train_test_split
+
 
 class CrossOntoCorpus(OntoCorpus):
     
@@ -136,6 +139,9 @@ class CrossOntoCorpus(OntoCorpus):
             self.corpus[label]["soft_nonsynonyms"] = soft_negatives    
             
     def generate_label_data(self, soft_neg_rate: int=2) -> List:
+        """generate onto label data according to negative sample rate r, 
+           i.e. the number of negatives sampled for each positive
+        """
         semantic_pairs = self.extract_semantic_pairs()
         synonyms = semantic_pairs["synonyms"]  # for-back synonyms
         # check if the input negative rates are applicable

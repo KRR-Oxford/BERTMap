@@ -2,14 +2,15 @@
 OntoText class that handles text data generation from owlready2 Ontology object.
 """
 
+import json
+from collections import OrderedDict, defaultdict
+from typing import Dict, Iterable, List, Optional
+
+import pandas as pd
 from bertmap.utils import batch_split, uniqify
 from owlready2.entity import ThingClass
-from owlready2.prop import IndividualValueList
 from owlready2.namespace import Ontology
-import pandas as pd
-import json
-from collections import defaultdict, OrderedDict
-from typing import List, Optional, Iterable, Dict
+from owlready2.prop import IndividualValueList
 
 
 class OntoText():
@@ -122,9 +123,11 @@ class OntoText():
         return uniqify(cleaned_texts)
 
     def abbr_entity_iri(self, entity_iri: str) -> str:
-        """onto_iri#fragment => onto_prefix:fragment"""
+        """onto_iri#fragment => onto_prefix:fragment
+        """
         return entity_iri.replace(self.iri, self.namespaces[self.iri])
     
     def expand_entity_iri(self, entity_iri_abbr: str) -> str:
-        """onto_iri#fragment <= onto_prefix:fragment"""
+        """onto_iri#fragment <= onto_prefix:fragment
+        """
         return entity_iri_abbr.replace(self.iri_abbr, self.inv_namespaces[self.iri_abbr])

@@ -1,25 +1,15 @@
-"""Mapping Generation on using Pretrained/Fine-tuned BERT with various pooling strategies and cosine-similarity:
-
-    Batched Algorithm with Divide and Conquer Design:
-    
-        [Fix the source side] 
-            For each *source batch* of classes, compute the Value for the source batch against *each target batch* (divide),
-            merge the output Value(s) (conquer) to finalize the mappings for current source batch.
-            
-        [Fix the target side]
-            Repeat the similar step as above except that we inverse the source-target direction.
-            
-    Possible Improvement: we can compute batch-to-batch for source and target sides simultaneously. However, it won't be practical for very large ontologies.
+"""Mapping Generation on using Pretrained/Fine-tuned BERT with various pooling strategies and cosine-similarity.
 """
 
-from bertmap.onto import OntoBox
-from bertmap.map import OntoMapping
+import time
+from typing import List, Optional
+
+import torch
 from bertmap.bert import BERTStatic
+from bertmap.map import OntoMapping
+from bertmap.onto import OntoBox
 from bertmap.utils import get_device
 from sklearn.metrics.pairwise import cosine_similarity
-from typing import Optional, List
-import torch
-import time
 
 
 class BERTEmbedsMapping(OntoMapping):

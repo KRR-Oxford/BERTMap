@@ -19,15 +19,16 @@ Mapping Generation superclass on using some kind of normalized distance metric o
     Current supported candidate selection: [Subword-level Inverted Index, ]
 """
 
-from bertmap.onto import OntoBox, OntoEvaluator
-from bertmap.utils import log_print, banner
-from typing import Optional, Union, Tuple
-from pandas import DataFrame
-from collections import defaultdict
-import pandas as pd
-import time
-import seaborn as sns 
 import re
+import time
+from collections import defaultdict
+from typing import Optional, Tuple, Union
+
+import pandas as pd
+import seaborn as sns
+from bertmap.onto import OntoBox, OntoEvaluator
+from bertmap.utils import banner, log_print
+from pandas import DataFrame
 
 
 class OntoMapping:
@@ -41,11 +42,12 @@ class OntoMapping:
         self.src_ob = src_ob
         self.tgt_ob = tgt_ob
         self.candidate_limit = candidate_limit
-        # define log print function
         self.save_dir = save_dir
         self.log_print = lambda info: log_print(info, f"{self.save_dir}/map.{self.candidate_limit}.log")
 
     def run(self) -> None:
+        """Run the computation of mapping calculation
+        """
         t_start = time.time()
         self.log_print(f'Candidate Limit: {self.candidate_limit}')
         self.alignment("SRC"); t_src = time.time()
@@ -56,12 +58,16 @@ class OntoMapping:
         self.log_print(f'the overall program time is :{t_end - t_start}')
         
     def from_to_config(self, flag: str="SRC") -> Tuple[OntoBox, OntoBox]:
+        """switch source and target OntoBox objects according to flag
+        """
         assert flag == "SRC" or flag == "TGT"
         if flag == "SRC": from_ob, to_ob = self.src_ob, self.tgt_ob
         else: from_ob, to_ob = self.tgt_ob, self.src_ob
         return from_ob, to_ob
     
     def alignment(self, flag: str="SRC") -> None:
+        """Fixed one-side ontology alignment
+        """
         raise NotImplementedError
         
     @staticmethod
@@ -70,8 +76,19 @@ class OntoMapping:
                  ref_ignored_tsv: Optional[Union[str, DataFrame]]=None,  
                  threshold: float=0.0, 
                  prefix: str="") -> DataFrame:
+        """evaluate the alignment results
+
+        Args:
+            pre_tsv (Union[str, DataFrame]): prediction tsv file
+            ref_tsv (Union[str, DataFrame]): reference tsv file
+            ref_ignored_tsv (Optional[Union[str, DataFrame]], optional): mappings to be ignored during evaluation. Defaults to None.
+            threshold (float, optional): mappings with scores lower than threshold will be filtered. Defaults to 0.0.
+            prefix (str, optional): index name. Defaults to "".
+
+        Returns:
+            DataFrame: evaluation results dataframe
+        """
         evaluator = OntoEvaluator(pre_tsv, ref_tsv, ref_ignored_tsv, threshold=threshold)
-        # print(f"# Mappings after thresholding: {len(evaluator.pre)}")
         result_df = pd.DataFrame(columns=["#Mappings", "#Ignored", "Precision", "Recall", "F1"])
         prefix = prefix + ":" + str(threshold)
         result_df.loc[prefix] = [len(evaluator.pre), evaluator.num_ignored, evaluator.P, evaluator.R, evaluator.F1]
@@ -80,6 +97,8 @@ class OntoMapping:
     
     @staticmethod
     def read_mappings_from_log(log_path: str, keep: int=1):
+        """Read mappings from the mapping computation log
+        """
         with open(log_path, "r") as f: lines = f.readlines()
         src_maps = defaultdict(list); tgt_maps = defaultdict(list)
         src_pa = r"\[SRC:.*Mapping: [\(|\[]'(.+)', '(.+)', (.+)[\)|\]]\]"
@@ -105,14 +124,12 @@ class OntoMapping:
     
     @staticmethod
     def print_eval(eval_csv: str):
+        """Print best string match and system results for easier recording
+        """
         df = pd.read_csv(eval_csv, index_col=0)
         best_string_match_idx = df["F1"][-3:].idxmax()
         best_system_idx = df["F1"][:-3].idxmax()
-        # banner("Evaluation Results"); print(df)
         banner(f"Evaluation results for mapping at {eval_csv}", sym="#")
-        # banner("Best string match results"); print(df.loc[best_string_match_idx])
-        # banner("Best BERTMap results"); print(df.loc[best_system_idx])
-        # return df.loc[[best_string_match_idx, best_system_idx]][["Precision", "Recall", "F1"]].to_latex()
         banner("Best string match results")
         P = df.loc[best_string_match_idx]["Precision"]; R = df.loc[best_string_match_idx]["Recall"]; 
         F1 = df.loc[best_string_match_idx]["F1"]
@@ -124,6 +141,8 @@ class OntoMapping:
 
     @staticmethod
     def plot_eval(eval_csv, start_col=0):
+        """plot the evaluation results (under review)
+        """
         # process eval data
         eval_df = pd.read_csv(eval_csv, index_col=0).iloc[start_col:].reset_index()
         eval_df["Mappings"] = list(eval_df["index"].apply(lambda x: x.split(":")[0]))

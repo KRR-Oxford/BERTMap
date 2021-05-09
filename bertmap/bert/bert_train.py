@@ -1,12 +1,15 @@
 """
-Fine-tuning BERT with the class-text datasets from ontologies
+Fine-tuning BERT with the classtext pair datasets extracted from ontologies
 Code inspired by: https://huggingface.co/transformers/training.html
 """
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, Trainer, TrainingArguments, EarlyStoppingCallback
-from sklearn.metrics import accuracy_score
 from typing import List
-from datasets import Dataset
+
 import pandas as pd
+from datasets import Dataset
+from sklearn.metrics import accuracy_score
+from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
+                          EarlyStoppingCallback, Trainer, TrainingArguments)
+
 
 class BERTTrainer:
     

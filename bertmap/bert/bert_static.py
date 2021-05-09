@@ -1,10 +1,15 @@
 """
-Pretrained BERT and its variants from Pytorch-based Huggingface Library.
+BERTStatic class for handling BERT embeddings and pre-trained/fine-tuned BERT models in eval mode
+
+"static" here means no gradient shift happened...
 """
-from transformers import AutoModel, AutoTokenizer, AutoModelForSequenceClassification
-from typing import Dict, List, Optional
-import torch
 import itertools
+from typing import Dict, List, Optional
+
+import torch
+from transformers import (AutoModel, AutoModelForSequenceClassification,
+                          AutoTokenizer)
+
 
 class BERTStatic:
 
