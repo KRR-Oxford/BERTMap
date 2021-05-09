@@ -111,7 +111,10 @@ class OntoMapping:
         banner("Evaluation Results"); print(df)
         banner("Best String Match Results"); print(df.loc[best_string_match_idx])
         banner("Best BERTMap results"); print(df.loc[best_system_idx])
-        return df.loc[[best_string_match_idx, best_system_idx]][["Precision", "Recall", "F1"]].to_latex()
+        P = df.loc[best_system_idx]["Precision"]; R = df.loc[best_system_idx]["Recall"]; 
+        F1 = df.loc[best_system_idx]["F1"]
+        # return df.loc[[best_string_match_idx, best_system_idx]][["Precision", "Recall", "F1"]].to_latex()
+        print(f"P={P}", f"R={R}", f"F1={F1}", str(best_system_idx).replace("combined", "cb"))
 
     @staticmethod
     def plot_eval(eval_csv, start_col=0):
