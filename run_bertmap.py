@@ -472,27 +472,27 @@ if __name__ == "__main__":
     print(f"configuration-file: {args.config}")
     print(f"mode: {args.mode}")
     with open(args.config, "r") as f:
-        config = json.load(f)
-    for stage, stage_config in config.items():
+        config_json = json.load(f)
+    for stage, stage_config in config_json.items():
         print(f"{stage} params:")
         for param, value in stage_config.items():
             print(f"\t{param}: {value}")
-    Path(config["data"]["task_dir"] + "/configs").mkdir(parents=True, exist_ok=True)
-    copy2(args.config, config["data"]["task_dir"] + "/configs")
+    Path(config_json["data"]["task_dir"] + "/configs").mkdir(parents=True, exist_ok=True)
+    copy2(args.config, config_json["data"]["task_dir"] + "/configs")
 
     banner("prepare onto data", sym="#")
-    prepare_data(config=config)
+    prepare_data(config=config_json)
 
     banner("construct onto corpora and fine-tuning data", sym="#")
-    construct_corpora(config=config)
+    construct_corpora(config=config_json)
 
     if args.mode == "bertmap":
-        fine_tune(config=config)
+        fine_tune(config=config_json)
         banner("compute and evaluate fine-tuning mappings", sym="#")
-        compute_fine_tune_maps(config=config)
+        compute_fine_tune_maps(config=config_json)
     elif args.mode == "bertembeds":
         banner(f"compute and evaluate baseline BERT embeddings mappings", sym="#")
-        compute_embeds_maps(config=config)
+        compute_embeds_maps(config=config_json)
     elif args.mode == "edit":
         banner(f"compute and evaluate normalized edit distance mappings", sym="#")
-        compute_nes_maps(config=config)
+        compute_nes_maps(config=config_json)
