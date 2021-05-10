@@ -23,7 +23,7 @@ sys.path.append(main_dir)
 # import essentials
 import argparse
 import json
-from shutil import move
+from shutil import copy2
 from pathlib import Path
 from copy import deepcopy
 from transformers import TrainingArguments
@@ -482,7 +482,7 @@ if __name__ == "__main__":
     if os.path.exists(config_file + f"/{args.config}"):
         print("config file already existed, use the existed one ...")
     else:
-        move(args.config, config_file)
+        copy2(args.config, config_file)
 
     banner("prepare onto data", sym="#")
     prepare_data(config=config_json)
