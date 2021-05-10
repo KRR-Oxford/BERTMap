@@ -26,15 +26,15 @@ from pathlib import Path
 from copy import deepcopy
 from transformers import TrainingArguments
 import torch
-from multiprocessing_on_dill import Pool, Process
+import multiprocessing_on_dill
 import pandas as pd
 import time
 
 # import bertmap
-from bertmap.utils import *
-from bertmap.onto import *
-from bertmap.corpora import *
-from bertmap.bert import *
+from bertmap.utils import evenly_divide, set_seed, equal_split, banner
+from bertmap.onto import OntoBox
+from bertmap.corpora import OntoAlignCorpora
+from bertmap.bert import BERTTrainer
 from bertmap.map import *
 
 na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL', 'null', 'n/a'})
@@ -45,7 +45,7 @@ def fix_path(path_str: str):
 def prepare_data(config):
     
     # the task directory
-    global task_dir, src, tgt, src_ob, tgt_ob, src_idx, tgt_idx
+    global task_dir, src, tgt, src_ob, tgt_ob
     
     # automatically set the task directory as {src}2{tgt} or {src}2{tgt}.{task}
     data_params = config["data"]
@@ -263,10 +263,10 @@ def compute_nes_maps(config):
                 for cl in batch_classes: mapping_computer.align_one_class(cl, flag=flag)
             for idxs in src_idxs:
                 batch = [src_classes[i] for i in idxs]
-                p = Process(target=align_batch, args=(batch, "SRC", )); p.start(); procs.append(p)
+                p = multiprocessing_on_dill.Process(target=align_batch, args=(batch, "SRC", )); p.start(); procs.append(p)
             for idxs in tgt_idxs:
                 batch = [tgt_classes[i] for i in idxs]
-                p = Process(target=align_batch, args=(batch, "TGT", )); p.start(); procs.append(p)
+                p = multiprocessing_on_dill.Process(target=align_batch, args=(batch, "TGT", )); p.start(); procs.append(p)
             for p in procs: p.join()
             ############## chunk for setting up multiprocessing on NES experiment ############
             
@@ -304,7 +304,7 @@ def eval_maps(config, candidate_limit: int, semi_supervised=False):
             ref_ignored = ref_ignored.append(train_maps_df).append(val_maps_df).reset_index(drop=True)
             ref_ignored.to_csv(f"{task_dir}/refs/maps.ignored.ss.tsv", sep="\t", index=False)
     
-    pool = Pool(10) 
+    pool = multiprocessing_on_dill.Pool(10) 
     eval_results = []
     thresholds = evenly_divide(0, 0.5, 5) + evenly_divide(0.7, 0.94, 24) + evenly_divide(0.95, 1.0, 50)
     for threshold in thresholds:

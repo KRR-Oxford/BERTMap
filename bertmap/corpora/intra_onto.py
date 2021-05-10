@@ -33,8 +33,8 @@ class IntraOntoCorpus(OntoCorpus):
                depth_strategy: Optional[str]):
         
         self.onto_box = onto_box
-        self.corpus = defaultdict(lambda:self.semantic_dict())
-        self.corpus_info = self.corpus_info()
+        self.corpus = defaultdict(lambda:self.init_semantic_dict())
+        self.corpus_info = self.init_corpus_info()
         self.corpus_info["onto"].append(self.onto_box.onto.name)
         self.corpus_info["nonsynonyms"]["soft-raw"] = 0
         self.corpus_info["nonsynonyms"]["hard-raw"] = 0

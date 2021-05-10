@@ -77,11 +77,11 @@ class OntoCorpus:
         return report
 
     @staticmethod
-    def semantic_dict():
+    def init_semantic_dict():
         # some corpus might not define the hard nonsynonyms so that they will be empty
         return {"synonyms": [], "soft_nonsynonyms": [], "hard_nonsynonyms": []}
     
-    def corpus_info(self):
+    def init_corpus_info(self):
         """init corpus information storage
         """
         return {

@@ -60,8 +60,8 @@ class CrossOntoCorpus(OntoCorpus):
         if type(src2tgt_mappings_file) is str: self.maps = OntoEvaluator.read_mappings(src2tgt_mappings_file)
         else: self.maps = src2tgt_mappings_file  # already processed
         # initialize corpus
-        self.corpus = defaultdict(lambda:self.semantic_dict())
-        self.corpus_info = self.corpus_info()
+        self.corpus = defaultdict(lambda:self.init_semantic_dict())
+        self.corpus_info = self.init_corpus_info()
         self.sample_rate = sample_rate  # rate for sampling the random (soft) nonsynonym
         self.violations = []
         self.corpus_info["onto"].append(self.src_ob.onto.name)
