@@ -479,7 +479,7 @@ if __name__ == "__main__":
             print(f"\t{param}: {value}")
     Path(config_json["data"]["task_dir"] + "/configs").mkdir(parents=True, exist_ok=True)
     config_file = config_json["data"]["task_dir"] + "/configs/" + args.config.split("/")[-1]
-    if os.path.exists(config_file + f"/{args.config}"):
+    if os.path.exists(config_file):
         print("config file already existed, use the existed one ...")
     else:
         copy2(args.config, config_file)
