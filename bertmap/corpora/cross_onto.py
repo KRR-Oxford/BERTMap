@@ -30,7 +30,7 @@ class CrossOntoCorpus(OntoCorpus):
         else:
             self.maps = src2tgt_mappings_file  # already processed or None
         self.sample_rate = sample_rate
-        super().__init__(src2tgt_mappings_file, sample_rate, corpus_file=corpus_file)
+        super().__init__(corpus_file=corpus_file)
         
     @classmethod
     def splitting_corpus(cls,

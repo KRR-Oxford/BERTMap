@@ -31,13 +31,9 @@ class IntraOntoCorpus(OntoCorpus):
         self.depth_strategy = depth_strategy  # choice of depth generation function
         self.class2depth = None
 
-        super().__init__(onto_box, sample_rate, depth_threshold, depth_strategy, corpus_file=corpus_file)
+        super().__init__(corpus_file=corpus_file)
         
-    def config(self, 
-               onto_box: OntoBox, 
-               sample_rate: int, 
-               depth_threshold: Optional[int], 
-               depth_strategy: Optional[str]):
+    def config(self):
 
         self.corpus_info["onto"].append(self.onto_box.onto.name)
         self.corpus_info["nonsynonyms"]["soft-raw"] = 0
@@ -46,9 +42,9 @@ class IntraOntoCorpus(OntoCorpus):
         self.corpus_info["nonsynonyms"]["soft-back"] = 0
         self.corpus_info["nonsynonyms"]["hard-back"] = 0
         self.corpus_info["others"]["soft_neg_sample_rate"] = self.sample_rate
-        if depth_threshold and depth_strategy:
-            self.onto_box.create_class2depth(depth_strategy)
-            self.class2depth = getattr(self.onto_box, f"class2depth_{depth_strategy}")
+        if self.depth_threshold and self.depth_strategy:
+            self.onto_box.create_class2depth(self.depth_strategy)
+            self.class2depth = getattr(self.onto_box, f"class2depth_{self.depth_strategy}")
             self.corpus_info["others"]["max_depth"] = max(self.class2depth.values())
             self.corpus_info["others"]["depth_threshold"] = self.depth_threshold
             self.corpus_info["others"]["depth_strategy"] = self.depth_strategy
