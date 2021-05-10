@@ -30,7 +30,7 @@ The corpus essentially stores pairs of texts that are semantically related, incl
 """
 
 import json
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 
 import pandas as pd
 from collections import  defaultdict

@@ -23,7 +23,7 @@ sys.path.append(main_dir)
 # import essentials
 import argparse
 import json
-from shutil import copy2
+from shutil import move
 from pathlib import Path
 from copy import deepcopy
 from transformers import TrainingArguments
@@ -478,7 +478,7 @@ if __name__ == "__main__":
         for param, value in stage_config.items():
             print(f"\t{param}: {value}")
     Path(config_json["data"]["task_dir"] + "/configs").mkdir(parents=True, exist_ok=True)
-    copy2(args.config, config_json["data"]["task_dir"] + "/configs")
+    move(args.config, config_json["data"]["task_dir"] + "/configs")
 
     banner("prepare onto data", sym="#")
     prepare_data(config=config_json)
