@@ -93,7 +93,7 @@ class OntoCorpus:
         # some corpus might not define the hard nonsynonyms so that they will be empty
         return {"synonyms": [], "soft_nonsynonyms": [], "hard_nonsynonyms": []}
     
-    def init_corpus_info(self) -> Dict[Any]:
+    def init_corpus_info(self) -> Dict:
         """init corpus information storage
         """
         return {
