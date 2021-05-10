@@ -478,7 +478,8 @@ if __name__ == "__main__":
         for param, value in stage_config.items():
             print(f"\t{param}: {value}")
     Path(config_json["data"]["task_dir"] + "/configs").mkdir(parents=True, exist_ok=True)
-    move(args.config, config_json["data"]["task_dir"] + "/configs")
+    config_file = config_json["data"]["task_dir"] + f"/configs/{args.config}"
+    move(args.config, config_file)
 
     banner("prepare onto data", sym="#")
     prepare_data(config=config_json)
