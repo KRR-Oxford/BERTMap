@@ -7,7 +7,8 @@ namespaces = {
     "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#": "nci:",
     "http://www.ihtsdo.org/snomed#": "snomed:",
 }
-na_vals = pd.io.parsers.STR_NA_VALUES.difference({'NULL', 'null', 'n/a'})
+na_vals = pd.io.parsers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
+
 
 def read_oaei_mappings(rdf_file, src_iri=None, tgt_iri=None):
     """
@@ -26,7 +27,7 @@ def read_oaei_mappings(rdf_file, src_iri=None, tgt_iri=None):
 
     for elem in xml_root.iter():
         # every Cell contains a mapping of en1 -rel(some value)-> en2
-        if 'Cell' in elem.tag:
+        if "Cell" in elem.tag:
             for sub_elem in elem:
                 if "entity1" in sub_elem.tag:
                     en1 = list(sub_elem.attrib.values())[0]
@@ -48,21 +49,24 @@ def read_oaei_mappings(rdf_file, src_iri=None, tgt_iri=None):
             else:
                 print("Unknown Relation Warning: ", rel)
 
-    print("#Maps (\"=\"):", len(ref_mappings))
-    print("#Maps (\"?\"):", len(ignored_mappings))
+    print('#Maps ("="):', len(ref_mappings))
+    print('#Maps ("?"):', len(ignored_mappings))
 
     return ref_mappings, ignored_mappings
+
 
 def save_oaei_mappings(rdf_file, src_onto=None, tgt_onto=None):
     output_dir = rdf_file.replace(".rdf", "")
     ref_mappings, ignored_mappings = read_oaei_mappings(rdf_file, src_onto, tgt_onto)
     _df = pd.DataFrame(ref_mappings, columns=["Entity1", "Entity2", "Value"])
-    _df.to_csv(output_dir + "_legal.tsv", index=False, sep='\t')
+    _df.to_csv(output_dir + "_legal.tsv", index=False, sep="\t")
     _df = pd.DataFrame(ignored_mappings, columns=["Entity1", "Entity2", "Value"])
-    _df.to_csv(output_dir + "_illegal.tsv", index=False, sep='\t')
+    _df.to_csv(output_dir + "_illegal.tsv", index=False, sep="\t")
+
 
 def create_rdf_template(rdf_file):
-    """Create rdf template without mappings"""
+    """Create rdf template without mappings
+    """
     root = le.parse(rdf_file).getroot()
     align = root[0]
     for elem in align:
@@ -71,9 +75,10 @@ def create_rdf_template(rdf_file):
     with open("template.rdf", "wb+") as f:
         le.ElementTree(root).write(f, pretty_print=True, xml_declaration=True, encoding="utf-8")
 
+
 def logmap_text_to_rdf(logmap_text, rdf_template):
     """Write LogMap output text into RDF format with given template
-    
+
     Args:
         logmap_text: path to the LogMap output text file
         rdf_template: rdf template with no mappings
@@ -99,8 +104,9 @@ def logmap_text_to_rdf(logmap_text, rdf_template):
         le.SubElement(rdf_cell, "entity2").set("{http://www.w3.org/1999/02/22-rdf-syntax-ns#}resource", en2)
         rdf_measure = le.SubElement(rdf_cell, "measure")
         rdf_measure.text = measure
-        rdf_measure.set("{http://www.w3.org/1999/02/22-rdf-syntax-ns#}datatype",
-                        "http://www.w3.org/2001/XMLSchema#float")
+        rdf_measure.set(
+            "{http://www.w3.org/1999/02/22-rdf-syntax-ns#}datatype", "http://www.w3.org/2001/XMLSchema#float"
+        )
         le.SubElement(rdf_cell, "relation").text = "="  # according to Ernesto, class subsumptions should be considered
 
     output_rdf = logmap_text.replace(".txt", ".rdf")
