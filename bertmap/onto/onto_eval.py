@@ -32,12 +32,14 @@ class OntoEvaluator:
             self.ref_ignored = self.read_mappings(ref_ignored_tsv)
 
         # compute Precision, Recall and Macro-F1
+        self.num_ignored = 0
         self.P = self.precision()
         self.R = self.recall()
         try:
             self.F1 = self.f1()
         except:
             self.F1 = "Undefined"
+            raise TypeError("F1 is undefined")
 
     def precision(self) -> float:
         """

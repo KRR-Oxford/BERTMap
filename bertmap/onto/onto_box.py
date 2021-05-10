@@ -33,13 +33,15 @@ class OntoBox:
         self,
         onto_file: str,
         onto_iri_abbr: Optional[str] = None,
-        textual_properties: List[str] = ["label"],
+        textual_properties: Optional[List[str]]=None,
         tokenizer_path: str = "emilyalsentzer/Bio_ClinicalBERT",
         cut: int = 0,
         from_saved: bool = False,
     ):
 
         # load owlready2 ontology and assign attributes
+        if textual_properties is None:
+            textual_properties = ["label"]
         self.onto_file = onto_file
         self.onto = get_ontology(f"file://{onto_file}").load()
         if not from_saved:
@@ -94,7 +96,7 @@ class OntoBox:
             f.write(str(self))
 
     @classmethod
-    def from_saved(cls, save_dir) -> OntoBox:
+    def from_saved(cls, save_dir) -> Optional[OntoBox]:
         """Create an OntoBox instance from data files in specified formats"""
         # check and load onto data files
         onto_file = []
@@ -119,7 +121,7 @@ class OntoBox:
         with open(f"{save_dir}/{info_file[0]}", "r") as f:
             lines = f.readlines()
             iri_abbr = re.findall(r"iri=\'(.+)\'", lines[0])[0]
-            properties = ast.literal_eval(re.findall(r"prop=(\[.+\])", lines[1])[0])
+            properties = ast.literal_eval(re.findall(r"prop=(\[.+])", lines[1])[0])
             cut = int(re.findall(r"cut=([0-9]+)", lines[2])[0])
             tokenizer_path = re.findall(r"tokenizer_path=(.+)>", lines[2])[0]
         # construct the OntoBox instance

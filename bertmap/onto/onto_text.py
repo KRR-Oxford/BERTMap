@@ -29,11 +29,13 @@ class OntoText:
         self,
         onto: Ontology,
         iri_abbr: Optional[str] = None,
-        properties: List[str] = ["label"],
+        properties: Optional[List[str]]=None,
         classtexts_file: Optional[str] = "",
     ):
 
         # load owlready2 ontology and assign attributes
+        if properties is None:
+            properties = ["label"]
         self.onto = onto
         self.name = self.onto.name
         self.iri = self.onto.base_iri
@@ -48,6 +50,8 @@ class OntoText:
             self.iri_abbr = iri_abbr
 
         # create or load texts associated to each class
+        self.num_texts = 0
+        self.texts = defaultdict(lambda: defaultdict(list))
         if not classtexts_file:
             self.extract_classtexts(*self.properties)
         else:

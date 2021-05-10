@@ -5,7 +5,7 @@ OntoInvertedIndex class with as entries the subword tokens retrieved from ontolo
 import json
 from collections import defaultdict
 from itertools import chain
-from typing import List, Optional
+from typing import Iterator, Optional
 
 from bertmap.onto import OntoText
 from transformers import AutoTokenizer
@@ -21,6 +21,10 @@ class OntoInvertedIndex:
     ):
 
         self.cut = cut
+        self.index = defaultdict(list)
+        self.tokenizer_path = tokenizer_path
+        self.tokenizer = None
+
         if index_file:
             self.load_index(index_file)
         else:
@@ -39,7 +43,7 @@ class OntoInvertedIndex:
         self.tokenizer_path = tokenizer_path
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
 
-    def tokenize(self, texts) -> List[str]:
+    def tokenize(self, texts) -> Iterator:
         return chain.from_iterable([self.tokenizer.tokenize(text) for text in texts])
 
     def construct_index(self, cut: int, *properties: str) -> None:

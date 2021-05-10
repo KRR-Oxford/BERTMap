@@ -14,9 +14,8 @@ def read_oaei_mappings(rdf_file, src_iri=None, tgt_iri=None):
     """
     Args:
         rdf_file: path to mappings in rdf format
-        src_onto: source ontology URI
-        tgt_onto: target ontology URI
-        include_measure: including measure value or not
+        src_iri: source ontology URI
+        tgt_iri: target ontology URI
 
     Returns:
         mappings(=;>,<), mappings(?)
@@ -28,6 +27,7 @@ def read_oaei_mappings(rdf_file, src_iri=None, tgt_iri=None):
     for elem in xml_root.iter():
         # every Cell contains a mapping of en1 -rel(some value)-> en2
         if "Cell" in elem.tag:
+            en1, en2, rel, measure = None, None, None, None
             for sub_elem in elem:
                 if "entity1" in sub_elem.tag:
                     en1 = list(sub_elem.attrib.values())[0]
