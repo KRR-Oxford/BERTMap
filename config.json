@@ -33,7 +33,8 @@
         "include_ids": true,
         "learning": "ss",
         "batch_size": 32,
-        "early_stop": true
+        "early_stop": true,
+        "eval_ratio": 5
     },
 
     "map": {

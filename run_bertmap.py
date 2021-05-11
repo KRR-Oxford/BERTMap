@@ -147,8 +147,12 @@ def fine_tune(config):
     # keep logging steps consisitent even for small batch size
     # report logging on every 3200 examples
     logging_steps = 100 * (32 // batch_size)
-    # eval on every 500 steps
-    eval_steps = 5 * logging_steps
+    # eval on every eval_ratio steps
+    if fine_tune_params["eval_ratio"]:
+        eval_ratio = fine_tune_params["eval_ratio"]
+    else: 
+        eval_ratio = 5
+    eval_steps = eval_ratio * logging_steps
 
     training_args = TrainingArguments(
         output_dir=exp_dir,
