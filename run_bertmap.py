@@ -146,7 +146,12 @@ def fine_tune(config):
     batch_size = fine_tune_params["batch_size"]
     # keep logging steps consisitent even for small batch size
     # report logging on every 3200 examples
-    logging_steps = 100 * (32 // batch_size)
+    if fine_tune_params["log_ratio"]:
+        log_ratio = fine_tune_params["log_ratio"]
+    else:
+        log_ratio = 100
+    
+    logging_steps = log_ratio * (32 // batch_size)
     # eval on every eval_ratio steps
     if fine_tune_params["eval_ratio"]:
         eval_ratio = fine_tune_params["eval_ratio"]
