@@ -47,5 +47,7 @@
         "strategy": "mean"
     },
 
-    "eval": true
+    "eval": {
+        "automatic": true
+    }
 }
