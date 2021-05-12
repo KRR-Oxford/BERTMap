@@ -17,31 +17,43 @@ class BERTTrainer:
                  bert_checkpoint: str, 
                  train_data: List,
                  val_data: List,
-                 test_data: List, 
-                 training_args: TrainingArguments,
+                 test_data: List,
                  max_length: int=128, 
-                 early_stop: bool=True,
+                 early_stop: bool=False,
                  early_stop_patience: int=5):
         print(f"initialize BERT for Binary Classification from the Pretrained BERT model at: {bert_checkpoint} ...")
         
         # BERT
         self.model = AutoModelForSequenceClassification.from_pretrained(bert_checkpoint)
         self.tokenizer = AutoTokenizer.from_pretrained(bert_checkpoint)
+        self.trainer = None
 
         # data
-        self.train = self.load_dataset(train_data, max_length=max_length)
+        self.tra = self.load_dataset(train_data, max_length=max_length)
         self.val = self.load_dataset(val_data, max_length=max_length)
-        self.test = self.load_dataset(test_data, max_length=max_length)
+        self.tst = self.load_dataset(test_data, max_length=max_length)
         print(f"text max length: {max_length}")
-        print(f"data files loaded with sizes:\n\t[# Train]: {len(self.train)}, [# Val]: {len(self.val)}, [# Test]: {len(self.test)}")
+        print(f"data files loaded with sizes:")
+        print(f"\t[# Train]: {len(self.tra)}, [# Val]: {len(self.val)}, [# Test]: {len(self.tst)}")
         
-        # trainer
-        self.training_args = training_args
-        self.trainer = Trainer(model=self.model, args=self.training_args, 
-                               train_dataset=self.train, eval_dataset=self.val, 
-                               compute_metrics=self.compute_metrics, tokenizer=self.tokenizer)
-        if early_stop: self.trainer.add_callback(EarlyStoppingCallback(early_stopping_patience=early_stop_patience))
-        
+        # early stopping
+        self.early_stop = early_stop
+        self.early_stop_patience = early_stop_patience
+
+    def train(self, train_args: TrainingArguments):
+        self.trainer = Trainer(
+            model=self.model,
+            args=train_args,
+            train_dataset=self.tra,
+            eval_dataset=self.val,
+            compute_metrics=self.compute_metrics,
+            tokenizer=self.tokenizer
+        )
+        if self.early_stop: self.trainer.add_callback(
+            EarlyStoppingCallback(early_stopping_patience=self.early_stop_patience)
+        )
+        self.trainer.train()
+
     @staticmethod
     def compute_metrics(pred):
         labels = pred.label_ids

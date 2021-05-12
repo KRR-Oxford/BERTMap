@@ -137,27 +137,30 @@ def fine_tune(config):
         banner(f"skip fine-tuning as checkpoints exist")
         return
 
-    with open(data_file, "r") as f:
-        oa_data = json.load(f)
+    with open(data_file, "r") as file:
+        oa_data = json.load(file)
     train = oa_data["train+"] if include_ids else oa_data["train"]
     val = oa_data["val+"] if learn == "us" and include_ids else oa_data["val"]
     test = oa_data["test"]
 
+    torch.cuda.empty_cache()
+    bert_oa = BERTTrainer(
+        config["bert"]["pretrained_path"],
+        train,
+        val,
+        test,
+        max_length=128,
+        early_stop=fine_tune_params["early_stop"],
+        early_stop_patience=10,
+    )
+
     batch_size = fine_tune_params["batch_size"]
+    epoch_steps = len(bert_oa.tra) // batch_size  # total steps of an epoch
     # keep logging steps consisitent even for small batch size
-    # report logging on every 3200 examples
-    if fine_tune_params["log_ratio"]:
-        log_ratio = fine_tune_params["log_ratio"]
-    else:
-        log_ratio = 100
-    
-    logging_steps = log_ratio * (32 // batch_size)
-    # eval on every eval_ratio steps
-    if fine_tune_params["eval_ratio"]:
-        eval_ratio = fine_tune_params["eval_ratio"]
-    else: 
-        eval_ratio = 5
-    eval_steps = eval_ratio * logging_steps
+    # report logging on every 0.02 epoch
+    logging_steps = int(epoch_steps * 0.02)
+    # eval on every 0.1 epoch
+    eval_steps = 5 * logging_steps
 
     training_args = TrainingArguments(
         output_dir=exp_dir,
@@ -165,7 +168,7 @@ def fine_tune(config):
         num_train_epochs=fine_tune_params["num_epochs"],
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
-        warmup_steps=0,
+        warmup_ratio=fine_tune_params["warm_up_ratio"],
         weight_decay=0.01,
         logging_steps=logging_steps,
         logging_dir=f"{exp_dir}/tb",
@@ -176,27 +179,17 @@ def fine_tune(config):
         save_steps=eval_steps,
         load_best_model_at_end=True,
         save_total_limit=1,
-        metric_for_best_model="accuracy",
-        greater_is_better=True,
+        # metric_for_best_model="accuracy",
+        # greater_is_better=True,
     )
-    torch.cuda.empty_cache()
-    bert_oa = BERTTrainer(
-        config["bert"]["pretrained_path"],
-        train,
-        val,
-        test,
-        training_args,
-        max_length=128,
-        early_stop=fine_tune_params["early_stop"],
-        early_stop_patience=10,
-    )
-    bert_oa.trainer.train()
+
+    bert_oa.train(training_args)
     # evaluation on test set
-    test_results = bert_oa.trainer.evaluate(bert_oa.test)
-    test_results["train-val-test sizes"] = f"{len(bert_oa.train)}-{len(bert_oa.val)}-{len(bert_oa.test)}"
+    test_results = bert_oa.trainer.evaluate(bert_oa.tst)
+    test_results["train-val-test sizes"] = f"{len(bert_oa.tra)}-{len(bert_oa.val)}-{len(bert_oa.tst)}"
     test_results_file = exp_dir + "/test.results.json"
-    with open(test_results_file, "w") as f:
-        json.dump(test_results, f, indent=4, separators=(",", ": "), sort_keys=True)
+    with open(test_results_file, "w") as file:
+        json.dump(test_results, file, indent=4, separators=(",", ": "), sort_keys=True)
 
 
 def compute_fine_tune_maps(config):

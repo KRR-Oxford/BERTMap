@@ -31,8 +31,10 @@
     "fine-tune": {
         "include_ids": true,
         "learning": "us",
+        "warm_up_ratio": 0.0,
         "num_epochs": 3.0,
-        "batch_size": 32
+        "batch_size": 32,
+        "early_stop": false
     },
 
     "map": {
