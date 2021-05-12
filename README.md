@@ -59,6 +59,9 @@ Here gives the explanations of the variables used in `config.json` for customize
 - `fine-tune`
   - `include_ids`: include identity synonyms in the positive samples or not.
   - `learning`: choice of learning setting `ss` (semi-supervised) or `us` (unsupervised).
+  - `warm_up_ratio`: portion of warm up steps.
+  - `max_length`: maximum length for tokenizer (highly important for **large** task!).
+  - `num_epochs`: number of training epochs, default is `3.0`.
   - `batch_size`: batch size for fine-tuning BERT.
   - `early_stop`: whether or not to apply early stopping (patience has been set to `10`).
 - `map`
