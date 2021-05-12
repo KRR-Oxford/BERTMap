@@ -149,7 +149,7 @@ def fine_tune(config):
         train,
         val,
         test,
-        max_length=128,
+        max_length=fine_tune_params["max_length"],
         early_stop=fine_tune_params["early_stop"],
         early_stop_patience=10,
     )
