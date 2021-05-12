@@ -70,6 +70,6 @@ Here gives the explanations of the variables used in `config.json` for customize
   - `nbest`: number of top results to be considered.
   - `string_match`: whether or not to use string match before others.
   - `strategy`: strategy for classifier scoring method, default is `mean`.
-  - `eval`: whether or not automatically evaluate the mappings.
+- `eval`: whether or not automatically evaluate the mappings.
 
 Should you need any further customizaions especially on the evaluation part, please set `eval` to `false` and use your own evaluation script.
