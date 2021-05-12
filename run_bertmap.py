@@ -219,6 +219,7 @@ def compute_fine_tune_maps(config):
                 bert_checkpoint=checkpoint,
                 tokenizer_path=config["bert"]["tokenizer_path"],
                 save_dir=f"{exp_dir}/map.{candidate_limit}",
+                max_length=config["fine-tune"]["max_length"],
                 **map_params,
             )
             mapping_computer.run()
@@ -268,6 +269,7 @@ def compute_embeds_maps(config):
                     tokenizer_path=config["bert"]["tokenizer_path"],
                     save_dir=f"{exp_dir}/map.{candidate_limit}",
                     strategy=strategy,
+                    max_length=config["fine-tune"]["max_length"],
                     **map_params,
                 )
                 mapping_computer.run()

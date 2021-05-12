@@ -13,23 +13,33 @@ from transformers import (AutoModel, AutoModelForSequenceClassification,
 
 class BERTStatic:
 
-    def __init__(self, 
-                 bert_checkpoint: str="emilyalsentzer/Bio_ClinicalBERT", 
-                 tokenizer_path: Optional[str]=None, 
-                 with_classifier=False):
+    def __init__(
+            self,
+            bert_checkpoint: str="emilyalsentzer/Bio_ClinicalBERT",
+            tokenizer_path: Optional[str]=None,
+            with_classifier: bool=False,
+            max_length: int=128
+    ):
         # if tokenizer path is not specified, use the same one as input BERT checkpoint
         if not tokenizer_path: tokenizer_path = bert_checkpoint 
         if not with_classifier: self.model = AutoModel.from_pretrained(bert_checkpoint, output_hidden_states=True)
         else: self.model = AutoModelForSequenceClassification.from_pretrained(bert_checkpoint, output_hidden_states=True)
         self.model.eval()    
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+        self.max_length = max_length
         
     def word_embeds(self, sents: List[str], neg_layer_num: int=-1):
         """neg_layer_num: negative number of layer, e.g. -1 means the last layer,
            the default strategy is to take the embeddings from the last layer
         """
         # dict with keys 'input_ids', 'token_type_ids' and 'attention_mask'
-        inputs = self.tokenizer(sents, padding=True, return_tensors="pt")
+        inputs = self.tokenizer(
+            sents,
+            padding=True,
+            return_tensors="pt",
+            max_length=self.max_length,
+            truncation=True
+        )
         # dict with keys 'last_hidden_state', 'pooler_output' and 'hidden_states'
         mask = inputs["attention_mask"]  # (batch_size, max_sent_len)
         with torch.no_grad():

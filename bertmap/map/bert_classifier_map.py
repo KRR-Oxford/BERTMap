@@ -13,18 +13,21 @@ from bertmap.utils import get_device
 
 class BERTClassifierMapping(OntoMapping):
     
-    def __init__(self,
-                 src_ob: OntoBox,
-                 tgt_ob: OntoBox,
-                 candidate_limit: Optional[int] = 50,
-                 save_dir: str="",
-                 batch_size: int=32,
-                 nbest: int=1, 
-                 bert_checkpoint: str="some checkpoint", 
-                 tokenizer_path: str="emilyalsentzer/Bio_ClinicalBERT", 
-                 string_match: bool=True, 
-                 strategy: str="mean",
-                 device_num: int=0):
+    def __init__(
+            self,
+            src_ob: OntoBox,
+            tgt_ob: OntoBox,
+            candidate_limit: Optional[int] = 50,
+            save_dir: str="",
+            batch_size: int=32,
+            max_length: int=128,
+            nbest: int=1,
+            bert_checkpoint: str="some checkpoint",
+            tokenizer_path: str="emilyalsentzer/Bio_ClinicalBERT",
+            string_match: bool=True,
+            strategy: str="mean",
+            device_num: int=0
+    ):
         
         super().__init__(src_ob, tgt_ob, candidate_limit, save_dir) 
         
@@ -36,12 +39,22 @@ class BERTClassifierMapping(OntoMapping):
         assert self.strategy == "mean" or self.strategy == "max"
         
         # load fine-tuned BERT in static mode
-        self.bert = BERTStatic(bert_checkpoint=bert_checkpoint, tokenizer_path=tokenizer_path, with_classifier=True)
+        self.bert = BERTStatic(
+            bert_checkpoint=bert_checkpoint,
+            tokenizer_path=tokenizer_path,
+            with_classifier=True
+        )
         self.device = get_device(device_num=device_num)
         self.bert.model.to(self.device)
         
         # alignment pipeline
-        self.tokenize = lambda x: self.bert.tokenizer(x, padding=True, return_tensors="pt")
+        self.tokenize = lambda x: self.bert.tokenizer(
+            x,
+            max_length=max_length,
+            truncation=True,
+            padding=True,
+            return_tensors="pt"
+        )
         self.softmax = torch.nn.Softmax(dim=1).to(self.device)
         self.classifier = lambda x: self.softmax(self.bert.model(**x).logits)[:, 1]
     

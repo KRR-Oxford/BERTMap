@@ -64,7 +64,16 @@ class BERTTrainer:
     def load_dataset(self, data: List, batch_size: int=1024, max_length: int=512) -> Dataset:
         data_df = pd.DataFrame(data, columns=["sent1", "sent2", "labels"])
         dataset = Dataset.from_pandas(data_df)
-        dataset = dataset.map(lambda examples: 
-            self.tokenizer(examples['sent1'], examples['sent2'], max_length=max_length, truncation=True), 
-            batched=True, batch_size=batch_size, num_proc=10)
+        dataset = dataset.map(
+            lambda examples:
+            self.tokenizer(
+                examples['sent1'],
+                examples['sent2'],
+                max_length=max_length,
+                truncation=True
+            ),
+            batched=True,
+            batch_size=batch_size,
+            num_proc=10
+        )
         return dataset

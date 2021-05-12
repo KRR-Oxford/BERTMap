@@ -20,6 +20,7 @@ class BERTEmbedsMapping(OntoMapping):
                  candidate_limit: Optional[int] = 50,
                  save_dir: str="",
                  batch_size: int=32,
+                 max_length: int = 128,
                  nbest: int=1, 
                  bert_checkpoint: str="some checkpoint", 
                  tokenizer_path: str="emilyalsentzer/Bio_ClinicalBERT", 
@@ -35,7 +36,12 @@ class BERTEmbedsMapping(OntoMapping):
         self.strategy = strategy
         assert self.strategy == "mean" or self.strategy == "cls"
         
-        self.bert = BERTStatic(bert_checkpoint=bert_checkpoint, tokenizer_path=tokenizer_path, with_classifier=False)
+        self.bert = BERTStatic(
+            bert_checkpoint=bert_checkpoint,
+            tokenizer_path=tokenizer_path,
+            with_classifier=False,
+            max_length=max_length,
+        )
         self.device = get_device(device_num=device_num)
         self.bert.model.to(self.device)
   
