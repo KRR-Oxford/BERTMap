@@ -72,4 +72,4 @@ Here gives the explanations of the variables used in `config.json` for customize
   - `strategy`: strategy for classifier scoring method, default is `mean`.
   - `eval`: whether or not automatically evaluate the mappings.
 
-Should you need any further customizaions especially on the evaluation part, please comment out the relevant part of code in `run_bertmap.py` and insert your own evaluation function.
+Should you need any further customizaions especially on the evaluation part, please set `eval` to `false` and use your own evaluation function.
