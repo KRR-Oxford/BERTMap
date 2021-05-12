@@ -33,7 +33,7 @@ class OntoBox:
         self,
         onto_file: str,
         onto_iri_abbr: Optional[str] = None,
-        textual_properties: Optional[List[str]]=None,
+        textual_properties: Optional[List[str]] = None,
         tokenizer_path: str = "emilyalsentzer/Bio_ClinicalBERT",
         cut: int = 0,
         from_saved: bool = False,
@@ -45,7 +45,9 @@ class OntoBox:
         self.onto_file = onto_file
         self.onto = get_ontology(f"file://{onto_file}").load()
         if not from_saved:
-            self.onto_text = OntoText(self.onto, iri_abbr=onto_iri_abbr, properties=textual_properties)
+            self.onto_text = OntoText(
+                self.onto, iri_abbr=onto_iri_abbr, properties=textual_properties
+            )
             self.onto_index = OntoInvertedIndex(self.onto_text, tokenizer_path, cut=cut)
         else:
             pass  # construct OntoText and ontoIndex from saved files
@@ -81,7 +83,9 @@ class OntoBox:
             idf = math.log10(D / len(potential_candidates))
             for class_id in potential_candidates:
                 candidate_pool[class_id] += idf  # each candidate class is scored by sum(idf)
-        candidate_pool = list(sorted(candidate_pool.items(), key=lambda item: item[1], reverse=True))[:candidate_limit]
+        candidate_pool = list(
+            sorted(candidate_pool.items(), key=lambda item: item[1], reverse=True)
+        )[:candidate_limit]
         selected_classes = [self.onto_text.idx2class[c[0]] for c in candidate_pool]
         show = min(candidate_limit, 3)
         print(f"select {len(candidate_pool)} candidates, e.g. {selected_classes[:show]}")
@@ -127,8 +131,12 @@ class OntoBox:
         # construct the OntoBox instance
         print(f"found files of correct formats, trying to load ontology data from {save_dir}")
         ontobox = cls(onto_file=f"{save_dir}/{onto_file[0]}", from_saved=True)
-        ontobox.onto_text = OntoText(ontobox.onto, iri_abbr, properties, f"{save_dir}/{classtexts_file[0]}")
-        ontobox.onto_index = OntoInvertedIndex(cut=cut, index_file=f"{save_dir}/{inv_index_file[0]}")
+        ontobox.onto_text = OntoText(
+            ontobox.onto, iri_abbr, properties, f"{save_dir}/{classtexts_file[0]}"
+        )
+        ontobox.onto_index = OntoInvertedIndex(
+            cut=cut, index_file=f"{save_dir}/{inv_index_file[0]}"
+        )
         ontobox.onto_index.set_tokenizer(tokenizer_path)
         return ontobox
 

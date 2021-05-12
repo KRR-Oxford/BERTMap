@@ -29,7 +29,7 @@ class OntoText:
         self,
         onto: Ontology,
         iri_abbr: Optional[str] = None,
-        properties: Optional[List[str]]=None,
+        properties: Optional[List[str]] = None,
         classtexts_file: Optional[str] = "",
     ):
 
@@ -45,7 +45,9 @@ class OntoText:
         if self.iri in self.namespaces.keys():
             self.iri_abbr = self.namespaces[self.iri]
         elif not iri_abbr:
-            print("Please provide the abbreviated IRI of the input ontology as argument {iri_abbr}.")
+            print(
+                "Please provide the abbreviated IRI of the input ontology as argument {iri_abbr}."
+            )
         else:
             self.iri_abbr = iri_abbr
 
@@ -98,7 +100,9 @@ class OntoText:
             for txts in td.values():
                 self.num_texts += len(txts)
 
-    def batch_iterator(self, selected_classes: List[str], batch_size: int) -> Iterable[Dict[str, Dict]]:
+    def batch_iterator(
+        self, selected_classes: List[str], batch_size: int
+    ) -> Iterable[Dict[str, Dict]]:
         """
         Args:
             selected_classes (List[str])

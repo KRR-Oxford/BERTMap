@@ -79,11 +79,15 @@ class OntoEvaluator:
         return 2 * self.P * self.R / (self.P + self.R)
 
     @classmethod
-    def read_mappings(cls, mapping_file: Union[str, DataFrame], threshold: float = 0.0) -> List[str]:
+    def read_mappings(
+        cls, mapping_file: Union[str, DataFrame], threshold: float = 0.0
+    ) -> List[str]:
         """read unique mappings from tsv file or pandas.DataFrame"""
         if type(mapping_file) is DataFrame:
             _df = mapping_file
         else:
             _df = pd.read_csv(mapping_file, sep="\t", na_values=cls.na_vals, keep_default_na=False)
-        mappings = ["\t".join(_df.iloc[i][:-1]) for i in range(len(_df)) if _df.iloc[i][-1] >= threshold]
+        mappings = [
+            "\t".join(_df.iloc[i][:-1]) for i in range(len(_df)) if _df.iloc[i][-1] >= threshold
+        ]
         return uniqify(mappings)

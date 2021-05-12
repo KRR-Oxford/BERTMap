@@ -46,8 +46,7 @@ def size_split(sizes):
 
 
 def batch_split(batch_size, max_num):
-    """Split into equal parts of {batch_size} as well as the tail
-    """
+    """Split into equal parts of {batch_size} as well as the tail"""
 
     if batch_size > max_num:
         print("Fix the batch size to maximum number.")
@@ -68,8 +67,7 @@ def batch_split(batch_size, max_num):
 
 
 def equal_split(num_splits, max_num):
-    """Split into equal {num_splits} part as well as the tail
-    """
+    """Split into equal {num_splits} part as well as the tail"""
     max_range = list(range(max_num))
     interval_range = max_num // num_splits
     splits = []
@@ -82,8 +80,7 @@ def equal_split(num_splits, max_num):
 
 
 def log_print(log_info, log_path: str):
-    """Logging information
-    """
+    """Logging information"""
     print(log_info)
     with open(log_path, "a+") as f:
         f.write(f"{log_info}\n")
