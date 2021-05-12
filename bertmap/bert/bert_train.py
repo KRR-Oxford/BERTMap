@@ -48,7 +48,13 @@ class BERTTrainer:
         self.early_stop = early_stop
         self.early_stop_patience = early_stop_patience
 
-    def train(self, train_args: TrainingArguments):
+    def train(self, train_args: TrainingArguments, resume_from_ckp: bool=False):
+        """initiate huggingface Trainer with input arguments and start training
+
+        Args:
+            train_args: huggingface trainer's arguments
+            resume_from_ckp: whether or not resuming from previous checkpoint
+        """
         self.trainer = Trainer(
             model=self.model,
             args=train_args,
@@ -61,7 +67,7 @@ class BERTTrainer:
             self.trainer.add_callback(
                 EarlyStoppingCallback(early_stopping_patience=self.early_stop_patience)
             )
-        self.trainer.train()
+        self.trainer.train(resume_from_checkpoint=resume_from_ckp)
 
     @staticmethod
     def compute_metrics(pred):
