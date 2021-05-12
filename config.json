@@ -1,19 +1,18 @@
 {
     "data": {
-        "task_dir": "/home/yuahe/projects/BERTMap/fma2snomed.small",
+        "task_dir": "/home/yuahe/projects/BERTMap/fma2nci.whole",
         "src_onto": "fma",
         "tgt_onto": "nci",
-        "task_suffix": "small",
-        "src_onto_file": "/home/yuahe/projects/BERTMap/data/largebio/ontos/fma2snomed.small.owl", 
-        "tgt_onto_file": "/home/yuahe/projects/BERTMap/data/largebio/ontos/snomed2fma.small.owl",
+        "src_onto_file": "/home/yuahe/projects/BERTMap/data/largebio/ontos/fma.whole.owl", 
+        "tgt_onto_file": "/home/yuahe/projects/BERTMap/data/largebio/ontos/nci.whole.owl",
         "properties": ["label"],
         "cut": 0
     },
 
     "corpora":{
         "sample_rate": 10,
-        "src2tgt_mappings_file": "/home/yuahe/projects/BERTMap/data/largebio/refs/fma2snomed.tsv",
-        "ignored_mappings_file": "/home/yuahe/projects/BERTMap/data/largebio/refs/fma2snomed.ignored.tsv",
+        "src2tgt_mappings_file": "/home/yuahe/projects/BERTMap/data/largebio/refs/fma2nci.tsv",
+        "ignored_mappings_file": "/home/yuahe/projects/BERTMap/data/largebio/refs/fma2nci.ignored.tsv",
         "train_map_ratio": 0.2,
         "val_map_ratio": 0.1,
         "test_map_ratio": 0.7,
@@ -31,15 +30,13 @@
 
     "fine-tune": {
         "include_ids": true,
-        "learning": "ss",
-        "batch_size": 32,
-        "early_stop": true,
-        "log_ratio": 100,
-        "eval_ratio": 5
+        "learning": "us",
+        "num_epochs": 3.0,
+        "batch_size": 32
     },
 
     "map": {
-        "candidate_limits": [50],
+        "candidate_limits": [25, 50, 100, 150, 200],
         "batch_size": 32,
         "nbest": 1,
         "string_match": true,

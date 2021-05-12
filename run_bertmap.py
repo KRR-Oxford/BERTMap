@@ -162,7 +162,7 @@ def fine_tune(config):
     training_args = TrainingArguments(
         output_dir=exp_dir,
         # max_steps=eval_steps*4 + 1,
-        num_train_epochs=30,
+        num_train_epochs=fine_tune_params["num_epochs"],
         per_device_train_batch_size=batch_size,
         per_device_eval_batch_size=batch_size,
         warmup_steps=0,
@@ -186,6 +186,7 @@ def fine_tune(config):
         val,
         test,
         training_args,
+        max_length=128,
         early_stop=fine_tune_params["early_stop"],
         early_stop_patience=10,
     )

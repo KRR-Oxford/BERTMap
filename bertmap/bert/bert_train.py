@@ -18,7 +18,8 @@ class BERTTrainer:
                  train_data: List,
                  val_data: List,
                  test_data: List, 
-                 training_args: TrainingArguments, 
+                 training_args: TrainingArguments,
+                 max_length: int=128, 
                  early_stop: bool=True,
                  early_stop_patience: int=5):
         print(f"initialize BERT for Binary Classification from the Pretrained BERT model at: {bert_checkpoint} ...")
@@ -28,9 +29,10 @@ class BERTTrainer:
         self.tokenizer = AutoTokenizer.from_pretrained(bert_checkpoint)
 
         # data
-        self.train = self.load_dataset(train_data)
-        self.val = self.load_dataset(val_data)
-        self.test = self.load_dataset(test_data)
+        self.train = self.load_dataset(train_data, max_length=max_length)
+        self.val = self.load_dataset(val_data, max_length=max_length)
+        self.test = self.load_dataset(test_data, max_length=max_length)
+        print(f"text max length: {max_length}")
         print(f"data files loaded with sizes:\n\t[# Train]: {len(self.train)}, [# Val]: {len(self.val)}, [# Test]: {len(self.test)}")
         
         # trainer
