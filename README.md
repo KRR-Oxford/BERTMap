@@ -64,7 +64,7 @@ Here gives the explanations of the variables used in `config.json` for customize
   - `num_epochs`: number of training epochs, default is `3.0`.
   - `batch_size`: batch size for fine-tuning BERT.
   - `early_stop`: whether or not to apply early stopping (patience has been set to `10`), default is `false`.
-  - `resume_from_training`: whether or not continue fine-tuning from previous checkpoint, default is `false`.
+  - `resume_checkpoint`: path to previous checkpoint if any, default is `null`.
 - `map`
   - `candidate_limits`: list of candidate limits used for mapping computation, suggested values are `[25, 50, 100, 150, 200]`.
   - `batch_size`: batch size used for mapping computation.
