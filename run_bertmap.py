@@ -133,7 +133,7 @@ def fine_tune(config):
     exp_dir = (
         task_dir + f"/fine-tune.exp/{learn}.exp" if not include_ids else task_dir + f"/fine-tune.exp/{learn}.ids.exp"
     )
-    if os.path.exists(exp_dir) and not fine_tune_params["resume_training"]:
+    if os.path.exists(exp_dir) and fine_tune_params["resume_checkpoint"] is None:
         banner(f"skip fine-tuning as checkpoints exist")
         return
 
@@ -183,7 +183,7 @@ def fine_tune(config):
         # greater_is_better=True,
     )
 
-    bert_oa.train(training_args, resume_from_ckp=fine_tune_params["resume_training"])
+    bert_oa.train(training_args, resume_from_ckp=fine_tune_params["resume_checkpoint"])
     # evaluation on test set
     test_results = bert_oa.trainer.evaluate(bert_oa.tst)
     test_results["train-val-test sizes"] = f"{len(bert_oa.tra)}-{len(bert_oa.val)}-{len(bert_oa.tst)}"
