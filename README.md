@@ -15,9 +15,9 @@ The following packages are necessary but not sufficient for running BERTMap:
 Clone the repository and run:
 ```
 # fine-tuning
-python run_bertmap.py -c config.json -m fine-tune 
+python run_bertmap.py -c config.json -m bertmap 
 # baseline
-python run_bertmap.py -c config.json -m baseline
+python run_bertmap.py -c config.json -m bertembeds
 ```
 The script skips data construction once built for the first time to ensure that all of the models 
 share the same set of pre-processed data. 
@@ -26,7 +26,7 @@ The fine-tuning model is implemented with huggingface Trainer, which by default 
 for restricting to GPUs of specified indices, please run (for example):
 ```
 # only device (1) and (2) are visible to the script
-CUDA_VISIBLE_DEVICES=1,2 python run_bertmap.py -c config.json -m fine-tune 
+CUDA_VISIBLE_DEVICES=1,2 python run_bertmap.py -c config.json -m bertmap 
 ```
 
 ### Configurations
@@ -74,4 +74,4 @@ Here gives the explanations of the variables used in `config.json` for customize
 - `eval`: 
   - `automatic`: whether or not automatically evaluate the mappings.
 
-Should you need any further customizaions especially on the evaluation part, please set `eval` to `false` and use your own evaluation script.
+Should you need any further customizaions especially on the evaluation part, please set `eval: automatic` to `false` and use your own evaluation script.
