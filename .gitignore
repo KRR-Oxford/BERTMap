@@ -310,4 +310,5 @@ testing/
 experiment/
 scripts/*
 fma*/
+!configs/*/*
 
