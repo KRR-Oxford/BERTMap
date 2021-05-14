@@ -3,15 +3,16 @@
 from typing import List, Optional, Union
 
 import pandas as pd
-from bertmap.onto import OntoText
+
+import bertmap
 from bertmap.utils import uniqify
 from pandas.core.frame import DataFrame
 
 
 class OntoEvaluator:
 
-    na_vals = pd.io.parsers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
-    namespaces = OntoText.namespaces
+    na_vals = bertmap.na_vals
+    namespaces = bertmap.namespaces
 
     def __init__(
         self,

@@ -41,7 +41,7 @@
 
     "map": {
         "candidate_limits": [25, 50, 100, 150, 200],
-        "batch_size": 32,
+        "batch_size": 24,
         "nbest": 1,
         "string_match": true,
         "strategy": "mean"

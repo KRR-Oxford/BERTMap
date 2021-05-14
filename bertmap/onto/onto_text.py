@@ -6,6 +6,7 @@ from collections import OrderedDict, defaultdict
 from typing import Dict, Iterable, List, Optional
 
 import pandas as pd
+import bertmap
 from bertmap.utils import batch_split, uniqify
 from owlready2.entity import ThingClass
 from owlready2.namespace import Ontology
@@ -15,15 +16,11 @@ from owlready2.prop import IndividualValueList
 class OntoText:
 
     # one can manually add more full iri - abbreviated iri pairs here
-    namespaces = {
-        "http://bioontology.org/projects/ontologies/fma/fmaOwlDlComponent_2_0#": "fma:",
-        "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#": "nci:",
-        "http://www.ihtsdo.org/snomed#": "snomed:",
-    }
+    namespaces = bertmap.namespaces
     inv_namespaces = {v: k for k, v in namespaces.items()}
 
     # exclude mistaken parsing of string "null" to NaN
-    na_vals = pd.io.parsers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
+    na_vals = bertmap.na_vals
 
     def __init__(
         self,
@@ -137,7 +134,15 @@ class OntoText:
 
     def abbr_entity_iri(self, entity_iri: str) -> str:
         """onto_iri#fragment => onto_prefix:fragment"""
-        return entity_iri.replace(self.iri, self.namespaces[self.iri])
+        if self.namespaces[self.iri] is not None:
+            return entity_iri.replace(self.iri, self.namespaces[self.iri])
+        # special case for phenotype 
+        for full_iri in self.namespaces.keys():
+            if full_iri in entity_iri: 
+                self.iri = full_iri
+                return entity_iri.replace(self.iri, self.namespaces[self.iri])
+        # change nothing if no abbreviation available
+        return entity_iri
 
     def expand_entity_iri(self, entity_iri_abbr: str) -> str:
         """onto_iri#fragment <= onto_prefix:fragment"""
