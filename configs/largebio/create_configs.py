@@ -58,5 +58,6 @@ for src, tgt in [("fma", "nci"), ("fma", "snomed"), ("snomed", "nci")]:
             config_file = (
                 exp_dir + f"/{learn}.ids.config.json" if ids else exp_dir + f"/{learn}.config.json"
             )
+            config["map"]["batch_size"] = 16
             with open(config_file, "w") as c:
                 json.dump(config, c, indent=4, separators=(",", ": "))
