@@ -81,7 +81,7 @@ class OntoText:
             for prop in synonym_properites:
                 # regard every synonym texts as labels
                 self.texts[cl_iri_abbr]["label"] += self.preprocess_classtexts(cl, prop)
-                self.num_texts += len(self.texts[cl_iri_abbr][prop])
+                self.num_texts += len(self.texts[cl_iri_abbr]["label"])
 
     def save_classtexts(self, classtexts_file: str) -> None:
         # do not sort keys otherwise class2idx and idx2class will be mis-used later

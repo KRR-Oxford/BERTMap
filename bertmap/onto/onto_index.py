@@ -30,7 +30,7 @@ class OntoInvertedIndex:
         else:
             self.ontotext = ontotext
             self.set_tokenizer(tokenizer_path)
-            self.construct_index(cut, *self.ontotext.synonym_properties)
+            self.construct_index(cut)
 
     def __repr__(self):
         return f"<OntoInvertedIndex num_entries={len(self.index)} cut={self.cut} tokenizer_path={self.tokenizer_path}>"
@@ -46,7 +46,7 @@ class OntoInvertedIndex:
     def tokenize(self, texts) -> Iterator:
         return chain.from_iterable([self.tokenizer.tokenize(text) for text in texts])
 
-    def construct_index(self, cut: int, *properties: str) -> None:
+    def construct_index(self, cut: int) -> None:
         """Create Inverted Index with sub-word tokens
 
         Args:
@@ -54,13 +54,10 @@ class OntoInvertedIndex:
         """
         self.index = defaultdict(list)
         for cls_iri, text_dict in self.ontotext.texts.items():
-            for prop, texts in text_dict.items():
-                if not prop in properties:
-                    continue
-                tokens = self.tokenize(texts)
-                for tk in tokens:
-                    if len(tk) > cut:
-                        self.index[tk].append(self.ontotext.class2idx[cls_iri])
+            tokens = self.tokenize(text_dict["label"])
+            for tk in tokens:
+                if len(tk) > cut:
+                    self.index[tk].append(self.ontotext.class2idx[cls_iri])
 
     def save_index(self, index_file: str) -> None:
         with open(index_file, "w") as f:
