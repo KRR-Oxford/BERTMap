@@ -33,20 +33,20 @@ class OntoBox:
         self,
         onto_file: str,
         onto_iri_abbr: Optional[str] = None,
-        textual_properties: Optional[List[str]] = None,
+        synonym_properties: Optional[List[str]] = None,
         tokenizer_path: str = "emilyalsentzer/Bio_ClinicalBERT",
         cut: int = 0,
         from_saved: bool = False,
     ):
 
         # load owlready2 ontology and assign attributes
-        if textual_properties is None:
-            textual_properties = ["label"]
+        if synonym_properties is None:
+            synonym_properties = ["label"]
         self.onto_file = onto_file
         self.onto = get_ontology(f"file://{onto_file}").load()
         if not from_saved:
             self.onto_text = OntoText(
-                self.onto, iri_abbr=onto_iri_abbr, properties=textual_properties
+                self.onto, iri_abbr=onto_iri_abbr, synonym_properties=synonym_properties
             )
             self.onto_index = OntoInvertedIndex(self.onto_text, tokenizer_path, cut=cut)
         else:

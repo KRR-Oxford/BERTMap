@@ -26,17 +26,17 @@ class OntoText:
         self,
         onto: Ontology,
         iri_abbr: Optional[str] = None,
-        properties: Optional[List[str]] = None,
+        synonym_properties: Optional[List[str]] = None,
         classtexts_file: Optional[str] = "",
     ):
 
         # load owlready2 ontology and assign attributes
-        if properties is None:
-            properties = ["label"]
+        if synonym_properties is None:
+            synonym_properties = ["label"]
         self.onto = onto
         self.name = self.onto.name
         self.iri = self.onto.base_iri
-        self.properties = properties
+        self.synonym_properties = synonym_properties
 
         # get the abbreviated iri for clearer presentation later on
         if self.iri in self.namespaces.keys():
@@ -52,7 +52,7 @@ class OntoText:
         self.num_texts = 0
         self.texts = defaultdict(lambda: defaultdict(list))
         if not classtexts_file:
-            self.extract_classtexts(*self.properties)
+            self.extract_classtexts(*self.synonym_properties)
         else:
             self.load_classtexts(classtexts_file)
 
@@ -67,20 +67,20 @@ class OntoText:
 
     def __repr__(self):
         iri_abbr = self.iri_abbr.replace(":", "")
-        return f"<OntoText abbr='{iri_abbr}' num_classes={len(self.class2idx)} num_texts={self.num_texts} prop={self.properties}>"
+        return f"<OntoText abbr='{iri_abbr}' num_classes={len(self.class2idx)} num_texts={self.num_texts} prop={self.synonym_properties}>"
 
-    def extract_classtexts(self, *properties) -> None:
+    def extract_classtexts(self, *synonym_properites) -> None:
         """Construct dict(class-iri -> dict(property -> class-text))"""
         self.num_texts = 0
         self.texts = defaultdict(lambda: defaultdict(list))
         # default lexicon information is the "labels"
-        if not properties:
-            properties = ["label"]
+        if not synonym_properites:
+            synonym_properites = ["label"]
         for cl in self.onto.classes():
             cl_iri_abbr = self.abbr_entity_iri(cl.iri)
-            for prop in properties:
-                # lowercase and remove underscores "_"
-                self.texts[cl_iri_abbr][prop] = self.preprocess_classtexts(cl, prop)
+            for prop in synonym_properites:
+                # regard every synonym texts as labels
+                self.texts[cl_iri_abbr]["label"] += self.preprocess_classtexts(cl, prop)
                 self.num_texts += len(self.texts[cl_iri_abbr][prop])
 
     def save_classtexts(self, classtexts_file: str) -> None:
@@ -134,7 +134,7 @@ class OntoText:
 
     def abbr_entity_iri(self, entity_iri: str) -> str:
         """onto_iri#fragment => onto_prefix:fragment"""
-        if self.namespaces[self.iri] is not None:
+        if self.namespaces[self.iri] != "":
             return entity_iri.replace(self.iri, self.namespaces[self.iri])
         # special case for phenotype 
         for full_iri in self.namespaces.keys():

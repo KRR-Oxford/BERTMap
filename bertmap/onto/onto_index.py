@@ -30,7 +30,7 @@ class OntoInvertedIndex:
         else:
             self.ontotext = ontotext
             self.set_tokenizer(tokenizer_path)
-            self.construct_index(cut, *self.ontotext.properties)
+            self.construct_index(cut, *self.ontotext.synonym_properties)
 
     def __repr__(self):
         return f"<OntoInvertedIndex num_entries={len(self.index)} cut={self.cut} tokenizer_path={self.tokenizer_path}>"

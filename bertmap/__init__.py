@@ -7,7 +7,7 @@ na_vals = pd.io.parsers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
 
 main_dir = __file__.replace("__init__.py", "")
 
-namespaces = defaultdict(Optional[str])
+namespaces = defaultdict(str)
 
 # largebio
 namespaces["http://bioontology.org/projects/ontologies/fma/fmaOwlDlComponent_2_0#"] = "fma:"
