@@ -129,7 +129,9 @@ class BERTClassifierMapping(OntoMapping):
                 for k in model_inputs_dict.keys():
                     model_inputs_dict[k] = model_inputs_dict[k].to(self.device)
                 batch_scores = self.classifier(model_inputs_dict)
+                print(f"shape of batch scores: {batch_scores.shape}")
                 pooled_batch_scores = self.batch_pooling(batch_scores, batch_lens)
+                print(f"shape of batch scores: {pooled_batch_scores.shape}")
                 # K should be nbest, except when the pooled batch scores do not contain K values
                 K = (
                     len(pooled_batch_scores)

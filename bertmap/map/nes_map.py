@@ -53,6 +53,7 @@ class NormEditSimMapping(OntoMapping):
             self.log_print(
                 f"[Time: {round(time.time() - self.start_time)}][{print_flag}][Class-idx: {from_class_idx}] No candidates available for for current entity ..."
             )
+            return
 
         max_sim_score = 0
         max_sim_class = ""
