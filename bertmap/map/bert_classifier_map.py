@@ -102,6 +102,16 @@ class BERTClassifierMapping(OntoMapping):
             # prepare a batch of label pairs for a given from-onto class
             for to_class_iri, text_dict in to_batch.items():
                 to_labels = text_dict["label"]
+                # for each to-class, combine its labels with the from-class's labels such that
+                # [[from_label_1, to_label_1],
+                #  [from_label_2, to_label_1],
+                #  [from_label_1, to_label_2],
+                #  [from_label_2, to_label_2], ...]
+                # the size of this label pair chunk is len(from_labels) * len(to_labels)
+                # we feed it as input to fine-tuned classifier and take the mean of classification scores
+                # as the synonym score between from-class and to-class
+                # note: the current drawback is we do not ensure consistent batch because each class might
+                # possess various numbers of labels
                 label_pairs = [
                     [from_label, to_label] for to_label in to_labels for from_label in from_labels
                 ]
@@ -120,6 +130,7 @@ class BERTClassifierMapping(OntoMapping):
                     model_inputs_dict[k] = model_inputs_dict[k].to(self.device)
                 batch_scores = self.classifier(model_inputs_dict)
                 pooled_batch_scores = self.batch_pooling(batch_scores, batch_lens)
+                # K should be nbest, except when the pooled batch scores do not contain K values
                 K = (
                     len(pooled_batch_scores)
                     if len(pooled_batch_scores) < self.nbest

@@ -5,7 +5,6 @@ import json
 from collections import OrderedDict, defaultdict
 from typing import Dict, Iterable, List, Optional
 
-import pandas as pd
 import bertmap
 from bertmap.utils import batch_split, uniqify
 from owlready2.entity import ThingClass
@@ -69,16 +68,16 @@ class OntoText:
         iri_abbr = self.iri_abbr.replace(":", "")
         return f"<OntoText abbr='{iri_abbr}' num_classes={len(self.class2idx)} num_texts={self.num_texts} prop={self.synonym_properties}>"
 
-    def extract_classtexts(self, *synonym_properites) -> None:
+    def extract_classtexts(self, *synonym_properties) -> None:
         """Construct dict(class-iri -> dict(property -> class-text))"""
         self.num_texts = 0
         self.texts = defaultdict(lambda: defaultdict(list))
         # default lexicon information is the "labels"
-        if not synonym_properites:
-            synonym_properites = ["label"]
+        if not synonym_properties:
+            synonym_properties = ["label"]
         for cl in self.onto.classes():
             cl_iri_abbr = self.abbr_entity_iri(cl.iri)
-            for prop in synonym_properites:
+            for prop in synonym_properties:
                 # regard every synonym texts as labels
                 self.texts[cl_iri_abbr]["label"] += self.preprocess_classtexts(cl, prop)
                 self.num_texts += len(self.texts[cl_iri_abbr]["label"])
