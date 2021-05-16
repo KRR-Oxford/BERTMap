@@ -232,7 +232,7 @@ def compute_fine_tune_maps(config):
                 f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", sep="\t", index=False
             )
             banner(f"evaluate mappings for candidate limit {candidate_limit}")
-            time.sleep(120)
+            time.sleep(10)
             torch.cuda.empty_cache()
         if config["eval"]["automatic"]:
             eval_maps(config=config, candidate_limit=candidate_limit)
@@ -284,7 +284,7 @@ def compute_embeds_maps(config):
                 )
                 banner(f"evaluate mappings for candidate limit {candidate_limit}")
                 banner(f"evaluate mappings for candidate limit {candidate_limit}")
-                time.sleep(120)
+                time.sleep(10)
                 torch.cuda.empty_cache()
             if config["eval"]["automatic"]:
                 eval_maps(config=config, candidate_limit=candidate_limit)
@@ -363,7 +363,7 @@ def compute_nes_maps(config):
                 f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv", sep="\t", index=False
             )
             banner(f"evaluate mappings for candidate limit {candidate_limit}")
-            # time.sleep(120)
+            time.sleep(10)
         if config["eval"]["automatic"]:
             eval_maps(config=config, candidate_limit=candidate_limit)
         # eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
