@@ -106,6 +106,8 @@ class OntoMapping:
             evaluator.F1,
         ]
         result_df = result_df.round({"Precision": 3, "Recall": 3, "F1": 3})
+        if evaluator.id_maps:
+            print(f"{len(evaluator.id_maps)} mappings ignored are identity mappings (same entity iris on both sides).")
         return result_df
 
     @staticmethod
