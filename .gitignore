@@ -312,3 +312,7 @@ scripts/*
 fma*/
 !configs/*/*
 
+# google-drive
+.driveignore
+.gd
+
