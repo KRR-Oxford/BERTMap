@@ -90,7 +90,8 @@ class BERTEmbedsMapping(OntoMapping):
         # here batch size refers to maximum number of to-labels in a batch
         to_label_size = max(self.batch_size // len(from_labels), self.nbest + 1)
         to_labels_iterator = to_ob.onto_text.labels_iterator(search_space, to_label_size)
-        j = 0
+        
+        searched_class_num = 0
         batch_nbest_scores = torch.tensor([-1] * self.nbest).to(self.device)
         batch_nbest_idxs = torch.tensor([-1] * self.nbest).to(self.device)
         from_text_dict = from_ob.onto_text.texts[from_class_iri]
@@ -126,13 +127,13 @@ class BERTEmbedsMapping(OntoMapping):
             )
             K = len(sim_scores) if len(sim_scores) < self.nbest else self.nbest
             nbest_scores, nbest_idxs = torch.topk(sim_scores, k=K)
-            nbest_idxs += j * len(to_batch)
+            nbest_idxs += searched_class_num
             # we do the substitution for every batch to prevent from memory overflow
             batch_nbest_scores, temp_idxs = torch.topk(
                 torch.cat([batch_nbest_scores, nbest_scores]), k=self.nbest
             )
             batch_nbest_idxs = torch.cat([batch_nbest_idxs, nbest_idxs])[temp_idxs]
-            j += 1
+            searched_class_num += len(to_batch)
 
         batch_nbest_class_iris = [search_space[idx] for idx in batch_nbest_idxs]
         return list(zip(batch_nbest_class_iris, batch_nbest_scores.cpu().detach().numpy()))
