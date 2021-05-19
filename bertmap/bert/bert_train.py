@@ -85,6 +85,6 @@ class BERTTrainer:
             ),
             batched=True,
             batch_size=batch_size,
-            num_proc=10,
+            num_proc=6,
         )
         return dataset
