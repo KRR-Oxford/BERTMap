@@ -93,7 +93,6 @@ class BERTClassifierMapping(OntoMapping):
         # here batch size refers to maximum number of to-labels in a batch
         to_label_size = max(self.batch_size // len(from_labels), self.nbest + 1) 
         to_labels_iterator = to_ob.onto_text.labels_iterator(search_space, to_label_size)
-        j = 0
         
         searched_class_num = 0
         batch_nbest_scores = torch.tensor([-1] * self.nbest).to(self.device)
@@ -151,7 +150,6 @@ class BERTClassifierMapping(OntoMapping):
                 batch_nbest_idxs = torch.cat([batch_nbest_idxs, nbest_idxs])[temp_idxs]
                 # print(f"batch_nbest: {batch_nbest_idxs}")
                 searched_class_num += len(to_batch)
-                j += 1
         batch_nbest_class_iris = [search_space[idx] for idx in batch_nbest_idxs]
         return list(zip(batch_nbest_class_iris, batch_nbest_scores.cpu().detach().numpy()))
 
