@@ -41,11 +41,11 @@
         "candidate_limits": [
             200,
             50,
+            150,
             100,
-            25,
-            150
+            25
         ],
-        "batch_size": 16,
+        "batch_size": 28,
         "nbest": 1,
         "string_match": true,
         "strategy": "mean"

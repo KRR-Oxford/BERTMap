@@ -39,13 +39,13 @@
     },
     "map": {
         "candidate_limits": [
-            25,
+            200,
             50,
-            100,
             150,
-            200
+            100,
+            25
         ],
-        "batch_size": 4,
+        "batch_size": 28,
         "nbest": 1,
         "string_match": true,
         "strategy": "mean"
