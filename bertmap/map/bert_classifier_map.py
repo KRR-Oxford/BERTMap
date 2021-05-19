@@ -94,7 +94,8 @@ class BERTClassifierMapping(OntoMapping):
         to_label_size = max(self.batch_size // len(from_labels), self.nbest + 1) 
         to_labels_iterator = to_ob.onto_text.labels_iterator(search_space, to_label_size)
         j = 0
-
+        
+        searched_class_num = 0
         batch_nbest_scores = torch.tensor([-1] * self.nbest).to(self.device)
         batch_nbest_idxs = torch.tensor([-1] * self.nbest).to(self.device)
         for to_batch in to_labels_iterator:
@@ -131,9 +132,9 @@ class BERTClassifierMapping(OntoMapping):
                 for k in model_inputs_dict.keys():
                     model_inputs_dict[k] = model_inputs_dict[k].to(self.device)
                 batch_scores = self.classifier(model_inputs_dict)  # torch.Size([num_batch_label_pairs]), singleton
-                print(f"shape of batch scores: {batch_scores.shape}")
+                # print(f"shape of batch scores: {batch_scores.shape}")
                 pooled_batch_scores = self.batch_pooling(batch_scores, batch_lens)  # torch.Size([to_batch_size]), singleton
-                print(f"shape of batch scores: {pooled_batch_scores.shape}")
+                # print(f"shape of batch scores: {pooled_batch_scores.shape}")
                 # K should be nbest, except when the pooled batch scores do not contain K values
                 K = (
                     len(pooled_batch_scores)
@@ -142,13 +143,14 @@ class BERTClassifierMapping(OntoMapping):
                 )
                 assert len(pooled_batch_scores) == len(to_batch)
                 nbest_scores, nbest_idxs = torch.topk(pooled_batch_scores, k=K)
-                nbest_idxs += j * len(to_batch)
+                nbest_idxs += searched_class_num
                 # we do the substitution for every batch to prevent from memory overflow
                 batch_nbest_scores, temp_idxs = torch.topk(
                     torch.cat([batch_nbest_scores, nbest_scores]), k=self.nbest
                 )
                 batch_nbest_idxs = torch.cat([batch_nbest_idxs, nbest_idxs])[temp_idxs]
                 print(f"batch_nbest: {batch_nbest_idxs}")
+                searched_class_num += len(to_batch)
                 j += 1
         batch_nbest_class_iris = [search_space[idx] for idx in batch_nbest_idxs]
         return list(zip(batch_nbest_class_iris, batch_nbest_scores.cpu().detach().numpy()))
