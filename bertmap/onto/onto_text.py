@@ -115,14 +115,18 @@ class OntoText:
         batch = OrderedDict()
         label_num = 0
         total_class_num = 0
-        for cl in selected_classes:
+        class_num = 0
+        for i in range(len(selected_classes)):
+            cl = selected_classes[i]
             text_dict = deepcopy(self.texts[cl])
             batch[cl] = text_dict
-            total_class_num += 1
+            class_num += 1
             label_num += len(text_dict["label"])
-            if label_num >= label_size:
+            if label_num >= label_size or (i == len(selected_classes) - 1):
                 batches.append(deepcopy(batch))
                 batch = OrderedDict()
+                total_class_num += class_num
+                class_num = 0
                 label_num = 0
         assert total_class_num == len(selected_classes)
         return batches
