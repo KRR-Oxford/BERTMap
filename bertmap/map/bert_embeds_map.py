@@ -87,8 +87,9 @@ class BERTEmbedsMapping(OntoMapping):
     ):
 
         from_ob, to_ob = self.from_to_config(flag=flag)
-        to_batch_size = max(self.batch_size // len(from_labels), self.nbest + 1)
-        to_texts_iterator = to_ob.onto_text.batch_iterator(search_space, to_batch_size)
+        # here batch size refers to maximum number of to-labels in a batch
+        to_label_size = max(self.batch_size // len(from_labels), self.nbest + 1)
+        to_labels_iterator = to_ob.onto_text.labels_iterator(search_space, to_label_size)
         j = 0
         batch_nbest_scores = torch.tensor([-1] * self.nbest).to(self.device)
         batch_nbest_idxs = torch.tensor([-1] * self.nbest).to(self.device)
@@ -97,7 +98,7 @@ class BERTEmbedsMapping(OntoMapping):
             {from_class_iri: from_text_dict}, strategy=self.strategy
         )
 
-        for to_batch in to_texts_iterator:
+        for to_batch in to_labels_iterator:
             batch_label_pairs = []
             batch_lens = []
             # prepare a batch of label pairs for a given from-onto class

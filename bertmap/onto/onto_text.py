@@ -10,6 +10,7 @@ from bertmap.utils import batch_split, uniqify
 from owlready2.entity import ThingClass
 from owlready2.namespace import Ontology
 from owlready2.prop import IndividualValueList
+from copy import deepcopy
 
 
 class OntoText:
@@ -96,23 +97,35 @@ class OntoText:
             for txts in td.values():
                 self.num_texts += len(txts)
 
-    def batch_iterator(
-        self, selected_classes: List[str], batch_size: int
+    def labels_iterator(
+        self, selected_classes: List[str], label_size: int
     ) -> Iterable[Dict[str, Dict]]:
         """
         Args:
             selected_classes (List[str])
-            batch_size (int)
+            label_size (int): the number for stopping adding more classes into batch,
+            once the number of labels in this batch exceeds this number for the first time,
+            it will be added to the batch list
 
         Yields:
-            dict: dictionary that stores a batch of (class-iri, class-text) pairs.
+            dict: dictionary that stores a batch of (class-iri, class-text) pairs
+            according to specified label size (so number of classes in the batch varies).
         """
-        idx_splits = batch_split(batch_size, max_num=len(selected_classes))
-        for idxs in idx_splits:
-            batch = OrderedDict()
-            for i in idxs:
-                batch[selected_classes[i]] = self.texts[selected_classes[i]]
-            yield batch
+        batches = []
+        batch = OrderedDict()
+        label_num = 0
+        total_class_num = 0
+        for cl in selected_classes:
+            text_dict = deepcopy(self.texts[cl])
+            batch[cl] = text_dict
+            total_class_num += 1
+            label_num += len(text_dict["label"])
+            if label_num >= label_size:
+                batches.append(deepcopy(batch))
+                batch = OrderedDict()
+                label_num = 0
+        assert total_class_num == len(selected_classes)
+        return batches
 
     @staticmethod
     def preprocess_classtexts(cl: ThingClass, prop: str) -> List[str]:
