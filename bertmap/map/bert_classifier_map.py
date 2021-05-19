@@ -131,16 +131,16 @@ class BERTClassifierMapping(OntoMapping):
                 for k in model_inputs_dict.keys():
                     model_inputs_dict[k] = model_inputs_dict[k].to(self.device)
                 batch_scores = self.classifier(model_inputs_dict)  # torch.Size([num_batch_label_pairs]), singleton
-                # print(f"shape of batch scores: {batch_scores.shape}")
+                print(f"shape of batch scores: {batch_scores.shape}")
                 pooled_batch_scores = self.batch_pooling(batch_scores, batch_lens)  # torch.Size([to_batch_size]), singleton
-                # print(f"shape of batch scores: {pooled_batch_scores.shape}")
+                print(f"shape of batch scores: {pooled_batch_scores.shape}")
                 # K should be nbest, except when the pooled batch scores do not contain K values
                 K = (
                     len(pooled_batch_scores)
                     if len(pooled_batch_scores) < self.nbest
                     else self.nbest
                 )
-                print(f"K: {K}")
+                assert len(pooled_batch_scores) == len(to_batch)
                 nbest_scores, nbest_idxs = torch.topk(pooled_batch_scores, k=K)
                 nbest_idxs += j * len(to_batch)
                 # we do the substitution for every batch to prevent from memory overflow
