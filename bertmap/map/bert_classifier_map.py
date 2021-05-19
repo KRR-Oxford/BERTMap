@@ -147,7 +147,7 @@ class BERTClassifierMapping(OntoMapping):
                     torch.cat([batch_nbest_scores, nbest_scores]), k=self.nbest
                 )
                 batch_nbest_idxs = torch.cat([batch_nbest_idxs, nbest_idxs])[temp_idxs]
-                print(f"current nbest idx: {batch_nbest_idxs}")
+                # print(f"current nbest idx: {batch_nbest_idxs}")
                 searched_class_num += len(to_batch)
         batch_nbest_class_iris = [search_space[idx] for idx in batch_nbest_idxs]
         return list(zip(batch_nbest_class_iris, batch_nbest_scores.cpu().detach().numpy()))
