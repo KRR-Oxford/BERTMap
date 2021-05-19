@@ -124,6 +124,7 @@ class BERTClassifierMapping(OntoMapping):
                 batch_label_pairs += label_pairs
                 batch_lens.append(len(to_labels) * len(from_labels))
             # compute the classification scores
+            print(len(batch_label_pairs), batch_lens)
             with torch.no_grad():
                 model_inputs_dict = self.tokenize(batch_label_pairs)
                 # assign everything to the current device
@@ -139,6 +140,7 @@ class BERTClassifierMapping(OntoMapping):
                     if len(pooled_batch_scores) < self.nbest
                     else self.nbest
                 )
+                print(f"K: {K}")
                 nbest_scores, nbest_idxs = torch.topk(pooled_batch_scores, k=K)
                 nbest_idxs += j * len(to_batch)
                 # we do the substitution for every batch to prevent from memory overflow
@@ -146,6 +148,7 @@ class BERTClassifierMapping(OntoMapping):
                     torch.cat([batch_nbest_scores, nbest_scores]), k=self.nbest
                 )
                 batch_nbest_idxs = torch.cat([batch_nbest_idxs, nbest_idxs])[temp_idxs]
+                print(f"batch_nbest: {batch_nbest_idxs}")
                 j += 1
         batch_nbest_class_iris = [search_space[idx] for idx in batch_nbest_idxs]
         return list(zip(batch_nbest_class_iris, batch_nbest_scores.cpu().detach().numpy()))
