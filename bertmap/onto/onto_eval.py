@@ -34,6 +34,7 @@ class OntoEvaluator:
 
         # compute Precision, Recall and Macro-F1
         self.num_ignored = 0
+        self.id_maps = []  # mapping of same iris should be ignored
         self.P = self.precision()
         self.R = self.recall()
         try:
@@ -50,7 +51,13 @@ class OntoEvaluator:
         tp = 0  # true positive
         fp = 0  # false positive
         self.num_ignored = 0
+        self.id_maps = []
         for p_map in self.pre:
+            # mapping of same iris should be ignored
+            if p_map.split("\t")[0] == p_map.split("\t")[1]:
+                self.id_maps.append(p_map)
+                self.num_ignored += 1
+                continue
             # ignore the "?" mappings where available
             if self.ref_ignored and p_map in self.ref_ignored:
                 self.num_ignored += 1
