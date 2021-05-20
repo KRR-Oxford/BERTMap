@@ -6,7 +6,7 @@ from collections import OrderedDict, defaultdict
 from typing import Dict, Iterable, List, Optional
 
 import bertmap
-from bertmap.utils import batch_split, uniqify
+from bertmap.utils import uniqify, banner
 from owlready2.entity import ThingClass
 from owlready2.namespace import Ontology
 from owlready2.prop import IndividualValueList
@@ -139,6 +139,7 @@ class OntoText:
         assert total_class_num == len(selected_classes)
         batch_lens = [len(b) for b in batches]
         assert sum(batch_lens) == len(selected_classes)
+        banner(f"form {len(batch_lens)} batches")
         return batches
 
     @staticmethod
