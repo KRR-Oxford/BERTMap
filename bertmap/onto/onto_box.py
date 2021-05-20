@@ -24,6 +24,7 @@ from shutil import copy2
 from typing import List, Optional
 
 from bertmap.onto import OntoInvertedIndex, OntoText
+from bertmap.utils import banner
 from owlready2 import get_ontology
 from owlready2.entity import ThingClass
 
@@ -87,8 +88,9 @@ class OntoBox:
             sorted(candidate_pool.items(), key=lambda item: item[1], reverse=True)
         )[:candidate_limit]
         selected_classes = [self.onto_text.idx2class[c[0]] for c in candidate_pool]
-        show = min(candidate_limit, 3)
-        print(f"select {len(candidate_pool)} candidates, e.g. {selected_classes[:show]}")
+        show = min(candidate_limit, 2)
+        banner(f"select {len(candidate_pool)} candidates", sym="^")
+        print(f"e.g. {selected_classes[:show]}")
         return selected_classes
 
     def save(self, save_dir) -> None:
