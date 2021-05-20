@@ -119,16 +119,26 @@ class OntoText:
         for i in range(len(selected_classes)):
             cl = selected_classes[i]
             text_dict = deepcopy(self.texts[cl])
-            batch[cl] = text_dict
-            class_num += 1
-            label_num += len(text_dict["label"])
-            if label_num >= label_size or (i == len(selected_classes) - 1):
+            # finish a batch when there is something in the batch AND
+            # addining the next class'sl labels will exceed size limit
+            to_be_full = label_num + len(text_dict["label"]) >= label_size
+            if batch and to_be_full:
                 batches.append(deepcopy(batch))
                 batch = OrderedDict()
                 total_class_num += class_num
                 class_num = 0
                 label_num = 0
+            batch[cl] = text_dict  # adding the labels into batch
+            class_num += 1
+            label_num += len(text_dict["label"])
+            # don't forget the last class
+            if i == len(selected_classes) - 1:
+                batches.append(deepcopy(batch))
+                total_class_num += class_num
+        # simple test to secure the algorithm is right
         assert total_class_num == len(selected_classes)
+        batch_lens = [len(b) for b in batches]
+        assert sum(batch_lens) == len(selected_classes)
         return batches
 
     @staticmethod
@@ -152,9 +162,9 @@ class OntoText:
         """onto_iri#fragment => onto_prefix:fragment"""
         if self.namespaces[self.iri] != "":
             return entity_iri.replace(self.iri, self.namespaces[self.iri])
-        # special case for phenotype 
+        # special case for phenotype
         for full_iri in self.namespaces.keys():
-            if full_iri in entity_iri: 
+            if full_iri in entity_iri:
                 self.iri = full_iri
                 return entity_iri.replace(self.iri, self.namespaces[self.iri])
         # change nothing if no abbreviation available
