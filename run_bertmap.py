@@ -461,7 +461,7 @@ def eval_maps(config, candidate_limit: int, semi_supervised=False):
 
 if __name__ == "__main__":
 
-    set_seed(8888)
+    set_seed(888)
 
     # parse configuration file and specify mode
     parser = argparse.ArgumentParser(description="run bertmap system")
