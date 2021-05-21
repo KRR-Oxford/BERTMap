@@ -45,7 +45,7 @@
             100,
             25
         ],
-        "batch_size": 24,
+        "batch_size": 36,
         "nbest": 1,
         "string_match": true,
         "strategy": "mean"
