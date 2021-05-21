@@ -35,7 +35,7 @@
         "num_epochs": 3.0,
         "batch_size": 32,
         "early_stop": false,
-        "resume_checkpoint": true
+        "resume_checkpoint": null
     },
     "map": {
         "candidate_limits": [
