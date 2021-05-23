@@ -13,6 +13,7 @@ namespaces = defaultdict(str)
 namespaces["http://bioontology.org/projects/ontologies/fma/fmaOwlDlComponent_2_0#"] = "fma:"
 namespaces["http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#"] = "nci:"
 namespaces["http://www.ihtsdo.org/snomed#"] = "snomed:"
+# namespaces["http://snomed.info/id/"] = "snomed+:"  # most recent version of SNOMED (accessed on May 2021)
 
 # phenotype
 namespaces["http://purl.obolibrary.org/obo/"] = "obo:"

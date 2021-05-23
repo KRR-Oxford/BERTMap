@@ -73,15 +73,16 @@ class OntoText:
         """Construct dict(class-iri -> dict(property -> class-text))"""
         self.num_texts = 0
         self.texts = defaultdict(lambda: defaultdict(list))
-        # default lexicon information is the "labels"
+        # default synonym property is rdf:label, i.e. class.label
         if not synonym_properties:
             synonym_properties = ["label"]
         for cl in self.onto.classes():
             cl_iri_abbr = self.abbr_entity_iri(cl.iri)
             for prop in synonym_properties:
-                # regard every synonym texts as labels
+                # regard every synonym text as a label
                 self.texts[cl_iri_abbr]["label"] += self.preprocess_classtexts(cl, prop)
-                self.num_texts += len(self.texts[cl_iri_abbr]["label"])
+            self.texts[cl_iri_abbr]["label"] = uniqify(self.texts[cl_iri_abbr]["label"])
+            self.num_texts += len(self.texts[cl_iri_abbr]["label"])
 
     def save_classtexts(self, classtexts_file: str) -> None:
         # do not sort keys otherwise class2idx and idx2class will be mis-used later
