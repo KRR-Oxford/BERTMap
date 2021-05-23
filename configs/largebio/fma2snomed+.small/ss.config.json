@@ -3,7 +3,7 @@
         "task_dir": "/home/cjy/BERTMap/fma2snomed+.small",
         "src_onto": "fma",
         "tgt_onto": "snomed+",
-        "src_onto_file": "/home/cjy/BERTMap/data/largebio/ontos/fma2snomed+.small.owl",
+        "src_onto_file": "/home/cjy/BERTMap/data/largebio/ontos/fma2snomed.small.owl",
         "tgt_onto_file": "/home/cjy/BERTMap/data/largebio/ontos/snomed+2fma.small.owl",
         "properties": [
             "label"

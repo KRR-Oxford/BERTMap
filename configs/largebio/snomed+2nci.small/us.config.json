@@ -4,7 +4,7 @@
         "src_onto": "snomed+",
         "tgt_onto": "nci",
         "src_onto_file": "/home/cjy/BERTMap/data/largebio/ontos/snomed+2nci.small.owl",
-        "tgt_onto_file": "/home/cjy/BERTMap/data/largebio/ontos/nci2snomed+.small.owl",
+        "tgt_onto_file": "/home/cjy/BERTMap/data/largebio/ontos/nci2snomed.small.owl",
         "properties": [
             "label"
         ],
