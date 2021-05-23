@@ -8,7 +8,13 @@ cur_dir = "/home/yuahe/projects/BERTMap"
 with open(f"{cur_dir}/config.json", "r") as f:
     config = json.load(f)
 
-for src, tgt in [("fma", "nci"), ("fma", "snomed"), ("snomed", "nci")]:
+for src, tgt in [
+    ("fma", "nci"),
+    ("fma", "snomed"),
+    ("snomed", "nci"),
+    ("fma", "snomed+"),
+    ("snomed+", "nci"),
+]:
     for learn in ["us", "ss"]:
         for ids in [True, False]:
             exp_dir = f"{cur_dir}/configs/largebio/{src}2{tgt}.small"
@@ -22,11 +28,13 @@ for src, tgt in [("fma", "nci"), ("fma", "snomed"), ("snomed", "nci")]:
             config["data"]["tgt_onto_file"] = (
                 server_dir + f"/data/largebio/ontos/{tgt}2{src}.small.owl"
             )
+            src_ori = src.replace("+", "")
+            tgt_ori = tgt.replace("+", "")
             config["corpora"]["src2tgt_mappings_file"] = (
-                server_dir + f"/data/largebio/refs/{src}2{tgt}.tsv"
+                server_dir + f"/data/largebio/refs/{src_ori}2{tgt_ori}.tsv"
             )
             config["corpora"]["ignored_mappings_file"] = (
-                server_dir + f"/data/largebio/refs/{src}2{tgt}.ignored.tsv"
+                server_dir + f"/data/largebio/refs/{src_ori}2{tgt_ori}.ignored.tsv"
             )
             config["fine-tune"]["include_ids"] = ids
             config["fine-tune"]["learning"] = learn
@@ -47,11 +55,13 @@ for src, tgt in [("fma", "nci"), ("fma", "snomed"), ("snomed", "nci")]:
             config["data"]["tgt_onto"] = tgt
             config["data"]["src_onto_file"] = server_dir + f"/data/largebio/ontos/{src}.whole.owl"
             config["data"]["tgt_onto_file"] = server_dir + f"/data/largebio/ontos/{tgt}.whole.owl"
+            src_ori = src.replace("+", "")
+            tgt_ori = tgt.replace("+", "")
             config["corpora"]["src2tgt_mappings_file"] = (
-                server_dir + f"/data/largebio/refs/{src}2{tgt}.tsv"
+                server_dir + f"/data/largebio/refs/{src_ori}2{tgt_ori}.tsv"
             )
             config["corpora"]["ignored_mappings_file"] = (
-                server_dir + f"/data/largebio/refs/{src}2{tgt}.ignored.tsv"
+                server_dir + f"/data/largebio/refs/{src_ori}2{tgt_ori}.ignored.tsv"
             )
             config["fine-tune"]["include_ids"] = ids
             config["fine-tune"]["learning"] = learn

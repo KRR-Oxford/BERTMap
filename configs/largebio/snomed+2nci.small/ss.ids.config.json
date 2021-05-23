@@ -1,10 +1,10 @@
 {
     "data": {
-        "task_dir": "/home/cjy/BERTMap/fma2nci.small",
-        "src_onto": "fma",
+        "task_dir": "/home/cjy/BERTMap/snomed+2nci.small",
+        "src_onto": "snomed+",
         "tgt_onto": "nci",
-        "src_onto_file": "/home/cjy/BERTMap/data/largebio/ontos/fma2nci.small.owl",
-        "tgt_onto_file": "/home/cjy/BERTMap/data/largebio/ontos/nci2fma.small.owl",
+        "src_onto_file": "/home/cjy/BERTMap/data/largebio/ontos/snomed+2nci.small.owl",
+        "tgt_onto_file": "/home/cjy/BERTMap/data/largebio/ontos/nci2snomed+.small.owl",
         "properties": [
             "label"
         ],
@@ -12,8 +12,8 @@
     },
     "corpora": {
         "sample_rate": 10,
-        "src2tgt_mappings_file": "/home/cjy/BERTMap/data/largebio/refs/fma2nci.tsv",
-        "ignored_mappings_file": "/home/cjy/BERTMap/data/largebio/refs/fma2nci.ignored.tsv",
+        "src2tgt_mappings_file": "/home/cjy/BERTMap/data/largebio/refs/snomed2nci.tsv",
+        "ignored_mappings_file": "/home/cjy/BERTMap/data/largebio/refs/snomed2nci.ignored.tsv",
         "train_map_ratio": 0.2,
         "val_map_ratio": 0.1,
         "test_map_ratio": 0.7,
@@ -28,8 +28,8 @@
         "tokenizer_path": "emilyalsentzer/Bio_ClinicalBERT"
     },
     "fine-tune": {
-        "include_ids": false,
-        "learning": "us",
+        "include_ids": true,
+        "learning": "ss",
         "warm_up_ratio": 0.0,
         "max_length": 128,
         "num_epochs": 3.0,
