@@ -320,9 +320,9 @@ def compute_nes_maps(config):
             mapping_computer.start_time = time.time()
             procs = []
             src_classes = list(src_ob.onto.classes())
-            src_idxs = equal_split(6, len(src_classes))
+            src_idxs = equal_split(8, len(src_classes))
             tgt_classes = list(tgt_ob.onto.classes())
-            tgt_idxs = equal_split(6, len(tgt_classes))
+            tgt_idxs = equal_split(8, len(tgt_classes))
 
             def align_batch(batch_classes, flag):
                 for cl in batch_classes:
