@@ -288,7 +288,7 @@ def compute_embeds_maps(config):
                 torch.cuda.empty_cache()
             if config["eval"]["automatic"]:
                 eval_maps(config=config, candidate_limit=candidate_limit)
-            # if learn == "ss": eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
+                eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
 
 
 def compute_nes_maps(config):
@@ -366,7 +366,7 @@ def compute_nes_maps(config):
             time.sleep(10)
         if config["eval"]["automatic"]:
             eval_maps(config=config, candidate_limit=candidate_limit)
-        # eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
+            eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
 
 
 def eval_maps(config, candidate_limit: int, semi_supervised=False):
