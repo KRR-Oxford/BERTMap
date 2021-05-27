@@ -142,7 +142,7 @@ class OntoMapping:
         return src_df, tgt_df, combined_df
 
     @staticmethod
-    def print_eval(eval_csv: str):
+    def print_eval(eval_csv: str, latex: bool=False):
         """Print best string match and system results for easier recording"""
         df = pd.read_csv(eval_csv, index_col=0)
         best_string_match_idx = df["F1"][-3:].idxmax()
@@ -158,6 +158,8 @@ class OntoMapping:
             f"F1={round(F1, 3)}",
             str(best_string_match_idx).replace("combined", "cb"),
         )
+        if latex:
+            print(round(P, 3), "&", round(R, 3), "&", round(F1, 3))
         banner("Best BERTMap results")
         P = df.loc[best_system_idx]["Precision"]
         R = df.loc[best_system_idx]["Recall"]
@@ -168,6 +170,8 @@ class OntoMapping:
             f"F1={round(F1, 3)}",
             str(best_system_idx).replace("combined", "cb"),
         )
+        if latex:
+            print(round(P, 3), "&", round(R, 3), "&", round(F1, 3))
 
     @staticmethod
     def plot_eval(eval_csv, start_col=0):
