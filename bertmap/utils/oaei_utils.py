@@ -1,21 +1,20 @@
 import xml.etree.ElementTree as ET
 import lxml.etree as le
 import pandas as pd
+import bertmap
 
-namespaces = {
-    "http://bioontology.org/projects/ontologies/fma/fmaOwlDlComponent_2_0#": "fma:",
-    "http://ncicb.nci.nih.gov/xml/owl/EVS/Thesaurus.owl#": "nci:",
-    "http://www.ihtsdo.org/snomed#": "snomed:",
-}
+# one can manually add more full iri - abbreviated iri pairs here
+namespaces = bertmap.namespaces
+inv_namespaces = {v: k for k, v in namespaces.items()}
 na_vals = pd.io.parsers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
 
 
-def read_oaei_mappings(rdf_file, src_iri=None, tgt_iri=None):
+def read_oaei_mappings(rdf_file: str, src_onto: str="", tgt_onto: str=""):
     """
     Args:
         rdf_file: path to mappings in rdf format
-        src_iri: source ontology URI
-        tgt_iri: target ontology URI
+        src_onto: source ontology iri abbreviation, e.g. fma
+        tgt_onto: target ontology iri abbreviation, e.g. nci
 
     Returns:
         mappings(=;>,<), mappings(?)
@@ -37,8 +36,8 @@ def read_oaei_mappings(rdf_file, src_iri=None, tgt_iri=None):
                     rel = sub_elem.text
                 elif "measure" in sub_elem.tag:
                     measure = sub_elem.text
-            en1 = en1.replace(src_iri, namespaces[src_iri])
-            en2 = en2.replace(tgt_iri, namespaces[tgt_iri])
+            en1 = en1.replace(inv_namespaces[src_onto], src_onto)
+            en2 = en2.replace(inv_namespaces[tgt_onto], tgt_onto)
             row = [en1, en2, measure]
             # =: equivalent; > superset of; < subset of.
             if rel == "=" or rel == ">" or rel == "<":

@@ -77,6 +77,10 @@ class OntoEvaluator:
         tp = 0  # true positive
         fn = 0  # false negative
         for r_map in self.ref:
+            # ignore the "?" mappings where available
+            if self.ref_ignored and r_map in self.ref_ignored:
+                self.num_ignored += 1
+                continue
             if r_map in self.pre:
                 tp += 1
             else:
