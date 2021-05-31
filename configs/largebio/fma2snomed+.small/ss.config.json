@@ -1,10 +1,10 @@
 {
     "data": {
-        "task_dir": "/home/cjy/BERTMap/fma2snomed+.small",
+        "task_dir": "/home/yuahe/projects/BERTMap/fma2snomed+.small",
         "src_onto": "fma",
         "tgt_onto": "snomed+",
-        "src_onto_file": "/home/cjy/BERTMap/data/largebio/ontos/fma2snomed.small.owl",
-        "tgt_onto_file": "/home/cjy/BERTMap/data/largebio/ontos/snomed+2fma.small.owl",
+        "src_onto_file": "/home/yuahe/projects/BERTMap/data/largebio/ontos/fma2snomed+.small.owl",
+        "tgt_onto_file": "/home/yuahe/projects/BERTMap/data/largebio/ontos/snomed+2fma.small.owl",
         "properties": [
             "label"
         ],
@@ -12,8 +12,8 @@
     },
     "corpora": {
         "sample_rate": 10,
-        "src2tgt_mappings_file": "/home/cjy/BERTMap/data/largebio/refs/fma2snomed.tsv",
-        "ignored_mappings_file": "/home/cjy/BERTMap/data/largebio/refs/fma2snomed.ignored.tsv",
+        "src2tgt_mappings_file": "/home/yuahe/projects/BERTMap/data/largebio/refs/fma2snomed.tsv",
+        "ignored_mappings_file": "/home/yuahe/projects/BERTMap/data/largebio/refs/fma2snomed.ignored.tsv",
         "train_map_ratio": 0.2,
         "val_map_ratio": 0.1,
         "test_map_ratio": 0.7,

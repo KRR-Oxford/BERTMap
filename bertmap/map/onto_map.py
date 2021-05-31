@@ -19,7 +19,9 @@ Mapping Generation superclass on using some kind of normalized distance metric o
     Current supported candidate selection: [Subword-level Inverted Index, ]
 """
 
+from os import system
 import re
+import sys
 import time
 from collections import defaultdict
 from typing import Optional, Tuple, Union
@@ -29,6 +31,7 @@ import seaborn as sns
 from bertmap.onto import OntoBox, OntoEvaluator
 from bertmap.utils import banner, log_print
 from pandas import DataFrame
+import numpy as np
 
 
 class OntoMapping:
@@ -107,7 +110,9 @@ class OntoMapping:
         ]
         result_df = result_df.round({"Precision": 3, "Recall": 3, "F1": 3})
         if evaluator.id_maps:
-            print(f"{len(evaluator.id_maps)} mappings ignored are identity mappings (same entity iris on both sides).")
+            print(
+                f"{len(evaluator.id_maps)} mappings ignored are identity mappings (same entity iris on both sides)."
+            )
         return result_df
 
     @staticmethod
@@ -142,7 +147,7 @@ class OntoMapping:
         return src_df, tgt_df, combined_df
 
     @staticmethod
-    def print_eval(eval_csv: str, latex: bool=False):
+    def print_eval(eval_csv: str):
         """Print best string match and system results for easier recording"""
         df = pd.read_csv(eval_csv, index_col=0)
         best_string_match_idx = df["F1"][-3:].idxmax()
@@ -158,8 +163,6 @@ class OntoMapping:
             f"F1={round(F1, 3)}",
             str(best_string_match_idx).replace("combined", "cb"),
         )
-        if latex:
-            print(round(P, 3), "&", round(R, 3), "&", round(F1, 3))
         banner("Best BERTMap results")
         P = df.loc[best_system_idx]["Precision"]
         R = df.loc[best_system_idx]["Recall"]
@@ -170,8 +173,24 @@ class OntoMapping:
             f"F1={round(F1, 3)}",
             str(best_system_idx).replace("combined", "cb"),
         )
-        if latex:
-            print(round(P, 3), "&", round(R, 3), "&", round(F1, 3))
+
+    @staticmethod
+    def print_eval_latex(eval_csv: str):
+        """Print best string match and system results for easier recording"""
+        df = pd.read_csv(eval_csv, index_col=0)
+        best_string_match_idx = df["F1"][-3:].idxmax()
+        best_system_idx = df["F1"][:-3].idxmax()
+        P_str = df.loc[best_string_match_idx]["Precision"]
+        R_str = df.loc[best_string_match_idx]["Recall"]
+        F1_str = df.loc[best_string_match_idx]["F1"]
+        string_match = (
+            f"{best_string_match_idx} & {round(P_str, 3)} & {round(R_str, 3)} & {round(F1_str, 3)}"
+        )
+        P = df.loc[best_system_idx]["Precision"]
+        R = df.loc[best_system_idx]["Recall"]
+        F1 = df.loc[best_system_idx]["F1"]
+        system = f"{best_system_idx} & {round(P, 3)} & {round(R, 3)} & {round(F1, 3)}"
+        return string_match, system
 
     @staticmethod
     def plot_eval(eval_csv, start_col=0):
@@ -191,24 +210,24 @@ class OntoMapping:
         # set styles
         sns.set(
             style="darkgrid",
-            rc={
-                "font.weight": "bold",
-                "font.size": 20,
-                "axes.labelsize": 20,
-                "axes.titlesize": 20,
-                "xtick.labelsize": 16,
-                "ytick.labelsize": 16,
-                "font.family": "Times New Roman",
-                "axes.labelweight": "bold",
-                "axes.titleweight": "bold",
-                "axes.titlepad": 10,
-            },
+            # rc={
+            #     "font.weight": "bold",
+            #     "font.size": 20,
+            #     "axes.labelsize": 20,
+            #     "axes.titlesize": 20,
+            #     "xtick.labelsize": 16,
+            #     "ytick.labelsize": 16,
+            #     "font.family": "Times New Roman",
+            #     "axes.labelweight": "bold",
+            #     "axes.titleweight": "bold",
+            #     "axes.titlepad": 10,
+            # },
         )
         # create FacetGrid plots for all mappings
         g = sns.FacetGrid(
             eval_df, col="Mappings", hue="Metric", height=5, aspect=1, margin_titles=True
         )
-        g.map(sns.lineplot, "Threshold", "Value", alpha=0.7, marker="o")
+        g.map(sns.lineplot, "Threshold", "Value", alpha=0.7, marker=None)
         name_mappings = list(eval_df["Mappings"].drop_duplicates())
         for i in range(len(name_mappings)):
             name = name_mappings[i]
@@ -223,7 +242,8 @@ class OntoMapping:
         g.fig.suptitle(
             "Plots of Precision, Recall, Macro-F1 against Threshold for Combined, SRC2TGT and TGT2SRC Mappings",
             y=1.02,
-            fontsize=20,
-            weight="bold",
+            fontsize=12,
+            # weight="bold",
         )
+        g.set(xticks=eval_df["Threshold"].iloc[[0, 50, 100, 150, 200, -1]])
         return g
