@@ -47,7 +47,7 @@
         ],
         "batch_size": 32,
         "nbest": 1,
-        "string_match": true,
+        "string_match": false,
         "strategy": "mean"
     },
     "eval": {
