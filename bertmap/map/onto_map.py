@@ -197,7 +197,11 @@ class OntoMapping:
         """plot the evaluation results (under review)"""
         # process eval data
         eval_df = pd.read_csv(eval_csv, index_col=0).iloc[start_col:].reset_index()
-        eval_df["Mappings"] = list(eval_df["index"].apply(lambda x: x.split(":")[0]))
+        eval_df["Mappings"] = list(
+            eval_df["index"].apply(
+                lambda x: x.split(":")[0].replace("src", "src2").replace("tgt", "tgt2src").replace("src2", "src2tgt")
+            )
+        )
         eval_df["Threshold"] = list(eval_df["index"].apply(lambda x: x.split(":")[1]))
         eval_df.drop(columns=["index"], inplace=True)
         eval_df = eval_df.melt(
@@ -239,11 +243,11 @@ class OntoMapping:
             )
             ax.legend(loc="upper left")
             ax.set_title(name, color="gray")
-        g.fig.suptitle(
-            "Plots of Precision, Recall, Macro-F1 against Threshold for Combined, SRC2TGT and TGT2SRC Mappings",
-            y=1.02,
-            fontsize=12,
-            # weight="bold",
-        )
+        # g.fig.suptitle(
+        #     "Plots of Precision, Recall, Macro-F1 against Threshold for Combined, SRC2TGT and TGT2SRC Mappings",
+        #     y=1.02,
+        #     fontsize=12,
+        #     # weight="bold",
+        # )
         g.set(xticks=eval_df["Threshold"].iloc[[0, 50, 100, 150, 200, -1]])
         return g
