@@ -35,13 +35,14 @@ class OntoEvaluator:
         # compute Precision, Recall and Macro-F1
         self.num_ignored = 0
         self.id_maps = []  # mapping of same iris should be ignored
-        self.P = self.precision()
-        self.R = self.recall()
         try:
+            self.P = self.precision()
+            self.R = self.recall()
             self.F1 = self.f1()
         except:
+            self.P = "Undefined"
+            self.R = "Undefined"
             self.F1 = "Undefined"
-            raise TypeError("F1 is undefined")
 
     def precision(self) -> float:
         """
