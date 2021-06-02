@@ -40,9 +40,9 @@ class OntoEvaluator:
             self.R = self.recall()
             self.F1 = self.f1()
         except:
-            self.P = "Undefined"
-            self.R = "Undefined"
-            self.F1 = "Undefined"
+            self.P = -1
+            self.R = -1
+            self.F1 = -1
 
     def precision(self) -> float:
         """
