@@ -451,12 +451,12 @@ def eval_maps(config, candidate_limit: int, semi_supervised=False):
         result = result.get()
         report = report.append(result)
     print(report)
+    report.to_csv(eval_file)
     max_scores = list(report.max()[["Precision", "Recall", "F1"]])
     max_inds = list(report.idxmax()[["Precision", "Recall", "F1"]])
     print(
         f"Best results are: P: {max_scores[0]} ({max_inds[0]}); R: {max_scores[1]} ({max_inds[1]}); F1: {max_scores[2]} ({max_inds[2]})."
     )
-    report.to_csv(eval_file)
 
 
 if __name__ == "__main__":
