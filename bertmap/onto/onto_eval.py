@@ -40,9 +40,9 @@ class OntoEvaluator:
             self.R = self.recall()
             self.F1 = self.f1()
         except:
-            self.P = -1
-            self.R = -1
-            self.F1 = -1
+            self.P = -1.0
+            self.R = -1.0
+            self.F1 = -1.0
 
     def precision(self) -> float:
         """
