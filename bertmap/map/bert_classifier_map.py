@@ -71,7 +71,7 @@ class BERTClassifierMapping(OntoMapping):
                 else to_ob.select_candidates(from_labels, self.candidate_limit)
             )
             from_class_idx = from_ob.onto_text.class2idx[from_class_iri]
-            assert from_class_idx == i
+            # assert from_class_idx == i
             i += 1  # to test the order preservation in OntoText dict
             if len(search_space) == 0:
                 self.log_print(
