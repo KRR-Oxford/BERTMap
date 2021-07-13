@@ -214,18 +214,18 @@ class OntoMapping:
         # set styles
         sns.set(
             style="darkgrid",
-            # rc={
-            #     "font.weight": "bold",
-            #     "font.size": 20,
-            #     "axes.labelsize": 20,
-            #     "axes.titlesize": 20,
-            #     "xtick.labelsize": 16,
-            #     "ytick.labelsize": 16,
-            #     "font.family": "Times New Roman",
-            #     "axes.labelweight": "bold",
-            #     "axes.titleweight": "bold",
-            #     "axes.titlepad": 10,
-            # },
+            rc={
+                "font.weight": "bold",
+                "font.size": 15,
+                "axes.labelsize": 13,
+                "axes.titlesize": 13,
+                "xtick.labelsize": 12,
+                "ytick.labelsize": 12,
+                "font.family": "Times New Roman",
+                "axes.labelweight": "bold",
+                "axes.titleweight": "bold",
+                "axes.titlepad": 15,
+            },
         )
         # create FacetGrid plots for all mappings
         g = sns.FacetGrid(
