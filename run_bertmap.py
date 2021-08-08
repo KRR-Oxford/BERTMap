@@ -33,11 +33,12 @@ import pandas as pd
 import time
 
 # import bertmap
-from bertmap.utils import evenly_divide, set_seed, equal_split, banner
+from bertmap.utils import set_seed, equal_split, banner
 from bertmap.onto import OntoBox
 from bertmap.corpora import OntoAlignCorpora
 from bertmap.bert import BERTTrainer
 from bertmap.map import *
+from eval_bertmap import eval_maps
 
 na_vals = pd.io.parsers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
 
@@ -236,8 +237,7 @@ def compute_fine_tune_maps(config):
             time.sleep(10)
             torch.cuda.empty_cache()
         if config["eval"]["automatic"]:
-            eval_maps(config=config, candidate_limit=candidate_limit)
-            eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
+            eval_maps(config=config, mode="bertmap", specified_candidate_limit=candidate_limit)
 
 
 def compute_embeds_maps(config):
@@ -287,8 +287,7 @@ def compute_embeds_maps(config):
                 time.sleep(10)
                 torch.cuda.empty_cache()
             if config["eval"]["automatic"]:
-                eval_maps(config=config, candidate_limit=candidate_limit)
-                eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
+                eval_maps(config=config, mode="bertembeds", specified_candidate_limit=candidate_limit)
 
 
 def compute_nes_maps(config):
@@ -365,98 +364,7 @@ def compute_nes_maps(config):
             banner(f"evaluate mappings for candidate limit {candidate_limit}")
             time.sleep(10)
         if config["eval"]["automatic"]:
-            eval_maps(config=config, candidate_limit=candidate_limit)
-            eval_maps(config=config, candidate_limit=candidate_limit, semi_supervised=True)
-
-
-def eval_maps(config, candidate_limit: int, semi_supervised=False):
-
-    eval_file = f"{exp_dir}/map.{candidate_limit}/eval.{candidate_limit}.csv"
-    # In semi-supervised setting, besides considering all the mappings, we should also test it on the test mappings
-    if semi_supervised:
-        eval_file = f"{exp_dir}/map.{candidate_limit}/eval.{candidate_limit}.test.csv"
-
-    if os.path.exists(eval_file):
-        print(f"skip map evaluation for candidate limit {candidate_limit} as existed ...")
-        return
-
-    report = pd.DataFrame(columns=["#Mappings", "#Ignored", "Precision", "Recall", "F1"])
-    ref = f"{task_dir}/refs/maps.ref.us.tsv"
-    ref_ignored = f"{task_dir}/refs/maps.ignored.tsv" if config["corpora"]["ignored_mappings_file"] else None
-    # for semi-supervised setting, we should ignore all the mappings in th train an val splits
-    if semi_supervised:
-        ss_ignored = f"{task_dir}/refs/maps.ignored.ss.tsv"
-        if os.path.exists(ss_ignored):
-            ref_ignored = ss_ignored
-        else:
-            train_maps_df = pd.read_csv(
-                f"{task_dir}/refs/maps.ref.ss.train.tsv", sep="\t", na_values=na_vals, keep_default_na=False
-            )
-            val_maps_df = pd.read_csv(
-                f"{task_dir}/refs/maps.ref.ss.val.tsv", sep="\t", na_values=na_vals, keep_default_na=False
-            )
-            ref = f"{task_dir}/refs/maps.ref.ss.test.tsv"
-            if ref_ignored:
-                ref_ignored = pd.read_csv(ref_ignored, sep="\t", na_values=na_vals, keep_default_na=False)
-            else:
-                ref_ignored = pd.DataFrame(columns=["Entity1", "Entity2", "Value"])
-            ref_ignored = ref_ignored.append(train_maps_df).append(val_maps_df).reset_index(drop=True)
-            ref_ignored.to_csv(f"{task_dir}/refs/maps.ignored.ss.tsv", sep="\t", index=False)
-
-    pool = multiprocessing_on_dill.Pool(10)
-    eval_results = []
-    thresholds = evenly_divide(0, 0.5, 5) + evenly_divide(0.7, 0.94, 24) + evenly_divide(0.95, 1.0, 50)
-    for threshold in thresholds:
-        threshold = round(threshold, 6)
-        eval_results.append(
-            pool.apply_async(
-                OntoMapping.evaluate,
-                args=(
-                    f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv",
-                    ref,
-                    ref_ignored,
-                    threshold,
-                    f"combined",
-                ),
-            )
-        )
-        eval_results.append(
-            pool.apply_async(
-                OntoMapping.evaluate,
-                args=(
-                    f"{exp_dir}/map.{candidate_limit}/src.{candidate_limit}.tsv",
-                    ref,
-                    ref_ignored,
-                    threshold,
-                    f"src",
-                ),
-            )
-        )
-        eval_results.append(
-            pool.apply_async(
-                OntoMapping.evaluate,
-                args=(
-                    f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.tsv",
-                    ref,
-                    ref_ignored,
-                    threshold,
-                    f"tgt",
-                ),
-            )
-        )
-    pool.close()
-    pool.join()
-
-    for result in eval_results:
-        result = result.get()
-        report = report.append(result)
-    print(report)
-    report.to_csv(eval_file)
-    max_scores = list(report.max()[["Precision", "Recall", "F1"]])
-    max_inds = list(report.idxmax()[["Precision", "Recall", "F1"]])
-    print(
-        f"Best results are: P: {max_scores[0]} ({max_inds[0]}); R: {max_scores[1]} ({max_inds[1]}); F1: {max_scores[2]} ({max_inds[2]})."
-    )
+            eval_maps(config=config, mode="edit", specified_candidate_limit=candidate_limit)
 
 
 if __name__ == "__main__":
