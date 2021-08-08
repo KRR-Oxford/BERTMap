@@ -8,6 +8,8 @@
 # append the paths
 import os
 
+from numpy.core.einsumfunc import _parse_possible_contraction
+
 main_dir = os.getcwd().split("BERTMap")[0] + "BERTMap"
 # os.environ["TOKENIZERS_PARALLELISM"] = "false"  # disable huggingface tokenizer paralellism
 import sys
@@ -36,6 +38,16 @@ def eval_maps(config, mode, specified_candidate_limit=None):
     global task_dir, exp_dir
     task_dir = config["data"]["task_dir"]
     exp_dir = ""
+    map_params = deepcopy(config["map"])
+    limits = map_params["candidate_limits"]
+    del map_params["candidate_limits"]
+    
+    def val_test():
+        if specified_candidate_limit:
+            validate_then_test(config=config, candidate_limit=specified_candidate_limit)
+        else:
+            for candidate_limit in limits:
+                validate_then_test(config=config, candidate_limit=candidate_limit)
 
     if mode == "bertmap":
         fine_tune_params = config["fine-tune"]
@@ -46,15 +58,17 @@ def eval_maps(config, mode, specified_candidate_limit=None):
         exp_dir = (
             task_dir + f"/fine-tune.exp/{learn}.exp" if not include_ids else task_dir + f"/fine-tune.exp/{learn}.ids.exp"
         )
-
-    map_params = deepcopy(config["map"])
-    limits = map_params["candidate_limits"]
-    del map_params["candidate_limits"]
-    if specified_candidate_limit:
-        validate_then_test(config=config, candidate_limit=specified_candidate_limit)
+        val_test()
+    elif mode == "bertembeds":
+        for strategy in ["cls", "mean"]:
+            exp_dir = task_dir + f"/{strategy}-embeds.exp"
+            val_test()
+    elif mode == "edit":
+        exp_dir = task_dir + "/nes.exp"
+        val_test()
     else:
-        for candidate_limit in limits:
-            validate_then_test(config=config, candidate_limit=candidate_limit)
+        raise ValueError("invalid option of mode ...")
+
              
 def validate_then_test(config, candidate_limit: int):
     best_ind = validate_maps(config=config, candidate_limit=candidate_limit)
