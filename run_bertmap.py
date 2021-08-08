@@ -287,7 +287,7 @@ def compute_embeds_maps(config):
                 time.sleep(10)
                 torch.cuda.empty_cache()
             if config["eval"]["automatic"]:
-                eval_maps(config=config, mode="bertembeds", specified_candidate_limit=candidate_limit)
+                eval_maps(config=config, mode="bertembeds", specified_candidate_limit=candidate_limit, strategy=strategy)
 
 
 def compute_nes_maps(config):
@@ -396,7 +396,7 @@ if __name__ == "__main__":
     Path(config_json["data"]["task_dir"] + "/configs").mkdir(parents=True, exist_ok=True)
     config_file = config_json["data"]["task_dir"] + "/configs/" + args.config.split("/")[-1]
     if os.path.exists(config_file):
-        print("config file already existed, use the existed one ...")
+        print("config file already existed, use the new one without copying in...")
     else:
         copy2(args.config, config_file)
 

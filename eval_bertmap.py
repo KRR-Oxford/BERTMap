@@ -33,7 +33,7 @@ na_vals = pd.io.parsers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
 task_dir = ""
 exp_dir = ""
 
-def eval_maps(config, mode, specified_candidate_limit=None):
+def eval_maps(config, mode, specified_candidate_limit=None, strategy=None):
 
     global task_dir, exp_dir
     task_dir = config["data"]["task_dir"]
@@ -60,7 +60,11 @@ def eval_maps(config, mode, specified_candidate_limit=None):
         )
         val_test()
     elif mode == "bertembeds":
-        for strategy in ["cls", "mean"]:
+        if not strategy:
+            for strt in ["cls", "mean"]:
+                exp_dir = task_dir + f"/{strt}-embeds.exp"
+                val_test()
+        else:
             exp_dir = task_dir + f"/{strategy}-embeds.exp"
             val_test()
     elif mode == "edit":
@@ -71,21 +75,22 @@ def eval_maps(config, mode, specified_candidate_limit=None):
 
              
 def validate_then_test(config, candidate_limit: int):
-    best_ind = validate_maps(config=config, candidate_limit=candidate_limit)
-    if not best_ind:
+    best_bertmap_ind, best_strm_ind = validate_maps(config=config, candidate_limit=candidate_limit)
+    if not best_bertmap_ind:
         # if already generated a validation results
         val_file = f"{exp_dir}/map.{candidate_limit}/results.val.{candidate_limit}.csv"
         val_results = pd.read_csv(val_file, index_col=0)
-        best_ind = list(val_results[:-3].idxmax()[["F1"]])[0]
-        banner(f"found best hyperparameters: {best_ind} ...")
+        best_bertmap_ind = list(val_results[:-3].idxmax()[["F1"]])[0]
+        best_strm_ind = list(val_results[-3:].idxmax()[["F1"]])[0]
+        banner(f"found best hyperparameters: {best_bertmap_ind} (BERTMap) {best_strm_ind} (String-match)")
         # OntoMapping.print_eval(val_file, "(validation)")
     # generate 70% results for both unsupervised and semi-supervised setting for comparison
-    test_maps(config=config, candidate_limit=candidate_limit, best_hyper=best_ind, semi_supervised=True)
+    test_maps(config, candidate_limit, best_bertmap_ind, best_strm_ind, semi_supervised=True)
     if "us" in str(config["fine-tune"]["learning"]):
-            test_maps(config=config, candidate_limit=candidate_limit, best_hyper=best_ind, semi_supervised=False)
+            test_maps(config, candidate_limit, best_bertmap_ind, best_strm_ind, semi_supervised=False)
     
 
-def test_maps(config, candidate_limit: int, best_hyper: str, semi_supervised: bool):
+def test_maps(config, candidate_limit: int, best_hyper: str, best_strm_hyper: str, semi_supervised: bool):
     
     if semi_supervised:
         eval_file = f"{exp_dir}/map.{candidate_limit}/results.test.ss.{candidate_limit}.csv"
@@ -123,6 +128,11 @@ def test_maps(config, candidate_limit: int, best_hyper: str, semi_supervised: bo
         
     # evaluate the corresponding test-set result
     result = OntoMapping.evaluate(mapping_file, ref, ref_ignored, float(threshold), set_type)
+    # evaluate the baseline string-matching results
+    set_type, threshold = best_strm_hyper.split(":")  # src/tgt/combined:threshold
+    result_strm = OntoMapping.evaluate(mapping_file, ref, ref_ignored, float(threshold), set_type)
+    result = result.append(result_strm)
+    
     result.to_csv(eval_file)
     if semi_supervised:
         banner("70% test set results (semi-supervised)")
@@ -137,7 +147,7 @@ def validate_maps(config, candidate_limit: int):
     eval_file = f"{exp_dir}/map.{candidate_limit}/results.val.{candidate_limit}.csv"
     if os.path.exists(eval_file):
         print(f"skip map validation for candidate limit {candidate_limit} as existed ...")
-        return
+        return None, None
 
     report = pd.DataFrame(columns=["#Mappings", "#Ignored", "Precision", "Recall", "F1"])
     ref = f"{task_dir}/refs/maps.ref.full.tsv"
@@ -211,7 +221,9 @@ def validate_maps(config, candidate_limit: int):
     OntoMapping.print_eval(eval_file, "(validation)")
 
     # return the best validation hyperparameter
-    return list(report[:-3].idxmax()[["F1"]])[0]
+    best_bertmap_ind = list(report[:-3].idxmax()[["F1"]])[0]
+    best_string_match_ind = list(report[-3:].idxmax()[["F1"]])[0]
+    return best_bertmap_ind, best_string_match_ind
 
 if __name__ == "__main__":
 
