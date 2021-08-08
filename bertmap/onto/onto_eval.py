@@ -24,6 +24,9 @@ class OntoEvaluator:
 
         # filter the prediction mappings according to similarity scores
         self.pre = self.read_mappings(pre_tsv, threshold=threshold)
+        self.id_maps = []  # mapping of same iris should be ignored
+        self.identity_mapping_check()
+        self.num_ignored = len(self.id_maps)
 
         # reference mappings and illegal mappings to be ignored
         self.ref = self.read_mappings(ref_tsv)
@@ -31,10 +34,16 @@ class OntoEvaluator:
             self.ref_ignored = None
         else:
             self.ref_ignored = self.read_mappings(ref_ignored_tsv)
+        
+        # convert list to set for fast computation
+        self.pre_set = set(self.pre)
+        self.ref_set = set(self.ref)
+        if self.ref_ignored:
+            self.ref_ignored_set = set(self.ref_ignored)
+            self.pre_unignored_set = self.pre_set - self.ref_ignored_set
+            self.ref_unignored_set = self.ref_set - self.ref_ignored_set
 
         # compute Precision, Recall and Macro-F1
-        self.num_ignored = 0
-        self.id_maps = []  # mapping of same iris should be ignored
         try:
             self.P = self.precision()
             self.R = self.recall()
@@ -49,25 +58,13 @@ class OntoEvaluator:
         % of predictions are correct:
             P = TP / (TP + FP)
         """
-        tp = 0  # true positive
-        fp = 0  # false positive
-        self.num_ignored = 0
-        self.id_maps = []
-        for p_map in self.pre:
-            # mapping of same iris should be ignored
-            if p_map.split("\t")[0] == p_map.split("\t")[1]:
-                self.id_maps.append(p_map)
-                self.num_ignored += 1
-                continue
-            # ignore the "?" mappings where available
-            if self.ref_ignored and p_map in self.ref_ignored:
-                self.num_ignored += 1
-                continue
-            # compute tp and fp non-illegal mappings
-            if p_map in self.ref:
-                tp += 1
-            else:
-                fp += 1
+        if self.ref_ignored:
+            num_pre_ignored = len(self.pre_set) - len(self.pre_unignored_set)
+            self.num_ignored += num_pre_ignored
+        # True Positive = the number of unignored prediction mappings that are True
+        tp = len(self.pre_unignored_set.intersection(self.ref_set))  
+        # False Positive = the number of unignored prediction mappings that are False
+        fp = len(self.pre_set) - tp - num_pre_ignored  
         return tp / (tp + fp)
 
     def recall(self) -> float:
@@ -75,21 +72,25 @@ class OntoEvaluator:
         % of correct retrieved
             R = TP / (TP + FN)
         """
-        tp = 0  # true positive
-        fn = 0  # false negative
-        for r_map in self.ref:
-            # ignore the "?" mappings where available
-            if self.ref_ignored and r_map in self.ref_ignored:
-                self.num_ignored += 1
-                continue
-            if r_map in self.pre:
-                tp += 1
-            else:
-                fn += 1
+        if self.ref_ignored:
+            num_ref_ignored = len(self.ref_set) - len(self.ref_unignored_set)
+            self.num_ignored += num_ref_ignored
+        # True Positive = the number of unignored reference mappings that are Positive
+        tp = len(self.ref_unignored_set.intersection(self.pre_set))
+        # False Negative = the number of unignored reference mappings that are Negative
+        fn = len(self.ref_set) - tp - num_ref_ignored
         return tp / (tp + fn)
 
     def f1(self) -> float:
         return 2 * self.P * self.R / (self.P + self.R)
+    
+    def identity_mapping_check(self) -> None:
+        for p_map in self.pre:
+            if p_map.split("\t")[0] == p_map.split("\t")[1]:
+                self.id_maps.append(p_map)
+        self.pre = list(set(self.pre) - set(self.id_maps))
+        if len(self.id_maps) > 0:
+            print(f"detect and delete {len(self.id_maps)} mappings of identical iris ...")
 
     @classmethod
     def read_mappings(

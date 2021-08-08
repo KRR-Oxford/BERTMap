@@ -20,24 +20,22 @@ import json
 from shutil import copy2
 from pathlib import Path
 from copy import deepcopy
-from transformers import TrainingArguments
-import torch
 import multiprocessing_on_dill
 import pandas as pd
-import time
 
 # import bertmap
-from bertmap.utils import evenly_divide, set_seed, equal_split, banner
-from bertmap.onto import OntoBox
-from bertmap.corpora import OntoAlignCorpora
-from bertmap.bert import BERTTrainer
-from bertmap.map import *
+from bertmap.utils import evenly_divide, set_seed, banner
+from bertmap.map import OntoMapping
 
 na_vals = pd.io.parsers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
+task_dir = ""
+exp_dir = ""
 
-def validate_maps(config, mode):
+def eval_maps(config, mode, specified_candidate_limit=None):
 
+    global task_dir, exp_dir
     task_dir = config["data"]["task_dir"]
+    exp_dir = ""
 
     if mode == "bertmap":
         fine_tune_params = config["fine-tune"]
@@ -49,52 +47,108 @@ def validate_maps(config, mode):
             task_dir + f"/fine-tune.exp/{learn}.exp" if not include_ids else task_dir + f"/fine-tune.exp/{learn}.ids.exp"
         )
 
-
     map_params = deepcopy(config["map"])
     limits = map_params["candidate_limits"]
     del map_params["candidate_limits"]
-    for candidate_limit in limits:
-        eval_maps(config=config, candidate_limit=candidate_limit)
+    if specified_candidate_limit:
+        validate_then_test(config=config, candidate_limit=specified_candidate_limit)
+    else:
+        for candidate_limit in limits:
+            validate_then_test(config=config, candidate_limit=candidate_limit)
+             
+def validate_then_test(config, candidate_limit: int):
+    best_ind = validate_maps(config=config, candidate_limit=candidate_limit)
+    if not best_ind:
+        # if already generated a validation results
+        val_file = f"{exp_dir}/map.{candidate_limit}/results.val.{candidate_limit}.csv"
+        val_results = pd.read_csv(val_file, index_col=0)
+        best_ind = list(val_results[:-3].idxmax()[["F1"]])[0]
+        banner(f"found best hyperparameters: {best_ind} ...")
+        # OntoMapping.print_eval(val_file, "(validation)")
+    # generate 70% results for both unsupervised and semi-supervised setting for comparison
+    test_maps(config=config, candidate_limit=candidate_limit, best_hyper=best_ind, semi_supervised=True)
+    if "us" in str(config["fine-tune"]["learning"]):
+            test_maps(config=config, candidate_limit=candidate_limit, best_hyper=best_ind, semi_supervised=False)
+    
 
-
-def eval_maps(config, candidate_limit: int, semi_supervised=False):
-
-    eval_file = f"{exp_dir}/map.{candidate_limit}/eval.{candidate_limit}.csv"
-    # In semi-supervised setting, besides considering all the mappings, we should also test it on the test mappings
+def test_maps(config, candidate_limit: int, best_hyper: str, semi_supervised: bool):
+    
     if semi_supervised:
-        eval_file = f"{exp_dir}/map.{candidate_limit}/eval.{candidate_limit}.test.csv"
-
+        eval_file = f"{exp_dir}/map.{candidate_limit}/results.test.ss.{candidate_limit}.csv"
+    else:
+        eval_file = f"{exp_dir}/map.{candidate_limit}/results.test.us.{candidate_limit}.csv"
     if os.path.exists(eval_file):
-        print(f"skip map evaluation for candidate limit {candidate_limit} as existed ...")
+        print(f"skip map testing for candidate limit {candidate_limit} as existed ...")
+        return
+    
+    # select the best mapping set-threshold combination according to validation results
+    set_type, threshold = best_hyper.split(":")  # src/tgt/combined:threshold
+    mapping_file = f"{exp_dir}/map.{candidate_limit}/{set_type}.{candidate_limit}.tsv"
+    
+    # configure reference mappings and mappings to be ignored
+    ref = f"{task_dir}/refs/maps.ref.full.tsv"
+    train_maps_df = pd.read_csv(
+        f"{task_dir}/refs/maps.ref.ss.train.tsv", sep="\t", na_values=na_vals, keep_default_na=False
+    )
+    val_maps_df = pd.read_csv(
+        f"{task_dir}/refs/maps.ref.ss.val.tsv", sep="\t", na_values=na_vals, keep_default_na=False
+    )
+        
+    ref_ignored = f"{task_dir}/refs/maps.ignored.tsv" if config["corpora"]["ignored_mappings_file"] else None
+    if ref_ignored:
+        ref_ignored = pd.read_csv(ref_ignored, sep="\t", na_values=na_vals, keep_default_na=False)
+    else:
+        # init mappings to be ignored if there is no pre-defined one
+        ref_ignored = pd.DataFrame(columns=["Entity1", "Entity2", "Value"])
+    if semi_supervised:
+        # train + val (30%) should be ignored for semi-supervised setting
+        ref_ignored = ref_ignored.append(val_maps_df).append(train_maps_df).reset_index(drop=True)
+    else:
+        # only val (10%) should be ignored for unsupervised setting
+        ref_ignored = ref_ignored.append(val_maps_df).reset_index(drop=True)
+        
+    # evaluate the corresponding test-set result
+    result = OntoMapping.evaluate(mapping_file, ref, ref_ignored, float(threshold), set_type)
+    result.to_csv(eval_file)
+    if semi_supervised:
+        banner("70% test set results (semi-supervised)")
+    else:
+        banner("90% test set results (unsupervised)")
+    print(result)
+    return result
+
+
+def validate_maps(config, candidate_limit: int):
+
+    eval_file = f"{exp_dir}/map.{candidate_limit}/results.val.{candidate_limit}.csv"
+    if os.path.exists(eval_file):
+        print(f"skip map validation for candidate limit {candidate_limit} as existed ...")
         return
 
     report = pd.DataFrame(columns=["#Mappings", "#Ignored", "Precision", "Recall", "F1"])
-    ref = f"{task_dir}/refs/maps.ref.us.tsv"
+    ref = f"{task_dir}/refs/maps.ref.full.tsv"
     ref_ignored = f"{task_dir}/refs/maps.ignored.tsv" if config["corpora"]["ignored_mappings_file"] else None
-    # for semi-supervised setting, we should ignore all the mappings in th train an val splits
-    if semi_supervised:
-        ss_ignored = f"{task_dir}/refs/maps.ignored.ss.tsv"
-        if os.path.exists(ss_ignored):
-            ref_ignored = ss_ignored
-        else:
-            train_maps_df = pd.read_csv(
-                f"{task_dir}/refs/maps.ref.ss.train.tsv", sep="\t", na_values=na_vals, keep_default_na=False
-            )
-            val_maps_df = pd.read_csv(
-                f"{task_dir}/refs/maps.ref.ss.val.tsv", sep="\t", na_values=na_vals, keep_default_na=False
-            )
-            ref = f"{task_dir}/refs/maps.ref.ss.test.tsv"
-            if ref_ignored:
-                ref_ignored = pd.read_csv(ref_ignored, sep="\t", na_values=na_vals, keep_default_na=False)
-            else:
-                ref_ignored = pd.DataFrame(columns=["Entity1", "Entity2", "Value"])
-            ref_ignored = ref_ignored.append(train_maps_df).append(val_maps_df).reset_index(drop=True)
-            ref_ignored.to_csv(f"{task_dir}/refs/maps.ignored.ss.tsv", sep="\t", index=False)
+    if ref_ignored:
+        ref_ignored = pd.read_csv(ref_ignored, sep="\t", na_values=na_vals, keep_default_na=False)
+    else:
+        # init mappings to be ignored if there is no pre-defined one
+        ref_ignored = pd.DataFrame(columns=["Entity1", "Entity2", "Value"])
+    train_maps_df = pd.read_csv(
+        f"{task_dir}/refs/maps.ref.ss.train.tsv", sep="\t", na_values=na_vals, keep_default_na=False
+    )
+    test_maps_df = pd.read_csv(
+        f"{task_dir}/refs/maps.ref.ss.test.tsv", sep="\t", na_values=na_vals, keep_default_na=False
+    )
+    # during validation, training and testing mappings should be ignored
+    ref_ignored = ref_ignored.append(train_maps_df).append(test_maps_df).reset_index(drop=True)
 
     pool = multiprocessing_on_dill.Pool(10)
     eval_results = []
-    thresholds = evenly_divide(0, 0.5, 5) + evenly_divide(0.7, 0.94, 24) + evenly_divide(0.95, 1.0, 50)
+    thresholds = evenly_divide(0, 0.8, 8) + evenly_divide(0.9, 0.97, 7) + evenly_divide(0.98, 1.0, 20)
     for threshold in thresholds:
+        # code for including the low threshold (<0.90) evaluation or not
+        # if threshold < 0.90: 
+        #     continue
         threshold = round(threshold, 6)
         eval_results.append(
             pool.apply_async(
@@ -140,11 +194,10 @@ def eval_maps(config, candidate_limit: int, semi_supervised=False):
         report = report.append(result)
     print(report)
     report.to_csv(eval_file)
-    max_scores = list(report.max()[["Precision", "Recall", "F1"]])
-    max_inds = list(report.idxmax()[["Precision", "Recall", "F1"]])
-    print(
-        f"Best results are: P: {max_scores[0]} ({max_inds[0]}); R: {max_scores[1]} ({max_inds[1]}); F1: {max_scores[2]} ({max_inds[2]})."
-    )
+    OntoMapping.print_eval(eval_file, "(validation)")
+
+    # return the best validation hyperparameter
+    return list(report[:-3].idxmax()[["F1"]])[0]
 
 if __name__ == "__main__":
 
@@ -178,5 +231,7 @@ if __name__ == "__main__":
         print("config file already existed, use the existed one ...")
     else:
         copy2(args.config, config_file)
+        
+    eval_maps(config=config_json, mode=args.mode)
 
 

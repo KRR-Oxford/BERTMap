@@ -95,7 +95,7 @@ class OntoAlignCorpora:
         Path(save_dir + "/refs").mkdir(parents=True, exist_ok=True)
         Path(save_dir + "/corpora").mkdir(parents=True, exist_ok=True)
         # copy and save the reference mappings for record
-        self.save_maps(self.maps, save_dir + "/refs/maps.ref.us.tsv")
+        self.save_maps(self.maps, save_dir + "/refs/maps.ref.full.tsv")
         self.save_maps(self.train_ss_co.maps, save_dir + "/refs/maps.ref.ss.train.tsv")
         self.save_maps(self.val_ss_co.maps, save_dir + "/refs/maps.ref.ss.val.tsv")
         self.save_maps(self.test_ss_co.maps, save_dir + "/refs/maps.ref.ss.test.tsv")
@@ -148,7 +148,9 @@ class OntoAlignCorpora:
                 oa_corpora.tra_map_ratio = float(map_ratios[0])
                 oa_corpora.val_map_ratio = float(map_ratios[1])
                 oa_corpora.test_map_ratio = float(map_ratios[2])
-        oa_corpora.maps = OntoEvaluator.read_mappings(save_dir + "/refs/maps.ref.us.tsv")
+        # splitting of full mappings when loading is unnecessary as already created before
+        # here loading the mappings simply for printing infomation
+        oa_corpora.maps = OntoEvaluator.read_mappings(save_dir + "/refs/maps.ref.full.tsv")
         oa_corpora.ignored_maps = OntoEvaluator.read_mappings(save_dir + "/refs/maps.ignored.tsv")
         return oa_corpora
 
