@@ -52,7 +52,7 @@ def eval_maps(config, mode, specified_candidate_limit=None, strategy=None):
     if mode == "bertmap":
         fine_tune_params = config["fine-tune"]
         learn = fine_tune_params["learning"]
-        assert learn == "us" or learn == "ss"
+        # assert learn == "us" or learn == "ss"
         include_ids = fine_tune_params["include_ids"]
         banner(f"evaluate fine-tuned models of {learn} settings", sym="#")
         exp_dir = (
