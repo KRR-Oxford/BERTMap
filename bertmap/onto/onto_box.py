@@ -155,7 +155,8 @@ class OntoBox:
     def super_classes(cl: ThingClass) -> List[ThingClass]:
         supclasses = list()
         for supclass in cl.is_a:
-            if type(supclass) == ThingClass:
+            # ignore the root class Thing
+            if type(supclass) == ThingClass and supclass.name != "Thing":
                 supclasses.append(supclass)
         return supclasses
 
