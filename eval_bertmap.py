@@ -63,6 +63,8 @@ def eval_maps(config, mode, candidate_limit, strategy=None, best_set_type=""):
         validate_then_test(config=config, candidate_limit=candidate_limit)
     else:
         raise ValueError("invalid option of mode ...")
+    
+    return best_set_type
 
 
 def validate_then_test(config, candidate_limit: int):
