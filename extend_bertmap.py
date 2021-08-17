@@ -39,7 +39,7 @@ def mapping_extension(config, candidate_limit, set_type_to_extend="", mapping_th
     learn = fine_tune_params["learning"]
     # assert learn == "us" or learn == "ss"
     include_ids = fine_tune_params["include_ids"]
-    banner(f"applying mapping extension on fine-tuned models of {learn} settings", sym="#")
+    banner(f"extending fine-tuned models of {learn} settings", sym="#")
     exp_dir = (
         task_dir + f"/fine-tune.exp/{learn}.exp"
         if not include_ids
@@ -76,11 +76,11 @@ def mapping_extension(config, candidate_limit, set_type_to_extend="", mapping_th
     
     bert_ex.extend_mappings(max_iter=50)
     
-    exp_df = pd.DataFrame(columns=["Entity1", "Entity2", "Value"])
     exp_list = []
     for m, v in bert_ex.expansion.items():
         src_iri, tgt_iri = m.split("\t")
         exp_list.append((src_iri, tgt_iri, v))
+    exp_df = pd.DataFrame(exp_list, columns=["Entity1", "Entity2", "Value"])
         
     pred_df = pd.read_csv(file_to_extend, sep="\t", na_values=na_vals, keep_default_na=False)
     extended_pred_df = pred_df.append(exp_df).reset_index(drop=True)
