@@ -30,14 +30,13 @@ na_vals = pd.io.parsers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
 task_dir = ""
 exp_dir = ""
 map_dir = ""
-extended_set_type = None
+extended_set_type = ""
 
+def eval_maps(config, mode, candidate_limit, strategy=None, best_set_type=""):
 
-def eval_maps(config, mode, candidate_limit, strategy=None):
-
-    global task_dir, exp_dir
+    global task_dir, exp_dir, extended_set_type
     task_dir = config["data"]["task_dir"]
-    exp_dir = ""
+    extended_set_type = best_set_type
 
     if mode == "bertmap":
         fine_tune_params = config["fine-tune"]
@@ -70,7 +69,7 @@ def validate_then_test(config, candidate_limit: int):
 
     global map_dir
     map_dir = f"{exp_dir}/map.{candidate_limit}"
-    if args.extended:
+    if extended_set_type:
         map_dir = f"{exp_dir}/map.{candidate_limit}/extended"
 
     best_bertmap_ind, best_strm_ind = validate_maps(config=config, candidate_limit=candidate_limit)
@@ -177,18 +176,18 @@ def validate_maps(config, candidate_limit: int):
     thresholds = (
         evenly_divide(0, 0.8, 8) + evenly_divide(0.9, 0.97, 7) + evenly_divide(0.98, 1.0, 20)
     )
-
+    
     cb_map_path = f"{exp_dir}/map.{candidate_limit}/combined.{candidate_limit}.tsv"
     src_map_path = f"{exp_dir}/map.{candidate_limit}/src.{candidate_limit}.tsv"
     tgt_map_path = f"{exp_dir}/map.{candidate_limit}/tgt.{candidate_limit}.tsv"
-
-    if args.extended == "combined":
+    
+    if extended_set_type == "combined":
         cb_map_path = f"{map_dir}/combined.{candidate_limit}.tsv"
-    elif args.extended == "src":
+    elif extended_set_type == "src":
         src_map_path = f"{map_dir}/src.{candidate_limit}.tsv"
-    elif args.extended == "tgt":
+    elif extended_set_type == "tgt":
         tgt_map_path = f"{map_dir}/tgt.{candidate_limit}.tsv"
-
+    
     for threshold in thresholds:
         threshold = round(threshold, 6)
         eval_results.append(
@@ -268,7 +267,6 @@ if __name__ == "__main__":
         default="",
         help="the best set type from first round of validation",
     )
-    global args
     args = parser.parse_args()
 
     banner("load configurations", sym="#")
@@ -288,4 +286,4 @@ if __name__ == "__main__":
         copy2(args.config, config_file)
 
     for limit in config_json["map"]["candidate_limits"]:
-        eval_maps(config=config_json, mode=args.mode, candidate_limit=limit)
+        eval_maps(config=config_json, mode=args.mode, candidate_limit=limit, best_set_type=args.extended)
