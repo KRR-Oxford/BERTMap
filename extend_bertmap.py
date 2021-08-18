@@ -52,6 +52,8 @@ def mapping_extension(config, candidate_limit, set_type_to_extend="", mapping_th
     if os.path.exists(file_to_save):
         print(f"skip map extension for candidate limit {candidate_limit} as existed ...")
         return
+    else:
+        Path(f"{map_dir}/extended/").mkdir(parents=True, exist_ok=True)
     
     banner(f"apply mapping extension on {extended_set_type} mappings")
 
