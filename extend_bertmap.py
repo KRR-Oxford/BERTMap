@@ -25,7 +25,7 @@ from bertmap.extend import BERTClassifierExtend
 na_vals = pd.io.parsers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
 
 
-def mapping_extension(config, candidate_limit, set_type_to_extend="", mapping_threshold=0.990):
+def mapping_extension(config, candidate_limit, set_type_to_extend="", mapping_threshold=0.900):
 
     global task_dir, exp_dir, map_dir, extended_set_type, src_ob, tgt_ob, theta
     task_dir = config["data"]["task_dir"]
@@ -99,7 +99,7 @@ if __name__ == "__main__":
         "-c", "--config", type=str, help="configuration file for bertmap system", required=True
     )
     parser.add_argument(
-        "-t", "--threshold", type=float, help="threshold for mapping extension", default=0.990
+        "-t", "--threshold", type=float, help="threshold for mapping extension", default=0.900
     )
     parser.add_argument(
         "-e",

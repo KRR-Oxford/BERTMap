@@ -11,6 +11,7 @@ from pandas.core.frame import DataFrame
 import pandas as pd
 from itertools import product
 from copy import deepcopy
+import time
 
 
 class OntoExtend:
@@ -33,13 +34,14 @@ class OntoExtend:
         self.expansion = dict()
 
     def extend_mappings(self, max_iter: int = 1):
+        start_time = time.time()
         num_iter = 0
         while self.frontier and num_iter < max_iter:
             count = 0
             new_expansion = dict()
             for mapping in self.frontier.keys():
                 src_iri, tgt_iri = mapping.split("\t")
-                print(f"[Map {count}]: {src_iri} -> {tgt_iri}")
+                print(f"[Time: {round(time.time() - start_time)}][Map {count}]: {src_iri} -> {tgt_iri}")
                 sup_maps, sub_maps = self.one_hob_extend(src_iri, tgt_iri)
                 # merging dictionary is possible because the duplicates have been removed
                 new_expansion = {**new_expansion, **sup_maps, **sub_maps}
