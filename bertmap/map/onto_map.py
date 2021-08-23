@@ -193,10 +193,10 @@ class OntoMapping:
         return string_match, system
 
     @staticmethod
-    def plot_eval(eval_csv, start_col=0):
+    def plot_eval(eval_csv, start_col=0, end_col=-3):
         """plot the evaluation results (under review)"""
         # process eval data
-        eval_df = pd.read_csv(eval_csv, index_col=0).iloc[start_col:].reset_index()
+        eval_df = pd.read_csv(eval_csv, index_col=0).iloc[start_col:end_col].reset_index()
         eval_df["Mappings"] = list(
             eval_df["index"].apply(
                 lambda x: x.split(":")[0].replace("src", "src2").replace("tgt", "tgt2src").replace("src2", "src2tgt")
@@ -219,8 +219,8 @@ class OntoMapping:
                 "font.size": 15,
                 "axes.labelsize": 13,
                 "axes.titlesize": 13,
-                "xtick.labelsize": 12,
-                "ytick.labelsize": 12,
+                "xtick.labelsize": 7,
+                "ytick.labelsize": 7,
                 "font.family": "Times New Roman",
                 "axes.labelweight": "bold",
                 "axes.titleweight": "bold",

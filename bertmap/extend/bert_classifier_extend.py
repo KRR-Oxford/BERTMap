@@ -1,15 +1,10 @@
 """
 Mapping Extension class
 """
-
-from typing import Union, List
-
-from bertmap.onto import OntoBox, OntoEvaluator
+from bertmap.onto import OntoBox
 from bertmap.extend import OntoExtend
 from bertmap.map import BERTClassifierMapping
-from bertmap.utils import get_device
 import torch
-from pandas import DataFrame
 from owlready2.entity import ThingClass
 from itertools import product
 
@@ -19,6 +14,7 @@ class BERTClassifierExtend(OntoExtend):
         self,
         src_ob: OntoBox,
         tgt_ob: OntoBox,
+        mapping_file: str,
         extend_threshold: float,
         bert_checkpoint: str = "some checkpoint",
         tokenizer_path: str = "emilyalsentzer/Bio_ClinicalBERT",
@@ -26,7 +22,7 @@ class BERTClassifierExtend(OntoExtend):
         string_match: bool = True,
         device_num: int = 0,
     ):
-        super().__init__(src_ob, tgt_ob, extend_threshold)
+        super().__init__(src_ob, tgt_ob, mapping_file, extend_threshold)
         self.string_match = string_match
         self.bert_classifier = BERTClassifierMapping(
             src_ob=src_ob,
@@ -46,12 +42,18 @@ class BERTClassifierExtend(OntoExtend):
         tgt_class_iri = self.tgt_ob.onto_text.abbr_entity_iri(tgt_class.iri)
         tgt_labels = self.tgt_ob.onto_text.texts[tgt_class_iri]["label"]
         label_pairs = list(product(src_labels, tgt_labels))
+        mapping_str = f"{src_class_iri}\t{tgt_class_iri}"
+
+        # check if the mapping has been explored before
+        if mapping_str in self.raw_mappings.keys() or mapping_str in self.expansion.keys():
+            # score of -1 means the mapping should be discarded
+            return mapping_str, -1.0
 
         # string-matching module before BERTMap
         if self.string_match:
             for pair in label_pairs:
                 if pair[0] == pair[1]:
-                    return src_class_iri, tgt_class_iri, 1.0
+                    return mapping_str, 1.0
 
         # apply BERT classifier
         with torch.no_grad():
@@ -67,4 +69,4 @@ class BERTClassifierExtend(OntoExtend):
             )  # torch.Size([1]), singleton
             map_score = map_score.cpu().detach().numpy()
 
-        return src_class_iri, tgt_class_iri, map_score[0]
+        return mapping_str, map_score[0]
