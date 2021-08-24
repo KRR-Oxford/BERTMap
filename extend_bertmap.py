@@ -141,4 +141,3 @@ if __name__ == "__main__":
             set_type_to_extend=args.extended,
             extension_threshold=args.threshold,
         )
-        break

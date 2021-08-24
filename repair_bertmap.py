@@ -78,43 +78,56 @@ def mapping_repair(
 
         # apply java commands of LogMap DEBUGGER
         repair_command = (
-            f"java -jar {main_dir}/repair_tools/logmap-matcher-4.0.jar DEBUGGER "
+            f"java -jar {main_dir}/repair/logmap-matcher-4.0.jar DEBUGGER "
             + f"file:{src_onto_path} file:{tgt_onto_path} TXT {formatted_file_path} {map_dir}/repaired false true"
         )
-        subprocess.run(repair_command.split(" "))
+        repair_process = subprocess.Popen(repair_command.split(" "))
+        repair_process.wait()
         eval_formatting(f"{map_dir}/repaired/mappings_repaired_with_LogMap.tsv", candidate_limit)
-        
         
     # configure reference mappings and mappings to be ignored
     print(f"evaluate the repaired mappings with threshold: {repair_threshold}")
     pred = f"{map_dir}/repaired/{repaired_set_type}.{candidate_limit}.tsv"
     ref = f"{task_dir}/refs/maps.ref.full.tsv"
     train_maps_df = pd.read_csv(
-        f"{task_dir}/refs/maps.ref.ss.train.tsv", sep="\t", na_values=na_vals, keep_default_na=False
+        f"{task_dir}/refs/maps.ref.ss.train.tsv",
+        sep="\t",
+        na_values=na_vals,
+        keep_default_na=False,
     )
     val_maps_df = pd.read_csv(
-        f"{task_dir}/refs/maps.ref.ss.val.tsv", sep="\t", na_values=na_vals, keep_default_na=False
+        f"{task_dir}/refs/maps.ref.ss.val.tsv",
+        sep="\t",
+        na_values=na_vals,
+        keep_default_na=False,
     )
 
     ref_ignored = (
-        f"{task_dir}/refs/maps.ignored.tsv" if config["corpora"]["ignored_mappings_file"] else None
+        f"{task_dir}/refs/maps.ignored.tsv"
+        if config["corpora"]["ignored_mappings_file"]
+        else None
     )
     if ref_ignored:
-        ref_ignored = pd.read_csv(ref_ignored, sep="\t", na_values=na_vals, keep_default_na=False)
+        ref_ignored = pd.read_csv(
+            ref_ignored, sep="\t", na_values=na_vals, keep_default_na=False
+        )
     else:
         # init mappings to be ignored if there is no pre-defined one
         ref_ignored = pd.DataFrame(columns=["Entity1", "Entity2", "Value"])
     # train + val (30%) should be ignored for semi-supervised setting
-    ref_ignored_ss = ref_ignored.append(val_maps_df).append(train_maps_df).reset_index(drop=True)
+    ref_ignored_ss = (
+        ref_ignored.append(val_maps_df).append(train_maps_df).reset_index(drop=True)
+    )
     # only val (10%) should be ignored for unsupervised setting
     ref_ignored_us = ref_ignored.append(val_maps_df).reset_index(drop=True)
     # results on 70% testing mappings
-    result_ss = OntoMapping.evaluate(pred, ref, ref_ignored_ss, prefix=repaired_set_type)
+    result_ss = OntoMapping.evaluate(pred, ref, ref_ignored_ss, threshold=repair_threshold, prefix=repaired_set_type)
+    result_ss.to_csv(f"{map_dir}/repaired/results.test.ss.{candidate_limit}.csv")
     # results on 90% testing mappings
-    result_us = OntoMapping.evaluate(pred, ref, ref_ignored_us, prefix=repaired_set_type)
-    # save both results
-    result_ss.to_csv(f"{map_dir}/repaired/results.test.ss.csv")
-    result_us.to_csv(f"{map_dir}/repaired/results.test.us.csv")
+    if "us" in learn:
+        result_us = OntoMapping.evaluate(pred, ref, ref_ignored_us, threshold=repair_threshold, prefix=repaired_set_type)
+        result_us.to_csv(f"{map_dir}/repaired/results.test.us.{candidate_limit}.csv")
+
 
 def repair_formatting(map_file_tsv, repair_threshold):
     map_dict = BERTClassifierExtend.read_mappings_to_dict(map_file_tsv, threshold=repair_threshold)
