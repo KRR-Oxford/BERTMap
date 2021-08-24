@@ -17,6 +17,7 @@ Clone the repository and run:
 # fine-tuning
 python run_bertmap.py -c config.json -m bertmap 
 # baseline
+python run_bertmap.py -c config.json -m nes
 python run_bertmap.py -c config.json -m bertembeds
 ```
 The script skips data construction once built for the first time to ensure that all of the models 
