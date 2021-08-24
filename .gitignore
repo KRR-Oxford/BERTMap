@@ -30,7 +30,7 @@
 .mtj.tmp/
 
 # Package Files #
-*.jar
+# *.jar
 *.war
 *.nar
 *.ear
@@ -319,3 +319,6 @@ fma*/
 
 display_results.ipynb
 configs
+
+repair_tools/*ipynb
+logmap-log.out
