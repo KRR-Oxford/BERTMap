@@ -16,6 +16,7 @@ import json
 from shutil import copy2
 from pathlib import Path
 import pandas as pd
+import subprocess
 
 # import bertmap
 from bertmap.utils import set_seed, banner
@@ -25,12 +26,18 @@ from bertmap.extend import BERTClassifierExtend
 na_vals = pd.io.parsers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
 
 
-def mapping_extension(config, candidate_limit, set_type_to_extend="", mapping_threshold=0.900):
+def mapping_extension(
+    config,
+    candidate_limit,
+    set_type_to_extend,
+    extension_threshold,
+):
 
-    global task_dir, exp_dir, map_dir, extended_set_type, src_ob, tgt_ob, theta
+    # configurations
+    global task_dir, exp_dir, map_dir, extended_set_type, src_ob, tgt_ob, kappa
     task_dir = config["data"]["task_dir"]
     extended_set_type = set_type_to_extend
-    theta = mapping_threshold
+    kappa = extension_threshold
 
     src_ob = OntoBox.from_saved(task_dir + "/src.onto")
     tgt_ob = OntoBox.from_saved(task_dir + "/tgt.onto")
@@ -47,48 +54,46 @@ def mapping_extension(config, candidate_limit, set_type_to_extend="", mapping_th
     )
 
     map_dir = f"{exp_dir}/map.{candidate_limit}"
+
+    # apply mapping extension
     file_to_extend = f"{map_dir}/{extended_set_type}.{candidate_limit}.tsv"
-    file_to_save = f"{map_dir}/extended/{extended_set_type}.{candidate_limit}.tsv"
-    if os.path.exists(file_to_save):
+    file_to_save_extended = f"{map_dir}/extended/{extended_set_type}.{candidate_limit}.tsv"
+    if os.path.exists(file_to_save_extended):
         print(f"skip map extension for candidate limit {candidate_limit} as existed ...")
-        return
     else:
         Path(f"{map_dir}/extended/").mkdir(parents=True, exist_ok=True)
-    
-    banner(f"apply mapping extension on {extended_set_type} mappings")
+        banner(f"apply mapping extension on {extended_set_type} mappings")
+        # load fine-tuned BERT classifier
+        checkpoint = exp_dir
+        for file in os.listdir(exp_dir):
+            if file.startswith("checkpoint"):
+                checkpoint += f"/{file}"
+                break
+        best_ckp = checkpoint.split("/")[-1]
+        print(f"find best {best_ckp}")
 
-    # load fine-tuned BERT classifier
-    checkpoint = exp_dir
-    for file in os.listdir(exp_dir):
-        if file.startswith("checkpoint"):
-            checkpoint += f"/{file}"
-            break
-    best_ckp = checkpoint.split("/")[-1]
-    print(f"find best {best_ckp}")
+        bert_ex = BERTClassifierExtend(
+            src_ob=src_ob,
+            tgt_ob=tgt_ob,
+            mapping_file=file_to_extend,
+            extend_threshold=kappa,
+            bert_checkpoint=checkpoint,
+            tokenizer_path=config["bert"]["tokenizer_path"],
+            max_length=config["fine-tune"]["max_length"],
+        )
 
-    bert_ex = BERTClassifierExtend(
-        src_ob=src_ob,
-        tgt_ob=tgt_ob,
-        mapping_file=file_to_extend,
-        extend_threshold=theta,
-        bert_checkpoint=checkpoint,
-        tokenizer_path=config["bert"]["tokenizer_path"],
-        max_length=config["fine-tune"]["max_length"],
-    )
-    
-    bert_ex.extend_mappings(max_iter=50)
-    
-    exp_list = []
-    for m, v in bert_ex.expansion.items():
-        src_iri, tgt_iri = m.split("\t")
-        exp_list.append((src_iri, tgt_iri, v))
-    exp_df = pd.DataFrame(exp_list, columns=["Entity1", "Entity2", "Value"])
-        
-    pred_df = pd.read_csv(file_to_extend, sep="\t", na_values=na_vals, keep_default_na=False)
-    extended_pred_df = pred_df.append(exp_df).reset_index(drop=True)
-    extended_pred_df.to_csv(file_to_save, index=False, sep="\t")
-    
-    print(f"# mappings: before={len(pred_df)} after={len(extended_pred_df)}")
+        bert_ex.extend_mappings(max_iter=50)
+
+        exp_list = []
+        for m, v in bert_ex.expansion.items():
+            src_iri, tgt_iri = m.split("\t")
+            exp_list.append((src_iri, tgt_iri, v))
+        exp_df = pd.DataFrame(exp_list, columns=["Entity1", "Entity2", "Value"])
+
+        pred_df = pd.read_csv(file_to_extend, sep="\t", na_values=na_vals, keep_default_na=False)
+        extended_pred_df = pred_df.append(exp_df).reset_index(drop=True)
+        extended_pred_df.to_csv(file_to_save_extended, index=False, sep="\t")
+        print(f"# mappings: before={len(pred_df)} after={len(extended_pred_df)}")
 
 
 if __name__ == "__main__":
@@ -129,9 +134,11 @@ if __name__ == "__main__":
         copy2(args.config, config_file)
 
     for limit in config_json["map"]["candidate_limits"]:
+        print(f"current candidate limit: {limit}")
         mapping_extension(
             config=config_json,
             candidate_limit=limit,
             set_type_to_extend=args.extended,
-            mapping_threshold=args.threshold,
+            extension_threshold=args.threshold,
         )
+        break
