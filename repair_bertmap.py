@@ -216,4 +216,3 @@ if __name__ == "__main__":
             set_type_to_repair=args.extended,
             repair_threshold=args.threshold,
         )
-        break
