@@ -12,6 +12,9 @@ The following packages are necessary but not sufficient for running BERTMap:
  ```
 
 ### Running BERTMap
+
+**IMPORTANT NOTICE**: BERTMap relies on class labels for training, but different ontologies have different annotation properties to define the aliases (synonyms), so preprocessing is required for adding all the synonyms to ``rdf:label`` before running BERTMap. The preprocessed ontologies involved in our paper together with their reference mappings are available in ``data.zip``.
+
 Clone the repository and run:
 ```
 # fine-tuning and evaluate bertmap prediction 
