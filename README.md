@@ -14,9 +14,19 @@ The following packages are necessary but not sufficient for running BERTMap:
 ### Running BERTMap
 Clone the repository and run:
 ```
-# fine-tuning
-python run_bertmap.py -c config.json -m bertmap 
-# baseline
+# fine-tuning and evaluate bertmap prediction 
+python run_bertmap.py -c config.json -m bertmap
+
+# mapping extension (-e specify which mapping set {src, tgt, combined} to be extended)
+python extend_bertmap.py -c config.json -e src
+
+# evaluate extended bertmap 
+python eval_bertmap.py -c config.json -e src
+
+# repair and evluate final outputs (-t specify best validation threshold)
+python repair_bertmap.py -c config.json -e src -t 0.999
+
+# baseline models (edit similarity and pretrained bert embeddings)
 python run_bertmap.py -c config.json -m nes
 python run_bertmap.py -c config.json -m bertembeds
 ```
