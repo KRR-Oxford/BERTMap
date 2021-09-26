@@ -1,6 +1,8 @@
 # BERTMap
 
-### Essential dependencies
+BERTMap is a BERT-based ontology alignment system, which utilizes the textual knowledge of ontologies to fine-tune BERT and make prediction. It also incorporates sub-word inverted indices for candidate selection, and (graph-based) extension and (logic-based) repair modules for mapping refinement.
+
+## Essential dependencies
 The following packages are necessary but not sufficient for running BERTMap:
  ```
  conda install pytorch torchvision torchaudio cudatoolkit=10.2 -c pytorch  # pytorch
@@ -11,7 +13,7 @@ The following packages are necessary but not sufficient for running BERTMap:
  pip install datasets  # huggingface datasets
  ```
 
-### Running BERTMap
+## Running BERTMap
 
 **IMPORTANT NOTICE**: BERTMap relies on class labels for training, but different ontologies have different annotation properties to define the aliases (synonyms), so preprocessing is required for adding all the synonyms to ``rdf:label`` before running BERTMap. The preprocessed ontologies involved in our paper together with their reference mappings are available in ``data.zip``.
 
@@ -43,7 +45,7 @@ for restricting to GPUs of specified indices, please run (for example):
 CUDA_VISIBLE_DEVICES=1,2 python run_bertmap.py -c config.json -m bertmap 
 ```
 
-### Configurations
+## Configurations
 Here gives the explanations of the variables used in `config.json` for customized BERTMap running.
 
 - `data`:
@@ -89,3 +91,9 @@ Here gives the explanations of the variables used in `config.json` for customize
   - `automatic`: whether or not automatically evaluate the mappings.
 
 Should you need any further customizaions especially on the evaluation part, please set `eval: automatic` to `false` and use your own evaluation script.
+
+## Acknolwedgements
+
+This work was supported by the SIRIUS Centre for Scalable Data Access (Research Council of Norway, project 237889), Samsung Research UK, Siemens AG, and the EPSRC projects AnaLOG (EP/P025943/1), OASIS (EP/S032347/1), UK FIRES (EP/S019111/1) and the AIDA project (Alan Turing Institute).
+
+The repair module is credited to [Ernesto Jiménez Ruiz et al.](http://www.cs.ox.ac.uk/isg/projects/LogMap/papers/paper_ISWC2011.pdf), and the code can be found [here](https://github.com/ernestojimenezruiz/logmap-matcher).
