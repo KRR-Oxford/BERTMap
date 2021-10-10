@@ -23,10 +23,10 @@ import multiprocessing_on_dill
 import pandas as pd
 
 # import bertmap
+from bertmap import na_vals
 from bertmap.utils import evenly_divide, set_seed, banner
 from bertmap.map import OntoMapping
 
-na_vals = pd.io.parsers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
 task_dir = ""
 exp_dir = ""
 map_dir = ""

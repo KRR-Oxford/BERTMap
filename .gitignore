@@ -310,6 +310,7 @@ testing/
 experiment/
 scripts/*
 fma*/
+snomed*/
 !configs/*/*
 
 # google-drive

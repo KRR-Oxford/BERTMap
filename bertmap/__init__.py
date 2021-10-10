@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import Optional
 
 # exclude mistaken parsing of string "null" to NaN
-na_vals = pd.io.parsers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
+na_vals = pd.io.parsers.readers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
 
 main_dir = __file__.replace("__init__.py", "")
 

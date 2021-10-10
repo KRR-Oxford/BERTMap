@@ -33,14 +33,13 @@ import pandas as pd
 import time
 
 # import bertmap
+from bertmap import na_vals
 from bertmap.utils import set_seed, equal_split, banner
 from bertmap.onto import OntoBox
 from bertmap.corpora import OntoAlignCorpora
 from bertmap.bert import BERTTrainer
 from bertmap.map import *
 from eval_bertmap import eval_maps
-
-na_vals = pd.io.parsers.STR_NA_VALUES.difference({"NULL", "null", "n/a"})
 
 
 def fix_path(path_str: str):
