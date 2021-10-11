@@ -156,7 +156,8 @@ def fine_tune(config):
 
     batch_size = fine_tune_params["batch_size"]
     epoch_steps = len(bert_oa.tra) // batch_size  # total steps of an epoch
-    epoch_steps = epoch_steps // torch.cuda.device_count()  # to deal with multi-gpus case
+    if torch.cuda.device_count() > 0:
+        epoch_steps = epoch_steps // torch.cuda.device_count()  # to deal with multi-gpus case
     # keep logging steps consisitent even for small batch size
     # report logging on every 0.02 epoch
     logging_steps = int(epoch_steps * 0.02)
