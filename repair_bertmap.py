@@ -18,6 +18,7 @@ from shutil import copy2
 from pathlib import Path
 import pandas as pd
 import subprocess
+from subprocess import TimeoutExpired
 
 # import bertmap
 from bertmap import na_vals
@@ -81,7 +82,11 @@ def mapping_repair(
             + f"file:{src_onto_path} file:{tgt_onto_path} TXT {formatted_file_path} {map_dir}/repaired false true"
         )
         repair_process = subprocess.Popen(repair_command.split(" "))
-        repair_process.wait()
+        try:
+            _, _ = repair_process.communicate(timeout=120)
+        except TimeoutExpired:
+            repair_process.kill()
+            _, _ = repair_process.communicate()
         eval_formatting(f"{map_dir}/repaired/mappings_repaired_with_LogMap.tsv", candidate_limit)
         
     # configure reference mappings and mappings to be ignored
