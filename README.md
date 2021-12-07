@@ -1,4 +1,12 @@
-# BERTMap
+# BERTMap: A BERT-based Ontology Alignment System
+
+**Important Notices**
+- The relevant paper was accepted in [AAAI-2022](https://aaai.org/Conferences/AAAI-22/).
+- Arxiv version is available at: https://arxiv.org/abs/2112.02682.
+- Code will be re-implemented as an example model in [Onto-PLM](https://github.com/KRR-Oxford/Onto-PLM), which will be a package for ontology engineering.
+
+
+## About
 
 BERTMap is a BERT-based ontology alignment system, which utilizes the textual knowledge of ontologies to fine-tune BERT and make prediction. It also incorporates sub-word inverted indices for candidate selection, and (graph-based) extension and (logic-based) repair modules for mapping refinement.
 
@@ -94,6 +102,5 @@ Should you need any further customizaions especially on the evaluation part, ple
 
 ## Acknolwedgements
 
-This work was supported by the SIRIUS Centre for Scalable Data Access (Research Council of Norway, project 237889), Samsung Research UK, Siemens AG, and the EPSRC projects AnaLOG (EP/P025943/1), OASIS (EP/S032347/1), UK FIRES (EP/S019111/1) and the AIDA project (Alan Turing Institute).
-
 The repair module is credited to [Ernesto Jiménez Ruiz et al.](http://www.cs.ox.ac.uk/isg/projects/LogMap/papers/paper_ISWC2011.pdf), and the code can be found [here](https://github.com/ernestojimenezruiz/logmap-matcher).
+
