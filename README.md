@@ -3,7 +3,7 @@
 **Important Notices**
 - The relevant paper was accepted in [AAAI-2022](https://aaai.org/Conferences/AAAI-22/).
 - Arxiv version is available at: https://arxiv.org/abs/2112.02682.
-- Code will be re-implemented as an example model in [Onto-PLM](https://github.com/KRR-Oxford/Onto-PLM), which will be a package for ontology engineering.
+- Code will be re-implemented as an example model in [DeepOnto](https://github.com/KRR-Oxford/DeepOnto), which will be a package for ontology engineering.
 
 
 ## About
