@@ -135,6 +135,10 @@ def test_maps(
     result = OntoMapping.evaluate(mapping_file, ref, ref_ignored, float(threshold), set_type)
     # evaluate the baseline string-matching results
     set_type, threshold = best_strm_hyper.split(":")  # src/tgt/combined:threshold
+    
+    # This line fixes the bug on string-match evaluation
+    mapping_file = f"{map_dir}/{set_type}.{candidate_limit}.tsv"
+    
     result_strm = OntoMapping.evaluate(mapping_file, ref, ref_ignored, float(threshold), set_type)
     result = result.append(result_strm)
 
