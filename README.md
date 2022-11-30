@@ -1,7 +1,9 @@
 # BERTMap: A BERT-based Ontology Alignment System
 
+## BERTMap is now maintained in the Deeponto repository: https://github.com/KRR-Oxford/DeepOnto
+
 **Important Notices**
-- Code has now been ***re-implemented as an example model in [DeepOnto](https://github.com/KRR-Oxford/DeepOnto)***, which is a developing package for ontology engineering.
+
 - The relevant paper was accepted in [AAAI-2022](https://aaai.org/Conferences/AAAI-22/).
 - Arxiv version is available at: https://arxiv.org/abs/2112.02682.
 
