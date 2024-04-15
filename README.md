@@ -102,7 +102,7 @@ Here gives the explanations of the variables used in `config.json` for customize
 
 Should you need any further customizaions especially on the evaluation part, please set `eval: automatic` to `false` and use your own evaluation script.
 
-## Acknolwedgements
+## Acknowledgments
 
 The repair module is credited to [Ernesto Jiménez Ruiz et al.](http://www.cs.ox.ac.uk/isg/projects/LogMap/papers/paper_ISWC2011.pdf), and the code can be found [here](https://github.com/ernestojimenezruiz/logmap-matcher).
 
